@@ -207,6 +207,17 @@ def test_converter():
     assert pth.path == Path('fake/directory')
 
 
+def test_default_converter():
+    from pathlib import Path
+
+    class SystemPath(Prefab):
+        path = Attribute(default='fake/directory', converter=Path)
+
+    pth = SystemPath()
+
+    assert pth.path == Path('fake/directory')
+
+
 def test_no_default():
     class Coordinate(Prefab):
         x = Attribute()
