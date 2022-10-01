@@ -93,7 +93,9 @@ def autogen(func):
 
 class Attribute:
     """
-    Descriptor class to define attributes
+    Descriptor class to define attributes.
+
+    This replaces the use of type hints in cluegen.
     """
     # noinspection PyProtectedMember
     def __set_name__(self, owner, name):
