@@ -5,7 +5,8 @@ Class boilerplate generator.
 Much of the code is based on [David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
 rewritten with additional comments to remind me of how it works.
 
-I wanted something a bit lighter weight than attrs 
+I wanted something a bit lighter weight than attrs. 
+Much like cluegen, I'm not making a package of this.
 
 This doesn't use type hints (clues) and instead uses a separate descriptor class
 to define Attributes. The attributes 'register' themselves with the class through
