@@ -1,7 +1,7 @@
 import pytest
 
 from prefab import Prefab, Attribute, ClassGenError, NotAPrefabError
-
+from pathlib import Path, WindowsPath
 
 def test_basic_subclass():
     class Coordinate(Prefab):
@@ -239,3 +239,17 @@ def test_not_prefab():
             x = Attribute()
 
     assert isinstance(e.value.__cause__, NotAPrefabError)
+
+
+def test_difficult_defaults():
+
+    class Settings(Prefab):
+        """
+        Global persistent settings handler
+        """
+        _globals = globals()
+        output_file = Attribute(default=Path("Settings.json"))
+
+    x = Settings()
+
+    assert x.output_file == Path("Settings.json")
