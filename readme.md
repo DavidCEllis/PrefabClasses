@@ -33,14 +33,15 @@ Coordinate3D(x=1, y=2, z=0)
 >>> point.x, point.y, point.z
 (1, 2, 0)
 
-from pathlib import PurePosixPath
+from pathlib import PurePath, PureWindowsPath, PurePosixPath
 
 class Settings(Prefab):
+    _globals = globals()  # This is necessary due to how Path is evaluated
     hostname = Attribute(default="localhost")
-    template_folder = Attribute(default='base/path', converter=PurePosixPath)
+    template_folder = Attribute(default=PurePath('base/path'), converter=PurePath)
 
 
 >>> settings = Settings(hostname='127.0.0.1')
 >>> settings.template_folder
-PurePosixPath('base/path')
+PureWindowsPath('base/path')
 ```
