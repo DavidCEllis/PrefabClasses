@@ -1,4 +1,4 @@
-# Prefab - Clueless cluegen #
+# PrefabClasses - Clueless cluegen #
 
 Class boilerplate generator.
 
