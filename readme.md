@@ -33,10 +33,9 @@ Coordinate3D(x=1, y=2, z=0)
 >>> point.x, point.y, point.z
 (1, 2, 0)
 
-from pathlib import PurePath, PureWindowsPath, PurePosixPath
+from pathlib import PurePath
 
 class Settings(Prefab):
-    _globals = globals()  # This is necessary due to how Path is evaluated
     hostname = Attribute(default="localhost")
     template_folder = Attribute(default=PurePath('base/path'), converter=PurePath)
 
