@@ -151,6 +151,7 @@ class Prefab:
         if not attributes:
             # It's easier to throw an error than to rewrite
             # The code for the useless case of a class with no attributes.
+            # Note - this will show up as a runtime error with this as the cause.
             raise ClassGenError("Class must contain at least 1 attribute.")
         cls._attribute_names = attributes
         cls.__match_args__ = tuple(cls._attribute_names)
