@@ -49,6 +49,8 @@ seems rather heavyweight for that.
 Based on ideas (and some code) from Cluegen by David Beazley https://github.com/dabeaz/cluegen
 """
 
+__version__ = "v0.1.0"
+
 
 # EXCEPTIONS #
 class ClassGenError(Exception):
