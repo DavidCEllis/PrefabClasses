@@ -1,6 +1,6 @@
 import pytest
 
-from prefab import Prefab, Attribute, ClassGenError, NotAPrefabError
+from prefab import Prefab, Attribute, PrefabError, NotAPrefabError
 from pathlib import Path
 
 
@@ -202,7 +202,7 @@ def test_no_default():
 
 
 def test_dumb_error():
-    with pytest.raises(ClassGenError):
+    with pytest.raises(PrefabError):
         class Empty(Prefab):
             pass
 
