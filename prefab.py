@@ -201,17 +201,14 @@ class Prefab:
                     if isinstance(attr_value, (str, int, float, bool)):
                         arg = f'{name}={getattr(cls, name)!r}'
                     else:
-                        # Because we need the value to be a string, make sure the repr doesn't
-                        # use any double quotes and break the string partway
-                        placeholder = repr(getattr(cls, name)).replace('"', "'")
-                        arg = f'{name}=DefaultValue("{placeholder}")'
+                        arg = f'{name}=DefaultValue("{name}")'
                 else:
                     arg = name
                 arglist.append(arg)
         args = ', '.join(arglist)
 
         assignments = (
-            (name, name) if attrib.init else (name, "DefaultValue()")
+            (name, name) if attrib.init else (name, f'DefaultValue("{name}")')
             for name, attrib in cls._attributes.items()
         )
         body = '\n'.join(
