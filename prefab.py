@@ -56,7 +56,7 @@ class PrefabError(Exception):
     pass
 
 
-class NotAPrefabError(AttributeError):
+class NotPrefabClassError(PrefabError, AttributeError):
     pass
 
 
@@ -119,7 +119,7 @@ class Attribute:
         # Here we append any generated attributes to a private variable
         # This will be used instead of cluegen's all_clues.
         if not issubclass(owner, Prefab):
-            raise NotAPrefabError(
+            raise NotPrefabClassError(
                 "Attempted to use Attribute outside of a Prefab derived class."
             )
 

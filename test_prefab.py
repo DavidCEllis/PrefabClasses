@@ -1,6 +1,6 @@
 import pytest
 
-from prefab import Prefab, Attribute, PrefabError, NotAPrefabError
+from prefab import Prefab, Attribute, PrefabError, NotPrefabClassError
 from pathlib import Path
 
 
@@ -246,7 +246,7 @@ def test_not_prefab():
         class Rebuild:
             x = Attribute()
 
-    assert isinstance(e.value.__cause__, NotAPrefabError)
+    assert isinstance(e.value.__cause__, NotPrefabClassError)
 
 
 def test_difficult_defaults():
