@@ -1,6 +1,6 @@
-import pytest
-
 from prefab import Prefab, Attribute, PrefabError, NotPrefabClassError
+
+import pytest
 from pathlib import Path
 
 
