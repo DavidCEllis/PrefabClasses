@@ -48,7 +48,7 @@ seems rather heavyweight for that.
 
 Based on ideas (and some code) from Cluegen by David Beazley https://github.com/dabeaz/cluegen
 """
-__version__ = "v0.3.0"
+__version__ = "v0.4.0"
 
 
 # EXCEPTIONS #
