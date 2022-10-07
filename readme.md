@@ -2,8 +2,8 @@
 
 Class boilerplate generator.
 
-Much of the code is based on [David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
-rewritten with additional comments to remind me of how it works.
+The idea and some of the code is based on [David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
+rewritten with additional features and explanation.
 
 This was done both as a means of learning how descriptors work and to remove a dependency 
 on attrs from a project.
