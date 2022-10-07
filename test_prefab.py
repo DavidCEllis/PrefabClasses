@@ -1,16 +1,65 @@
 import pytest
 
-from prefab import Prefab, Attribute, ClassGenError, NotAPrefabError
+from prefab import Prefab, Attribute, PrefabError, NotAPrefabError
 from pathlib import Path
 
 
-def test_basic_subclass():
+def test_basic():
     class Coordinate(Prefab):
         x = Attribute()
         y = Attribute()
 
     x = Coordinate(1, 2)
 
+    assert (x.x, x.y) == (1, 2)
+
+
+def test_basic_kwargs():
+    class Coordinate(Prefab):
+        x = Attribute()
+        y = Attribute()
+
+    x = Coordinate(x=1, y=2)
+
+    assert (x.x, x.y) == (1, 2)
+
+
+def test_quote_in_repr():
+    # Fake class that has double quotes in its repr
+    class TrickRepr:
+        def __init__(self, val):
+            self.val = val
+
+        def __repr__(self):
+            return f"TrickRepr(\"{self.val}\")"
+
+    class EvilPrefab(Prefab):
+        x = Attribute(default=TrickRepr("apple"))
+
+    x = EvilPrefab()
+
+
+def test_quote_in_repr_no_init():
+    # Fake class that has double quotes in its repr
+    class TrickRepr:
+        def __init__(self, val):
+            self.val = val
+
+        def __repr__(self):
+            return f"TrickRepr(\"{self.val}\")"
+
+    class EvilPrefab(Prefab):
+        x = Attribute(default=TrickRepr("apple"), init=False)
+
+    x = EvilPrefab()
+
+
+def test_init_exclude():
+    class Coordinate(Prefab):
+        x = Attribute()
+        y = Attribute(default=2, init=False)
+
+    x = Coordinate(x=1)
     assert (x.x, x.y) == (1, 2)
 
 
@@ -82,6 +131,15 @@ def test_repr():
     expected_repr = "Coordinate(x=1, y=2)"
 
     assert repr(Coordinate(1, 2)) == expected_repr
+
+
+def test_repr_exclude():
+    class Coordinate(Prefab):
+        x = Attribute(repr=False)
+        y = Attribute()
+
+    expected_repr = "Coordinate(y=2)"
+    assert repr(Coordinate(1, 2) == expected_repr)
 
 
 def test_iter():
@@ -202,7 +260,7 @@ def test_no_default():
 
 
 def test_dumb_error():
-    with pytest.raises(ClassGenError):
+    with pytest.raises(PrefabError):
         class Empty(Prefab):
             pass
 

@@ -52,7 +52,7 @@ __version__ = "v0.3.0"
 
 
 # EXCEPTIONS #
-class ClassGenError(Exception):
+class PrefabError(Exception):
     pass
 
 
@@ -71,7 +71,7 @@ class DefaultValue:
     Dummy class for default values.
     This avoids the actual default value being interpreted when exec is called.
     """
-    def __init__(self, value):
+    def __init__(self, value=None):
         """
         Dummy init function, note that the value is never used or even stored.
         """
@@ -125,9 +125,11 @@ class Attribute:
 
         # Make a new list for this class if it doesn't exist.
         # The class name is used to avoid sharing a list with a parent class.
-        sub_attribute_names = getattr(owner, f'_{owner.__name__}_attribute_names', [])
-        sub_attribute_names.append(name)
-        setattr(owner, f'_{owner.__name__}_attribute_names', sub_attribute_names)
+        attribute_var = f'_{owner.__name__}_attributes'
+        sub_attributes = getattr(owner, attribute_var, {})
+        sub_attributes[name] = self
+        setattr(owner, attribute_var, sub_attributes)
+
         self.private_name = f'_{name}'
 
     def __get__(self, obj, objtype=None):
@@ -144,9 +146,19 @@ class Attribute:
             value = self.converter(value)
         setattr(obj, self.private_name, value)
 
-    def __init__(self, *, default=_NOTHING, converter=None):
+    # noinspection PyShadowingBuiltins
+    def __init__(self, *, default=_NOTHING, converter=None, init=True, repr=True):
+        """
+        Create an Attribute for a prefab
+        :param default: Default value for this attribute
+        :param converter: prefab.attr = x -> prefab.attr = converter(x)
+        :param init: Include this attribute in the __init__ parameters
+        :param repr: Include this attribute in the class __repr__
+        """
         self.default = default
         self.converter = converter
+        self.init = init
+        self.repr = repr
 
 
 # noinspection PyReturnFromInit,PyMethodParameters
@@ -154,7 +166,7 @@ class Prefab:
     """
     The main prefab class - The one to inherit from.
     """
-    _attribute_names = []
+    _attributes = {}
     _methods = []
 
     def __init_subclass__(cls):
@@ -167,50 +179,67 @@ class Prefab:
             setattr(cls, name, val)
 
         # Get all attributes
-        attributes = [name for c in reversed(cls.__mro__)
-                      for name in getattr(c, f'_{c.__name__}_attribute_names', [])]
+        attributes = {name: attrib for c in reversed(cls.__mro__)
+                      for name, attrib in getattr(c, f'_{c.__name__}_attributes', {}).items()}
         if not attributes:
             # It's easier to throw an error than to rewrite
             # The code for the useless case of a class with no attributes.
             # Note - this will show up as a runtime error with this as the cause.
-            raise ClassGenError("Class must contain at least 1 attribute.")
-        cls._attribute_names = attributes
-        cls.__match_args__ = tuple(cls._attribute_names)
+            raise PrefabError("Class must contain at least 1 attribute.")
+        cls._attributes = attributes
+        cls.__match_args__ = tuple(name for name in cls._attributes)
 
     @autogen
     def __init__(cls):
         arglist = []
-        for name in cls._attribute_names:
-            if hasattr(cls, name):
-                attr = getattr(cls, name)
-                if isinstance(attr, (str, int, float, bool)):
-                    arg = f'{name}={getattr(cls, name)!r}'
+        for name, attrib in cls._attributes.items():
+            if attrib.init:
+                if hasattr(cls, name):
+                    attr_value = getattr(cls, name)
+                    if isinstance(attr_value, (str, int, float, bool)):
+                        arg = f'{name}={getattr(cls, name)!r}'
+                    else:
+                        # Because we need the value to be a string, make sure the repr doesn't
+                        # use any double quotes and break the string partway
+                        placeholder = repr(getattr(cls, name)).replace('"', "'")
+                        arg = f'{name}=DefaultValue("{placeholder}")'
                 else:
-                    arg = f'{name}=DefaultValue("{getattr(cls, name)!r}")'
-            else:
-                arg = name
-            arglist.append(arg)
+                    arg = name
+                arglist.append(arg)
         args = ', '.join(arglist)
-        body = '\n'.join(f"    self.{name} = {name}" for name in cls._attribute_names)
+
+        assignments = (
+            (name, name) if attrib.init else (name, "DefaultValue()")
+            for name, attrib in cls._attributes.items()
+        )
+        body = '\n'.join(
+            f"    self.{name} = {value}"
+            for name, value in assignments
+        )
+
         code = f"def __init__(self, {args}):\n{body}\n"
         return code
 
     @autogen
     def __repr__(cls):
-        content = ', '.join(f"{name}={{self.{name}!r}}" for name in cls._attribute_names)
+        content = ', '.join(
+            f"{name}={{self.{name}!r}}"
+            for name, attrib in cls._attributes.items()
+            if attrib.repr
+        )
         code = f"def __repr__(self):\n    return f'{{type(self).__name__}}({content})'"
         return code
 
     @autogen
     def __iter__(cls):
-        values = '\n'.join(f'    yield self.{name} ' for name in cls._attribute_names)
+        values = '\n'.join(f'    yield self.{name} ' for name in cls._attributes.keys())
         code = f"def __iter__(self):\n{values}"
         return code
 
     @autogen
     def __eq__(cls):
-        selfvals = ','.join(f'self.{name}' for name in cls._attribute_names)
-        othervals = ','.join(f'other.{name}' for name in cls._attribute_names)
+        selfvals = ','.join(f'self.{name}' for name in cls._attributes.keys())
+        othervals = ','.join(f'other.{name}' for name in cls._attributes.keys())
         class_comparison = "self.__class__ is other.__class__"
         instance_comparison = f"({selfvals},) == ({othervals},)"
         code = (
@@ -221,7 +250,7 @@ class Prefab:
 
     # Additional motivating methods
     def to_dict(self):
-        return {name: getattr(self, name) for name in self._attribute_names}
+        return {name: getattr(self, name) for name in self._attributes.keys()}
 
     def to_json(self, *, excludes=None, indent=2, default=str, **kwargs):
         """
