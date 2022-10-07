@@ -24,6 +24,12 @@ def test_basic_kwargs():
     assert (x.x, x.y) == (1, 2)
 
 
+def test_no_default_no_init_error():
+    with pytest.raises(PrefabError):
+        class Construct(Prefab):
+            x = Attribute(init=False)
+
+
 def test_quote_in_repr():
     # Fake class that has double quotes in its repr
     class TrickRepr:

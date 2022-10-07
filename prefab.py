@@ -155,6 +155,8 @@ class Attribute:
         :param init: Include this attribute in the __init__ parameters
         :param repr: Include this attribute in the class __repr__
         """
+        if not init and default is _NOTHING:
+            raise PrefabError("Must provide a default value if the attribute is not in init.")
         self.default = default
         self.converter = converter
         self.init = init
