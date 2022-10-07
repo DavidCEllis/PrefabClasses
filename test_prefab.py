@@ -30,21 +30,6 @@ def test_no_default_no_init_error():
             x = Attribute(init=False)
 
 
-def test_quote_in_repr_no_init():
-    # Fake class that has double quotes in its repr
-    class TrickRepr:
-        def __init__(self, val):
-            self.val = val
-
-        def __repr__(self):
-            return f"TrickRepr(\"{self.val}\")"
-
-    class EvilPrefab(Prefab):
-        x = Attribute(default=TrickRepr("apple"), init=False)
-
-    x = EvilPrefab()
-
-
 def test_init_exclude():
     class Coordinate(Prefab):
         x = Attribute()
