@@ -361,3 +361,20 @@ def test_difficult_defaults():
     x = Settings()
 
     assert x.output_file == Path("Settings.json")
+
+
+class PicklePrefab(Prefab):
+    """Pickle doesn't work on local objects so we need a global PickleCoordinate"""
+    x = Attribute(default=800)
+    y = Attribute(default=Path('Settings.json'))
+
+
+def test_picklable():
+
+    picktest = PicklePrefab()
+
+    import pickle
+    pick_dump = pickle.dumps(picktest)
+    pick_restore = pickle.loads(pick_dump)
+
+    assert pick_restore == picktest
