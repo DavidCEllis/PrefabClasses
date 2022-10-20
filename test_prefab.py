@@ -1,6 +1,10 @@
 from prefab import Prefab, Attribute, PrefabError, NotPrefabClassError
 
-import pytest
+try:  # pragma: nocover
+    from pytest import raises
+except ImportError:  # pragma: nocover
+    from smalltest.tools import raises
+
 from pathlib import Path
 
 
@@ -30,7 +34,7 @@ def test_kw_only():
         y = Attribute(kw_only=True)
 
     # Check the typeerror is raised for trying to use y as a positional argument
-    with pytest.raises(TypeError):
+    with raises(TypeError):
         x = Coordinate(1, 2)
 
     x = Coordinate(1, y=2)
@@ -44,7 +48,7 @@ def test_only_kw_only():
         y = Attribute(kw_only=True)
 
     # Check the typeerror is raised for trying to use y as a positional argument
-    with pytest.raises(TypeError):
+    with raises(TypeError):
         x = Coordinate(1, 2)
 
     x = Coordinate(x=1, y=2)
@@ -52,7 +56,7 @@ def test_only_kw_only():
 
 
 def test_kw_not_in_init():
-    with pytest.raises(PrefabError) as e_info:
+    with raises(PrefabError) as e_info:
         class Construct(Prefab):
             x = Attribute(default="test", kw_only=True, init=False)
 
@@ -60,7 +64,7 @@ def test_kw_not_in_init():
 
 
 def test_no_default_no_init_error():
-    with pytest.raises(PrefabError) as e_info:
+    with raises(PrefabError) as e_info:
         class Construct(Prefab):
             x = Attribute(init=False)
 
@@ -326,12 +330,12 @@ def test_no_default():
         x = Attribute()
         y = Attribute()
 
-    with pytest.raises(TypeError):
+    with raises(TypeError):
         x = Coordinate(1)
 
 
 def test_dumb_error():
-    with pytest.raises(PrefabError) as e_info:
+    with raises(PrefabError) as e_info:
         class Empty(Prefab):
             pass
 
@@ -339,7 +343,7 @@ def test_dumb_error():
 
 
 def test_not_prefab():
-    with pytest.raises(RuntimeError) as e:
+    with raises(RuntimeError) as e:
         class Rebuild:
             x = Attribute()
 
