@@ -66,16 +66,22 @@ class NotPrefabClassError(PrefabError, AttributeError):
 _NOTHING = object()
 
 
-class DefaultValue:
+class Default:
+    """Base Dummy Value Class"""
+    def __init__(self, value=None):
+        pass
+
+
+class DefaultValue(Default):
     """
     Dummy class for default values.
     This avoids the actual default value being interpreted when exec is called.
     """
-    def __init__(self, value=None):
-        """
-        Dummy init function, note that the value is never used or even stored.
-        """
-        pass
+
+class DefaultFactory(Default):
+    """
+    Dummy class for default factories
+    """
 
 
 def autogen(func):
@@ -88,7 +94,7 @@ def autogen(func):
     """
     def __get__(self, instance, cls):
         # Include the defaultvalue class used as a placeholder for defaults
-        global_vars = {"DefaultValue": DefaultValue}
+        global_vars = {"DefaultValue": DefaultValue, "DefaultFactory": DefaultFactory}
         local_vars = {}
         code = func(cls)
         exec(code, global_vars, local_vars)
@@ -132,15 +138,21 @@ class Attribute:
         self.private_name = f'_{name}'
 
     def __get__(self, obj, objtype=None):
-        if self.default is _NOTHING:
-            return getattr(obj, self.private_name)
-        return getattr(obj, self.private_name, self.default)
+        if self.default is not _NOTHING:
+            return getattr(obj, self.private_name, self.default)
+        if self.default_factory is not _NOTHING:
+            # noinspection PyCallingNonCallable
+            return getattr(obj, self.private_name, DefaultFactory())
+        return getattr(obj, self.private_name)
 
     def __set__(self, obj, value):
         # Detect if the value is a default placeholder and replace
         # it with the real value.
         if isinstance(value, DefaultValue):
             value = self.default
+        elif isinstance(value, DefaultFactory):
+            # noinspection PyCallingNonCallable
+            value = self.default_factory()
         if self.converter and (self._converter_unused or self.always_convert):
             self._converter_unused = False
             value = self.converter(value)
@@ -151,6 +163,7 @@ class Attribute:
             self,
             *,
             default=_NOTHING,
+            default_factory=_NOTHING,
             converter=None,
             init=True,
             repr=True,
@@ -160,17 +173,22 @@ class Attribute:
         """
         Create an Attribute for a prefab
         :param default: Default value for this attribute
+        :param default_factory: No argument callable to give a default value (for otherwise mutable defaults)
         :param converter: prefab.attr = x -> prefab.attr = converter(x)
         :param init: Include this attribute in the __init__ parameters
         :param repr: Include this attribute in the class __repr__
         :param kw_only: Make this argument keyword only in init
         :param always_convert: Run the converter whenever the argument is set, not just in init
         """
-        if not init and default is _NOTHING:
-            raise PrefabError("Must provide a default value if the attribute is not in init.")
+        if not init and default is _NOTHING and default_factory is _NOTHING:
+            raise PrefabError("Must provide a default value/factory if the attribute is not in init.")
+        if default is not _NOTHING and default_factory is not _NOTHING:
+            raise PrefabError("Cannot define both a default value and a default factory.")
         if kw_only and not init:
             raise PrefabError("Attribute cannot be keyword only if it is not in init.")
+
         self.default = default
+        self.default_factory = default_factory
 
         self.converter = converter
         self.always_convert = always_convert
@@ -218,6 +236,9 @@ class Prefab:
                     attr_value = getattr(cls, name)
                     if isinstance(attr_value, (str, int, float, bool)):
                         arg = f'{name}={getattr(cls, name)!r}'
+                    elif isinstance(attr_value, DefaultFactory):
+                        # factory values will specifically return defaultfactory
+                        arg = f'{name}=DefaultFactory("{name}")'
                     else:
                         arg = f'{name}=DefaultValue("{name}")'
                 else:
@@ -236,7 +257,11 @@ class Prefab:
             args = pos_args
 
         assignments = (
-            (name, name) if attrib.init else (name, f'DefaultValue("{name}")')
+            (name, name)
+            if attrib.init
+            else (name, f'DefaultValue("{name}")')
+            if attrib.default is not _NOTHING
+            else (name, f'DefaultFactory("{name}")')
             for name, attrib in cls._attributes.items()
         )
         body = '\n'.join(
@@ -245,6 +270,7 @@ class Prefab:
         )
 
         code = f"def __init__(self, {args}):\n{body}\n"
+        print(code)
         return code
 
     @autogen

@@ -68,7 +68,16 @@ def test_no_default_no_init_error():
         class Construct(Prefab):
             x = Attribute(init=False)
 
-    assert e_info.value.args[0] == "Must provide a default value if the attribute is not in init."
+    assert e_info.value.args[0] == "Must provide a default value/factory if the attribute is not in init."
+
+
+def test_default_value_and_factory_error():
+    """Error if defining both a value and a factory"""
+    with raises(PrefabError) as e_info:
+        class Construct(Prefab):
+            x = Attribute(default=12, default_factory=list)
+
+    assert e_info.value.args[0] == "Cannot define both a default value and a default factory."
 
 
 def test_init_exclude():
@@ -90,6 +99,30 @@ def test_basic_with_defaults():
 
     y = Coordinate(y=5)
     assert (y.x, y.y) == (0, 5)
+
+
+def test_mutable_defaults_bad():
+    """Test mutable defaults behave as they would in a regular class"""
+    class MutableDefault(Prefab):
+        x = Attribute(default=list())
+
+    mut1 = MutableDefault()
+    mut2 = MutableDefault()
+
+    # Check the lists are the same object
+    assert mut1.x is mut2.x
+
+
+def test_default_factory_good():
+    class FactoryDefault(Prefab):
+        x = Attribute(default_factory=list)
+
+    mut1 = FactoryDefault()
+    mut2 = FactoryDefault()
+
+    # Check the attribute is a list and is not the same list for different instances
+    assert isinstance(mut1.x, list)
+    assert mut1.x is not mut2.x
 
 
 def test_basic_composition():
