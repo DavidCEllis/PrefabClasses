@@ -173,6 +173,7 @@ def test_inheritance_and_composition():
     assert (x.x, x.y, x.z, x.t) == (1, 2, 3, 4)
 
 
+# Dunder method tests
 def test_repr():
     class Coordinate(Prefab):
         x = Attribute()
@@ -245,6 +246,7 @@ def test_neq():
     assert x != y
 
 
+# Serialization tests
 def test_todict():
     class Coordinate(Prefab):
         x = Attribute()
@@ -255,31 +257,6 @@ def test_todict():
     expected_dict = {'x': 1, 'y': 2}
 
     assert x.to_dict() == expected_dict
-
-
-def test_todict_recurse():
-    class Coordinate(Prefab):
-        x = Attribute()
-        y = Attribute()
-
-    class Circle(Prefab):
-        radius = Attribute(default=1)
-        origin = Attribute(default=Coordinate(0, 0))
-
-    circ = Circle()
-
-    circ_dict = {
-        "radius": 1,
-        "origin": {"x": 0, "y": 0}
-    }
-
-    circ_norecurse = {
-        "radius": 1,
-        "origin": Coordinate(0, 0)
-    }
-
-    assert circ.to_dict(recurse=True) == circ_dict
-    assert circ.to_dict(recurse=False) == circ_norecurse
 
 
 def test_tojson():
@@ -301,6 +278,44 @@ def test_tojson():
 
     expected_json = json.dumps({'path': 'path/to/test'}, indent=2)
     assert pth.to_json(excludes=['filename'], default=str) == expected_json
+
+
+def test_tojson_recurse():
+    """Due to the implementation, json dumps should recurse by default"""
+    import json
+
+    class Coordinate(Prefab):
+        x = Attribute()
+        y = Attribute()
+
+    class Circle(Prefab):
+        radius = Attribute(default=1)
+        origin = Attribute(default=Coordinate(0, 0))
+
+    circ = Circle()
+
+    circ_dict = {
+        "radius": 1,
+        "origin": {"x": 0, "y": 0}
+    }
+
+    circ_json = json.dumps(circ_dict, indent=2)
+
+    assert circ_json == circ.to_json(indent=2)
+
+
+def test_jsonencoder_failure():
+    """With the encoder for Prefabs it should still typeerror on unencodable types"""
+    from pathlib import PurePosixPath  # Not looking to handle windows '\' issues
+
+    class SystemPath(Prefab):
+        filename = Attribute()
+        path = Attribute(converter=PurePosixPath)
+
+    pth = SystemPath('testfile', 'path/to/test')
+
+    with raises(TypeError):
+        pth.to_json()
 
 
 def test_converter():
