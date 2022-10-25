@@ -48,7 +48,6 @@ seems rather heavyweight for that.
 
 Based on ideas (and some code) from Cluegen by David Beazley https://github.com/dabeaz/cluegen
 """
-import json
 
 __version__ = "v0.4.0"
 
@@ -358,4 +357,5 @@ class Prefab:
                 return default(o)
             raise TypeError(f"Object of type {o.__class__.__name__} is not JSON Serializable")
 
+        import json  # Only import JSON if needed
         return json.dumps(out_dict, indent=indent, default=default_func, **kwargs)
