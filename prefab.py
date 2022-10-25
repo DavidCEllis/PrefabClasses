@@ -48,6 +48,8 @@ seems rather heavyweight for that.
 
 Based on ideas (and some code) from Cluegen by David Beazley https://github.com/dabeaz/cluegen
 """
+import json
+
 __version__ = "v0.4.0"
 
 
@@ -77,6 +79,7 @@ class DefaultValue(Default):
     Dummy class for default values.
     This avoids the actual default value being interpreted when exec is called.
     """
+
 
 class DefaultFactory(Default):
     """
@@ -302,30 +305,25 @@ class Prefab:
         return code
 
     # Additional motivating methods
-    def to_dict(self, *, recurse=True):
+    def to_dict(self):
         """
         Represent the prefab as a dictionary of attribute names and values.
 
-        :param recurse: Convert attributes that are prefab instances to dictionaries
         :return: dictionary {attribute_name: attribute_value, ...}
         """
         result = {}
         for name in self._attributes.keys():
             value = getattr(self, name)
-            if recurse and isinstance(value, Prefab):
-                value = value.to_dict(recurse=True)
             result[name] = value
         return result
 
     def to_json(self, *, excludes=None, indent=2, **kwargs):
         """
         Output the class attributes as JSON
-        :param excludes:
+        :param excludes: list of attributes to exclude from json dump
         :param indent: indent for json
         :return:
         """
-        # This should only be imported if this method is called
-        import json
 
         if excludes:
             out_dict = {
@@ -336,4 +334,12 @@ class Prefab:
         else:
             out_dict = self.to_dict()
 
-        return json.dumps(out_dict, indent=indent, **kwargs)
+        return json.dumps(out_dict, indent=indent, cls=PrefabEncoder, **kwargs)
+
+
+class PrefabEncoder(json.JSONEncoder):
+    """Custom encoder to handle Prefab instances"""
+    def default(self, o):
+        if isinstance(o, Prefab):
+            return o.to_dict()
+        return super().default(o)
