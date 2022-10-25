@@ -297,10 +297,10 @@ def test_tojson():
     assert pth.to_dict()['path'] == PurePosixPath('path/to/test')
 
     expected_json = json.dumps({'filename': 'testfile', 'path': 'path/to/test'}, indent=2)
-    assert pth.to_json() == expected_json
+    assert pth.to_json(default=str) == expected_json
 
     expected_json = json.dumps({'path': 'path/to/test'}, indent=2)
-    assert pth.to_json(excludes=['filename']) == expected_json
+    assert pth.to_json(excludes=['filename'], default=str) == expected_json
 
 
 def test_converter():

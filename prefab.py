@@ -317,12 +317,11 @@ class Prefab:
             result[name] = value
         return result
 
-    def to_json(self, *, excludes=None, indent=2, default=str, **kwargs):
+    def to_json(self, *, excludes=None, indent=2, **kwargs):
         """
         Output the class attributes as JSON
         :param excludes:
         :param indent: indent for json
-        :param default: default converter for json
         :return:
         """
         # This should only be imported if this method is called
@@ -337,4 +336,4 @@ class Prefab:
         else:
             out_dict = self.to_dict()
 
-        return json.dumps(out_dict, indent=indent, default=default, **kwargs)
+        return json.dumps(out_dict, indent=indent, **kwargs)
