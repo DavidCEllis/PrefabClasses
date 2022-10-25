@@ -226,6 +226,20 @@ class Prefab:
             # It's easier to throw an error than to rewrite
             # The code for the useless case of a class with no attributes.
             raise PrefabError("Class must contain at least 1 attribute.")
+
+        default_defined = []
+        for name, attrib in attributes.items():
+            if attrib.default is not _NOTHING or attrib.default_factory is not _NOTHING:
+                default_defined.append(name)
+            else:
+                if default_defined:
+                    names = ', '.join(default_defined)
+                    raise SyntaxError(
+                        "non-default argument follows default argument",
+                        f"defaults: {names}",
+                        f"non_default after default: {name}"
+                    )
+
         cls._attributes = attributes
         cls.__match_args__ = tuple(name for name in cls._attributes)
 
@@ -317,14 +331,14 @@ class Prefab:
             result[name] = value
         return result
 
-    def to_json(self, *, excludes=None, indent=2, **kwargs):
+    def to_json(self, *, excludes=None, indent=2, default=None, **kwargs):
         """
         Output the class attributes as JSON
         :param excludes: list of attributes to exclude from json dump
         :param indent: indent for json
+        :param default: default function for JSON Encoder
         :return:
         """
-
         if excludes:
             out_dict = {
                 key: value
@@ -334,12 +348,14 @@ class Prefab:
         else:
             out_dict = self.to_dict()
 
-        return json.dumps(out_dict, indent=indent, cls=PrefabEncoder, **kwargs)
+        # This function tells the JSON encoder how to serialise Prefab derived objects
+        # If the user needs to serialize other classes their default will be called
+        # only if the object is not an instance of Prefab
+        def default_func(o):
+            if isinstance(o, Prefab):
+                return o.to_dict()
+            elif default is not None:
+                return default(o)
+            raise TypeError(f"Object of type {o.__class__.__name__} is not JSON Serializable")
 
-
-class PrefabEncoder(json.JSONEncoder):
-    """Custom encoder to handle Prefab instances"""
-    def default(self, o):
-        if isinstance(o, Prefab):
-            return o.to_dict()
-        return super().default(o)
+        return json.dumps(out_dict, indent=indent, default=default_func, **kwargs)

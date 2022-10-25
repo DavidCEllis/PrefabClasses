@@ -1,11 +1,11 @@
+from pathlib import Path, PurePath, PurePosixPath
+
 from prefab import Prefab, Attribute, PrefabError, NotPrefabClassError
 
 try:  # pragma: nocover
     from pytest import raises
 except ImportError:  # pragma: nocover
     from smalltest.tools import raises
-
-from pathlib import Path
 
 
 def test_basic():
@@ -61,6 +61,22 @@ def test_kw_not_in_init():
             x = Attribute(default="test", kw_only=True, init=False)
 
     assert e_info.value.args[0] == "Attribute cannot be keyword only if it is not in init."
+
+
+def test_positional_after_kw_error():
+    with raises(SyntaxError) as e_info:
+        class FailSyntax(Prefab):
+            x = Attribute(default=0)
+            y = Attribute()
+
+    assert e_info.value.args[0] == "non-default argument follows default argument"
+
+    with raises(SyntaxError) as e_info:
+        class FailFactorySyntax(Prefab):
+            x = Attribute(default_factory=list)
+            y = Attribute()
+
+    assert e_info.value.args[0] == "non-default argument follows default argument"
 
 
 def test_no_default_no_init_error():
@@ -261,7 +277,6 @@ def test_todict():
 
 def test_tojson():
     import json
-    from pathlib import PurePosixPath  # Not looking to handle windows '\' issues
 
     class SystemPath(Prefab):
         filename = Attribute()
@@ -306,7 +321,6 @@ def test_tojson_recurse():
 
 def test_jsonencoder_failure():
     """With the encoder for Prefabs it should still typeerror on unencodable types"""
-    from pathlib import PurePosixPath  # Not looking to handle windows '\' issues
 
     class SystemPath(Prefab):
         filename = Attribute()
@@ -318,8 +332,37 @@ def test_jsonencoder_failure():
         pth.to_json()
 
 
+def test_jsonencoder_layered():
+    import json
+
+    def default_for_path(o):
+        if isinstance(o, PurePath):
+            return str(o)
+        raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+
+    class Onion(Prefab):
+        pth = Attribute()
+        syspath = Attribute()
+
+    class SystemPath(Prefab):
+        filename = Attribute()
+        path = Attribute(converter=PurePosixPath)
+
+    pth = SystemPath('testfile', 'path/to/test')
+    x = Onion(pth=PurePosixPath('what'), syspath=pth)
+
+    result = {
+        "pth": "what",
+        "syspath": {
+            "filename": "testfile",
+            "path": "path/to/test"
+        }
+    }
+
+    assert json.dumps(result, indent=2) == x.to_json(default=default_for_path)
+
+
 def test_converter():
-    from pathlib import Path
 
     class SystemPath(Prefab):
         path = Attribute(converter=Path)
@@ -331,7 +374,6 @@ def test_converter():
 
 def test_default_converter():
     """Check the converter works on default arguments"""
-    from pathlib import Path
 
     class SystemPath(Prefab):
         path = Attribute(default='fake/directory', converter=Path)
@@ -343,7 +385,6 @@ def test_default_converter():
 
 def test_converter_only_init():
     """Check the converter only runs on init"""
-    from pathlib import Path
 
     class SystemPath(Prefab):
         path = Attribute(converter=Path)
@@ -359,7 +400,6 @@ def test_converter_only_init():
 
 def test_converter_always():
     """Check the converter runs every time if told to"""
-    from pathlib import Path
 
     class SystemPath(Prefab):
         path = Attribute(converter=Path, always_convert=True)
