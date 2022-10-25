@@ -44,7 +44,7 @@ def test_default_value_and_factory_error():
     assert e_info.value.args[0] == "Cannot define both a default value and a default factory."
 
 
-def test_dumb_error():
+def test_no_attributes_error():
     with raises(PrefabError) as e_info:
         class Empty(Prefab):
             pass
