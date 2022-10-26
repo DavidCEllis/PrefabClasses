@@ -286,7 +286,6 @@ class Prefab:
         )
 
         code = f"def __init__(self, {args}):\n{body}\n"
-        print(code)
         return code
 
     @autogen
