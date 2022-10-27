@@ -251,7 +251,7 @@ class Prefab:
                 if hasattr(cls, name):
                     attr_value = getattr(cls, name)
                     if isinstance(attr_value, (str, int, float, bool)):
-                        arg = f'{name}={getattr(cls, name)!r}'
+                        arg = f'{name}={attr_value!r}'
                     elif isinstance(attr_value, DefaultFactory):
                         # factory values will specifically return defaultfactory
                         arg = f'{name}=DefaultFactory("{name}")'
@@ -317,14 +317,21 @@ class Prefab:
         return code
 
     # Additional motivating methods
-    def to_dict(self):
+    def to_dict(self, *, init_attributes_only=False):
         """
         Represent the prefab as a dictionary of attribute names and values.
-
+    
+        :param init_attributes_only: Only include attributes that are included in init.
         :return: dictionary {attribute_name: attribute_value, ...}
         """
         result = {}
-        for name in self._attributes.keys():
+
+        if init_attributes_only:
+            attrib_names = (name for name, attrib in self._attributes.items() if attrib.init)
+        else:
+            attrib_names = self._attributes.keys()
+
+        for name in attrib_names:
             value = getattr(self, name)
             result[name] = value
         return result
