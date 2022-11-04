@@ -1,7 +1,7 @@
 """Tests related to serialization to JSON or Pickle"""
 from pathlib import Path, PurePosixPath, PurePath
 
-from prefab import Prefab, Attribute
+from prefab import Prefab, Attribute, as_dict, to_json
 from smalltest.tools import raises
 
 
@@ -15,7 +15,7 @@ def test_todict():
 
     expected_dict = {'x': 1, 'y': 2}
 
-    assert x.to_dict() == expected_dict
+    assert as_dict(x) == expected_dict
 
 
 def test_todict_init_only():
@@ -28,11 +28,11 @@ def test_todict_init_only():
 
     expected_dict = {'x': 1, 'y': 2, 'z': 0}
 
-    assert x.to_dict() == expected_dict
+    assert as_dict(x) == expected_dict
 
     expected_dict = {'x': 1, 'y': 2}
 
-    assert x.to_dict(init_attributes_only=True) == expected_dict
+    assert as_dict(x, init_attributes_only=True) == expected_dict
 
 
 def test_tojson():
@@ -46,13 +46,13 @@ def test_tojson():
 
     # Check it's a Path internally
     assert pth.path == PurePosixPath('path/to/test')
-    assert pth.to_dict()['path'] == PurePosixPath('path/to/test')
+    assert as_dict(pth)['path'] == PurePosixPath('path/to/test')
 
     expected_json = json.dumps({'filename': 'testfile', 'path': 'path/to/test'}, indent=2)
-    assert pth.to_json(default=str) == expected_json
+    assert to_json(pth, default=str) == expected_json
 
     expected_json = json.dumps({'path': 'path/to/test'}, indent=2)
-    assert pth.to_json(excludes=['filename'], default=str) == expected_json
+    assert to_json(pth, excludes=['filename'], default=str) == expected_json
 
 
 def test_tojson_recurse():
@@ -76,7 +76,7 @@ def test_tojson_recurse():
 
     circ_json = json.dumps(circ_dict, indent=2)
 
-    assert circ_json == circ.to_json(indent=2)
+    assert circ_json == to_json(circ, indent=2)
 
 
 def test_jsonencoder_failure():
@@ -89,7 +89,7 @@ def test_jsonencoder_failure():
     pth = SystemPath('testfile', 'path/to/test')
 
     with raises(TypeError):
-        pth.to_json()
+        to_json(pth)
 
 
 def test_jsonencoder_layered():
@@ -119,7 +119,7 @@ def test_jsonencoder_layered():
         }
     }
 
-    assert json.dumps(result, indent=2) == x.to_json(default=default_for_path)
+    assert json.dumps(result, indent=2) == to_json(x, default=default_for_path)
 
 
 class PicklePrefab(Prefab):
