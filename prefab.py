@@ -316,8 +316,6 @@ class Prefab:
         )
         return code
 
-    # Additional motivating methods
-
 
 # noinspection PyProtectedMember
 def as_dict(inst, *, init_attributes_only=False):
