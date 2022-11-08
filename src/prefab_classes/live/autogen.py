@@ -63,4 +63,4 @@ def autogen(func):
         setattr(cls, func.__name__, method)
         return method.__get__(instance, cls)
 
-    return type(f'AutoGen_{func.__name__}', (), dict(__get__=__get__, __set_name__=__set_name__))()
+    return type(f'AutoGen_{func.__name__}', (), dict(__get__=__get__))()
