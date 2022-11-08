@@ -58,3 +58,16 @@ def test_no_attributes_error():
             pass
 
     assert e_info.value.args[0] == "Class must contain at least 1 attribute."
+
+
+def test_created_twice():
+    @prefab
+    class DejaVu:
+        x = Attribute()
+
+    with raises(PrefabError) as e_info:
+        @prefab
+        class DejaVu:
+            x = Attribute()
+
+    assert e_info.value.args[0] == "Class with name test_created_twice.<locals>.DejaVu already registered as a prefab."
