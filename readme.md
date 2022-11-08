@@ -10,6 +10,11 @@ and wanted to see if something like that could work for the
 project. With some modification I ended up with the first
 version of this. 
 
+**The 'compiled' method has not yet been implemented in this
+package but soon will be. 
+See [PrefabGenerator](https://github.com/DavidCEllis/PrefabGenerator)
+for the proof of concept.**
+
 This package provides 2 different methods of code generation
 depending on the use case and speed requirements.
 
