@@ -63,8 +63,4 @@ def autogen(func):
         setattr(cls, func.__name__, method)
         return method.__get__(instance, cls)
 
-    def __set_name__(self, cls, name):
-        # Add this method to the _methods list to be generated with the subclass
-        cls._methods.append((name, self))
-
     return type(f'AutoGen_{func.__name__}', (), dict(__get__=__get__, __set_name__=__set_name__))()

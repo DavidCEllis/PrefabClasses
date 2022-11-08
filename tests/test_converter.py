@@ -1,12 +1,13 @@
 """Test the converter parameter works as intended"""
 from pathlib import Path
 
-from prefab import Prefab, Attribute
+from prefab_classes import prefab, Attribute
 
 
 def test_converter():
 
-    class SystemPath(Prefab):
+    @prefab
+    class SystemPath:
         path = Attribute(converter=Path)
 
     pth = SystemPath('fake/directory')
@@ -17,7 +18,8 @@ def test_converter():
 def test_default_converter():
     """Check the converter works on default arguments"""
 
-    class SystemPath(Prefab):
+    @prefab
+    class SystemPath:
         path = Attribute(default='fake/directory', converter=Path)
 
     pth = SystemPath()
@@ -28,7 +30,8 @@ def test_default_converter():
 def test_converter_only_init():
     """Check the converter only runs on init"""
 
-    class SystemPath(Prefab):
+    @prefab
+    class SystemPath:
         path = Attribute(converter=Path)
 
     pth = SystemPath('fake/directory')
@@ -43,7 +46,8 @@ def test_converter_only_init():
 def test_converter_always():
     """Check the converter runs every time if told to"""
 
-    class SystemPath(Prefab):
+    @prefab
+    class SystemPath:
         path = Attribute(converter=Path, always_convert=True)
 
     pth = SystemPath('fake/directory')

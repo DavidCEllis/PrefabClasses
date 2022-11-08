@@ -47,7 +47,7 @@ Based on ideas (and some code) from Cluegen by David Beazley https://github.com/
 """
 from ..exceptions import PrefabError
 from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
-from .method_generators import get_init_maker, get_repr_maker, get_eq_maker
+from .method_generators import get_init_maker, get_repr_maker, get_eq_maker, get_iter_maker
 
 prefab_register = {}
 
@@ -175,9 +175,12 @@ def prefab(cls: type):
     __init__ = get_init_maker()
     __repr__ = get_repr_maker()
     __eq__ = get_eq_maker()
+    __iter__ = get_iter_maker()
+
     setattr(cls, '__init__', __init__)
     setattr(cls, '__repr__', __repr__)
     setattr(cls, '__eq__', __eq__)
+    setattr(cls, '__iter__', __iter__)
 
     prefab_register[cls.__qualname__] = cls
     return cls

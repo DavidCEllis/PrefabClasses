@@ -1,12 +1,15 @@
 """Tests that Prefabs handle inheritance as expected"""
-from prefab import Prefab, Attribute
+from prefab_classes import prefab, Attribute
 
 
 def test_basic_inheritance():
-    class Coordinate(Prefab):
+
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
+    @prefab
     class Coordinate3D(Coordinate):
         z = Attribute()
 
@@ -16,13 +19,17 @@ def test_basic_inheritance():
 
 
 def test_multiple_inheritance():
-    class Coordinate(Prefab):
+
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
-    class CoordinateZ(Prefab):
+    @prefab
+    class CoordinateZ:
         z = Attribute()
 
+    @prefab
     class Coordinate3D(CoordinateZ, Coordinate):
         pass
 
@@ -32,16 +39,20 @@ def test_multiple_inheritance():
 
 
 def test_layered_inheritance():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
+    @prefab
     class Coordinate3D(Coordinate):
         z = Attribute()
 
-    class CoordinateTime(Prefab):
+    @prefab
+    class CoordinateTime:
         t = Attribute()
 
+    @prefab
     class Coordinate4D(CoordinateTime, Coordinate3D):
         pass
 

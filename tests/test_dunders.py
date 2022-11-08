@@ -1,9 +1,10 @@
 """Test the non-init dunder methods"""
-from prefab import Prefab, Attribute
+from prefab_classes import prefab, Attribute
 
 
 def test_repr():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
@@ -13,7 +14,8 @@ def test_repr():
 
 
 def test_repr_exclude():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute(repr=False)
         y = Attribute()
 
@@ -22,7 +24,8 @@ def test_repr_exclude():
 
 
 def test_iter():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
@@ -33,16 +36,20 @@ def test_iter():
 
 
 def test_eq():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
+    @prefab
     class Coordinate3D(Coordinate):
         z = Attribute()
 
-    class CoordinateTime(Prefab):
+    @prefab
+    class CoordinateTime:
         t = Attribute()
 
+    @prefab
     class Coordinate4D(CoordinateTime, Coordinate3D):
         pass
 
@@ -54,16 +61,20 @@ def test_eq():
 
 
 def test_neq():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
+    @prefab
     class Coordinate3D(Coordinate):
         z = Attribute()
 
-    class CoordinateTime(Prefab):
+    @prefab
+    class CoordinateTime:
         t = Attribute()
 
+    @prefab
     class Coordinate4D(CoordinateTime, Coordinate3D):
         pass
 

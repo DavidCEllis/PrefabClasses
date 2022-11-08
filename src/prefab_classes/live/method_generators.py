@@ -115,3 +115,11 @@ def get_eq_maker():
         )
         return code
     return autogen(__eq__)
+
+
+def get_iter_maker():
+    def __iter__(cls):
+        values = '\n'.join(f'    yield self.{name} ' for name in cls._attributes.keys())
+        code = f"def __iter__(self):\n{values}"
+        return code
+    return autogen(__iter__)
