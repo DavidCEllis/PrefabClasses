@@ -19,7 +19,7 @@ attrs this trades speed of first access for speed of import.
 This also means that if a class method is never accessed then 
 it is not generated.
 
-The compiled method instead generates all of the code when the 
+The 'compiled' method instead generates all of the code when the 
 module is first *compiled* into a .pyc file. Subsequently there 
 is no overhead once the .pyc has been generated as the result 
 is a plain python class in the .pyc. The trade-off is that this
