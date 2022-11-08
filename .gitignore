@@ -5,3 +5,4 @@ references
 .coverage
 scratch/
 *.egg-info/
+build/
