@@ -70,7 +70,7 @@ class Attribute:
         sub_attributes[name] = self
         setattr(owner, attribute_var, sub_attributes)
 
-        self.private_name = f'_{name}'
+        self.private_name = f'_prefab_attribute_{name}'
 
     def __get__(self, obj, objtype=None):
         # The default values here should only be used in the __init__ method
