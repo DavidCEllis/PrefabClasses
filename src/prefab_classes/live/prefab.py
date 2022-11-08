@@ -146,7 +146,39 @@ def prefab(cls: type):
             f"already registered as a prefab."
         )
     # Here first we need to look at type hints for the type hint
-    # syntax variant. NOT YET IMPLEMENTED
+    # syntax variant.
+    # If a key exists and is *NOT* in __annotations__ then all
+    # annotations will be ignored as it becomes complex to fix the
+    # ordering.
+    annotation_names = getattr(cls, '__annotations__', {}).keys()
+    cls_attributes = getattr(cls, f'_{cls.__name__}_attributes', {})
+    attribute_names = cls_attributes.keys()
+
+    if set(annotation_names).issuperset(set(attribute_names)):
+        # replace the classes' attributes dict with one with the correct
+        # order from the annotations.
+        new_attributes = {}
+        for name in annotation_names:
+            # Copy atributes that are already defined to the new dict
+            # generate Attribute() values for those that are not defined.
+            if hasattr(cls, name):
+                if name in attribute_names:
+                    new_attributes[name] = cls_attributes[name]
+                else:
+                    attribute_default = getattr(cls, name)
+                    attribute = Attribute(default=attribute_default)
+                    # Set private_name because set_name is never called
+                    attribute.private_name = f'_prefab_attribute_{name}'
+                    setattr(cls, name, attribute)
+                    new_attributes[name] = attribute
+            else:
+                attribute = Attribute()
+                # Set private_name because set_name is never called
+                attribute.private_name = f'_prefab_attribute_{name}'
+                setattr(cls, name, attribute)
+                new_attributes[name] = attribute
+
+        setattr(cls, f'_{cls.__name__}_attributes', new_attributes)
 
     # Handle attributes
     attributes = {name: attrib for c in reversed(cls.__mro__)
