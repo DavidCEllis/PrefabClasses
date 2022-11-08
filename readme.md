@@ -1,30 +1,50 @@
 # PrefabClasses - Clueless cluegen #
 
-Class boilerplate generator.
+Class boilerplate generator. Yet another variation on attrs/dataclasses.
 
-The idea and some of the code is based on [David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
-rewritten with additional features and explanation.
+# Why are you remaking this again? #
 
-This was done both as a means of learning how descriptors work and to remove a dependency 
-on attrs from a project.
+Initially wanting to remove a dependency on attrs I had seen 
+[David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
+and wanted to see if something like that could work for the 
+project. With some modification I ended up with the first
+version of this. 
 
-Much like cluegen, I'm not making a package of this.
+**The 'compiled' method has not yet been implemented in this
+package but soon will be. 
+See [PrefabGenerator](https://github.com/DavidCEllis/PrefabGenerator)
+for the proof of concept.**
 
-This doesn't use type hints (clues) and instead uses a separate descriptor class
-to define Attributes. The attributes 'register' themselves with the class through
-the (ab)use of the `__set_name__` magic method.
+This package provides 2 different methods of code generation
+depending on the use case and speed requirements.
+
+The 'live' method works as *cluegen* worked, generating the 
+required methods only when they are first accessed. Compared to
+attrs this trades speed of first access for speed of import. 
+This also means that if a class method is never accessed then 
+it is not generated.
+
+The 'compiled' method instead generates all of the code when the 
+module is first *compiled* into a .pyc file. Subsequently there 
+is no overhead once the .pyc has been generated as the result 
+is a plain python class in the .pyc. The trade-off is that this
+method has some additional restrictions so is slightly less
+flexible. Most notably inheritance does not work across .py files
+as each file is compiled in isolation.
 
 Usage is pretty much what you would expect:
 
 ```python
-from prefab import Attribute, Prefab
+from prefab_classes import Attribute, prefab
    
 
-class Coordinate(Prefab):
+@prefab
+class Coordinate:
     x = Attribute()
     y = Attribute()
 
 
+@prefab
 class Coordinate3D(Coordinate):
     z = Attribute(default=0)
 
@@ -35,9 +55,10 @@ Coordinate3D(x=1, y=2, z=0)
 
 from pathlib import PurePath
 
-class Settings(Prefab):
+@prefab
+class Settings:
     hostname = Attribute(default="localhost")
-    template_folder = Attribute(default=PurePath('base/path'), converter=PurePath)
+    template_folder = Attribute(default='base/path', converter=PurePath)
 
 
 >>> settings = Settings(hostname='127.0.0.1')

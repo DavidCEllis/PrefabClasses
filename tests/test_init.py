@@ -1,12 +1,13 @@
 """Tests for the behaviour of __init__"""
 from pathlib import Path
 
-from prefab import Prefab, Attribute
+from prefab_classes import prefab, Attribute
 from smalltest.tools import raises
 
 
 def test_basic():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
@@ -16,7 +17,8 @@ def test_basic():
 
 
 def test_basic_kwargs():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
@@ -26,7 +28,8 @@ def test_basic_kwargs():
 
 
 def test_kw_only():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute(kw_only=True)
 
@@ -40,7 +43,8 @@ def test_kw_only():
 
 def test_only_kw_only():
 
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute(kw_only=True)
         y = Attribute(kw_only=True)
 
@@ -53,7 +57,8 @@ def test_only_kw_only():
 
 
 def test_init_exclude():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute(default=2, init=False)
 
@@ -62,7 +67,8 @@ def test_init_exclude():
 
 
 def test_basic_with_defaults():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute(default=0)
         y = Attribute(default=0)
 
@@ -75,7 +81,8 @@ def test_basic_with_defaults():
 
 def test_mutable_defaults_bad():
     """Test mutable defaults behave as they would in a regular class"""
-    class MutableDefault(Prefab):
+    @prefab
+    class MutableDefault:
         x = Attribute(default=list())
 
     mut1 = MutableDefault()
@@ -86,7 +93,8 @@ def test_mutable_defaults_bad():
 
 
 def test_default_factory_good():
-    class FactoryDefault(Prefab):
+    @prefab
+    class FactoryDefault:
         x = Attribute(default_factory=list)
 
     mut1 = FactoryDefault()
@@ -98,7 +106,8 @@ def test_default_factory_good():
 
 
 def test_no_default():
-    class Coordinate(Prefab):
+    @prefab
+    class Coordinate:
         x = Attribute()
         y = Attribute()
 
@@ -110,8 +119,8 @@ def test_no_default():
 
 
 def test_difficult_defaults():
-
-    class Settings(Prefab):
+    @prefab
+    class Settings:
         """
         Global persistent settings handler
         """
