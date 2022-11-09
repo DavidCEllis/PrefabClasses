@@ -123,3 +123,9 @@ def get_iter_maker():
         code = f"def __iter__(self):\n{values}"
         return code
     return autogen(__iter__)
+
+
+init_maker = get_init_maker()
+repr_maker = get_repr_maker()
+eq_maker = get_eq_maker()
+iter_maker = get_iter_maker()
