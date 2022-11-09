@@ -45,6 +45,8 @@ Replaces attrs.
 
 Based on ideas (and some code) from Cluegen by David Beazley https://github.com/dabeaz/cluegen
 """
+from functools import partial
+
 from ..exceptions import PrefabError
 from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
 from .method_generators import init_maker, repr_maker, eq_maker, iter_maker
@@ -139,7 +141,7 @@ class Attribute:
         self.kw_only = kw_only
 
 
-def prefab(cls: type):
+def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     if cls.__qualname__ in prefab_register:
         raise PrefabError(
             f"Class with name {cls.__qualname__} "
@@ -204,10 +206,28 @@ def prefab(cls: type):
     cls._attributes = attributes
     cls.__match_args__ = tuple(name for name in attributes)
 
-    setattr(cls, '__init__', init_maker)
-    setattr(cls, '__repr__', repr_maker)
-    setattr(cls, '__eq__', eq_maker)
-    setattr(cls, '__iter__', iter_maker)
+    if init:
+        setattr(cls, '__init__', init_maker)
+    if repr:
+        setattr(cls, '__repr__', repr_maker)
+    if eq:
+        setattr(cls, '__eq__', eq_maker)
+    if iter:
+        setattr(cls, '__iter__', iter_maker)
 
     prefab_register[cls.__qualname__] = cls
     return cls
+
+
+def prefab(
+        cls: type = None,
+        *,
+        init=True,
+        repr=True,
+        eq=True,
+        iter=False,
+):
+    if cls is None:
+        # Called as () method to change defaults
+        return partial(_make_prefab, init=init, repr=repr, eq=eq, iter=iter)
+    return _make_prefab(cls, init=init, repr=repr, eq=eq, iter=iter)

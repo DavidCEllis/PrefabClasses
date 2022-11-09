@@ -24,7 +24,7 @@ def test_repr_exclude():
 
 
 def test_iter():
-    @prefab
+    @prefab(iter=True)
     class Coordinate:
         x = Attribute()
         y = Attribute()
