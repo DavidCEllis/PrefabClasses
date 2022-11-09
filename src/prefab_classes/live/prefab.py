@@ -166,17 +166,17 @@ def prefab(cls: type):
                     new_attributes[name] = cls_attributes[name]
                 else:
                     attribute_default = getattr(cls, name)
-                    attribute = Attribute(default=attribute_default)
+                    attrib = Attribute(default=attribute_default)
                     # Set private_name because set_name is never called
-                    attribute.private_name = f'_prefab_attribute_{name}'
-                    setattr(cls, name, attribute)
-                    new_attributes[name] = attribute
+                    attrib.private_name = f'_prefab_attribute_{name}'
+                    setattr(cls, name, attrib)
+                    new_attributes[name] = attrib
             else:
-                attribute = Attribute()
+                attrib = Attribute()
                 # Set private_name because set_name is never called
-                attribute.private_name = f'_prefab_attribute_{name}'
-                setattr(cls, name, attribute)
-                new_attributes[name] = attribute
+                attrib.private_name = f'_prefab_attribute_{name}'
+                setattr(cls, name, attrib)
+                new_attributes[name] = attrib
 
         setattr(cls, f'_{cls.__name__}_attributes', new_attributes)
 
