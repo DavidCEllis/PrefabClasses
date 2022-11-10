@@ -1,15 +1,15 @@
 """Tests for the behaviour of __init__"""
 from pathlib import Path
 
-from prefab_classes import prefab, Attribute
+from prefab_classes import prefab, attribute
 from smalltest.tools import raises
 
 
 def test_basic():
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute()
+        x = attribute()
+        y = attribute()
 
     x = Coordinate(1, 2)
 
@@ -19,8 +19,8 @@ def test_basic():
 def test_basic_kwargs():
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute()
+        x = attribute()
+        y = attribute()
 
     x = Coordinate(x=1, y=2)
 
@@ -30,8 +30,8 @@ def test_basic_kwargs():
 def test_kw_only():
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute(kw_only=True)
+        x = attribute()
+        y = attribute(kw_only=True)
 
     # Check the typeerror is raised for trying to use y as a positional argument
     with raises(TypeError):
@@ -45,8 +45,8 @@ def test_only_kw_only():
 
     @prefab
     class Coordinate:
-        x = Attribute(kw_only=True)
-        y = Attribute(kw_only=True)
+        x = attribute(kw_only=True)
+        y = attribute(kw_only=True)
 
     # Check the typeerror is raised for trying to use y as a positional argument
     with raises(TypeError):
@@ -59,8 +59,8 @@ def test_only_kw_only():
 def test_init_exclude():
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute(default=2, init=False)
+        x = attribute()
+        y = attribute(default=2, init=False)
 
     x = Coordinate(x=1)
     assert (x.x, x.y) == (1, 2)
@@ -69,8 +69,8 @@ def test_init_exclude():
 def test_basic_with_defaults():
     @prefab
     class Coordinate:
-        x = Attribute(default=0)
-        y = Attribute(default=0)
+        x = attribute(default=0)
+        y = attribute(default=0)
 
     x = Coordinate()
     assert (x.x, x.y) == (0, 0)
@@ -83,7 +83,7 @@ def test_mutable_defaults_bad():
     """Test mutable defaults behave as they would in a regular class"""
     @prefab
     class MutableDefault:
-        x = Attribute(default=list())
+        x = attribute(default=list())
 
     mut1 = MutableDefault()
     mut2 = MutableDefault()
@@ -95,7 +95,7 @@ def test_mutable_defaults_bad():
 def test_default_factory_good():
     @prefab
     class FactoryDefault:
-        x = Attribute(default_factory=list)
+        x = attribute(default_factory=list)
 
     mut1 = FactoryDefault()
     mut2 = FactoryDefault()
@@ -108,8 +108,8 @@ def test_default_factory_good():
 def test_no_default():
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute()
+        x = attribute()
+        y = attribute()
 
     with raises(TypeError) as e_info:
         x = Coordinate(1)
@@ -124,7 +124,7 @@ def test_difficult_defaults():
         """
         Global persistent settings handler
         """
-        output_file = Attribute(default=Path("Settings.json"))
+        output_file = attribute(default=Path("Settings.json"))
 
     x = Settings()
 

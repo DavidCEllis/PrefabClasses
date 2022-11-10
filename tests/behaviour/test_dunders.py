@@ -1,12 +1,12 @@
 """Test the non-init dunder methods"""
-from prefab_classes import prefab, Attribute
+from prefab_classes import prefab, attribute
 
 
 def test_repr():
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute()
+        x = attribute()
+        y = attribute()
 
     expected_repr = "Coordinate(x=1, y=2)"
 
@@ -16,8 +16,8 @@ def test_repr():
 def test_repr_exclude():
     @prefab
     class Coordinate:
-        x = Attribute(repr=False)
-        y = Attribute()
+        x = attribute(repr=False)
+        y = attribute()
 
     expected_repr = "Coordinate(y=2)"
     assert repr(Coordinate(1, 2) == expected_repr)
@@ -26,8 +26,8 @@ def test_repr_exclude():
 def test_iter():
     @prefab(iter=True)
     class Coordinate:
-        x = Attribute()
-        y = Attribute()
+        x = attribute()
+        y = attribute()
 
     x = Coordinate(1, 2)
 
@@ -38,16 +38,16 @@ def test_iter():
 def test_eq():
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute()
+        x = attribute()
+        y = attribute()
 
     @prefab
     class Coordinate3D(Coordinate):
-        z = Attribute()
+        z = attribute()
 
     @prefab
     class CoordinateTime:
-        t = Attribute()
+        t = attribute()
 
     @prefab
     class Coordinate4D(CoordinateTime, Coordinate3D):
@@ -63,16 +63,16 @@ def test_eq():
 def test_neq():
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute()
+        x = attribute()
+        y = attribute()
 
     @prefab
     class Coordinate3D(Coordinate):
-        z = Attribute()
+        z = attribute()
 
     @prefab
     class CoordinateTime:
-        t = Attribute()
+        t = attribute()
 
     @prefab
     class Coordinate4D(CoordinateTime, Coordinate3D):

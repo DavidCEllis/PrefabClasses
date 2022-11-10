@@ -1,4 +1,4 @@
-from prefab_classes import prefab, Attribute
+from prefab_classes import prefab, attribute
 
 
 def test_basic_hints():
@@ -16,7 +16,7 @@ def test_attribute_hints():
     @prefab
     class Settings:
         path: str = 'path/to/file'
-        file_list: list = Attribute(default_factory=list)
+        file_list: list = attribute(default_factory=list)
 
     x = Settings()
     assert repr(x) == "Settings(path='path/to/file', file_list=[])"
@@ -27,7 +27,7 @@ def test_hinted_ignored():
     @prefab
     class Settings:
         path: str = 'path/to/file'
-        file_list = Attribute(default_factory=list)
+        file_list = attribute(default_factory=list)
 
     x = Settings()
     assert repr(x) == "Settings(file_list=[])"

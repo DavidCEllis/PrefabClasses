@@ -1,7 +1,7 @@
 """Tests related to serialization to JSON or Pickle"""
 from pathlib import Path, PurePosixPath, PurePath
 
-from prefab_classes import prefab, Attribute
+from prefab_classes import prefab, attribute
 from prefab_classes.serializers import as_dict, to_json
 from smalltest.tools import raises
 
@@ -10,8 +10,8 @@ from smalltest.tools import raises
 def test_todict():
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute()
+        x = attribute()
+        y = attribute()
 
     x = Coordinate(1, 2)
 
@@ -23,9 +23,9 @@ def test_todict():
 def test_todict_init_only():
     @prefab
     class Coordinate3D:
-        x = Attribute()
-        y = Attribute()
-        z = Attribute(default=0, init=False)
+        x = attribute()
+        y = attribute()
+        z = attribute(default=0, init=False)
 
     x = Coordinate3D(1, 2)
 
@@ -43,8 +43,8 @@ def test_tojson():
 
     @prefab
     class SystemPath:
-        filename = Attribute()
-        path = Attribute(converter=PurePosixPath)
+        filename = attribute()
+        path = attribute(converter=PurePosixPath)
 
     pth = SystemPath('testfile', 'path/to/test')
 
@@ -65,13 +65,13 @@ def test_tojson_recurse():
 
     @prefab
     class Coordinate:
-        x = Attribute()
-        y = Attribute()
+        x = attribute()
+        y = attribute()
 
     @prefab
     class Circle:
-        radius = Attribute(default=1)
-        origin = Attribute(default=Coordinate(0, 0))
+        radius = attribute(default=1)
+        origin = attribute(default=Coordinate(0, 0))
 
     circ = Circle()
 
@@ -90,8 +90,8 @@ def test_jsonencoder_failure():
 
     @prefab
     class SystemPath:
-        filename = Attribute()
-        path = Attribute(converter=PurePosixPath)
+        filename = attribute()
+        path = attribute(converter=PurePosixPath)
 
     pth = SystemPath('testfile', 'path/to/test')
 
@@ -109,13 +109,13 @@ def test_jsonencoder_layered():
 
     @prefab
     class Onion:
-        pth = Attribute()
-        syspath = Attribute()
+        pth = attribute()
+        syspath = attribute()
 
     @prefab
     class SystemPath:
-        filename = Attribute()
-        path = Attribute(converter=PurePosixPath)
+        filename = attribute()
+        path = attribute(converter=PurePosixPath)
 
     pth = SystemPath('testfile', 'path/to/test')
     x = Onion(pth=PurePosixPath('what'), syspath=pth)
@@ -134,8 +134,8 @@ def test_jsonencoder_layered():
 @prefab
 class PicklePrefab:
     """Pickle doesn't work on local objects so we need a global PickleCoordinate"""
-    x = Attribute(default=800)
-    y = Attribute(default=Path('Settings.json'))
+    x = attribute(default=800)
+    y = attribute(default=Path('Settings.json'))
 
 
 def test_picklable():

@@ -95,8 +95,8 @@ class Attribute:
         elif isinstance(value, DefaultFactory):
             # noinspection PyCallingNonCallable
             value = self.default_factory()
-        if self.converter and (self._converter_unused or self.always_convert):
-            self._converter_unused = False
+        if self.converter and not self._converted:
+            self._converted = True
             value = self.converter(value)
         setattr(obj, self.private_name, value)
 
@@ -109,8 +109,7 @@ class Attribute:
             converter=None,
             init=True,
             repr=True,
-            kw_only=False,
-            always_convert=False
+            kw_only=False
     ):
         """
         Create an Attribute for a prefab
@@ -120,7 +119,6 @@ class Attribute:
         :param init: Include this attribute in the __init__ parameters
         :param repr: Include this attribute in the class __repr__
         :param kw_only: Make this argument keyword only in init
-        :param always_convert: Run the converter whenever the argument is set, not just in init
         """
         if not init and default is _NOTHING and default_factory is _NOTHING:
             raise PrefabError("Must provide a default value/factory if the attribute is not in init.")
@@ -133,8 +131,7 @@ class Attribute:
         self.default_factory = default_factory
 
         self.converter = converter
-        self.always_convert = always_convert
-        self._converter_unused = True
+        self._converted = False
 
         self.init = init
         self.repr = repr
@@ -168,13 +165,13 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
                     new_attributes[name] = cls_attributes[name]
                 else:
                     attribute_default = getattr(cls, name)
-                    attrib = Attribute(default=attribute_default)
+                    attrib = attribute(default=attribute_default)
                     # Set private_name because set_name is never called
                     attrib.private_name = f'_prefab_attribute_{name}'
                     setattr(cls, name, attrib)
                     new_attributes[name] = attrib
             else:
-                attrib = Attribute()
+                attrib = attribute()
                 # Set private_name because set_name is never called
                 attrib.private_name = f'_prefab_attribute_{name}'
                 setattr(cls, name, attrib)
@@ -219,6 +216,37 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     return cls
 
 
+def attribute(
+        *,
+        default=_NOTHING,
+        default_factory=_NOTHING,
+        converter=None,
+        init=True,
+        repr=True,
+        kw_only=False
+):
+    """
+    Get an Attribute instance - indirect to allow for potential changes in the future
+
+    :param default: Default value for this attribute
+    :param default_factory: No argument callable to give a default value (for otherwise mutable defaults)
+    :param converter: prefab.attr = x -> prefab.attr = converter(x)
+    :param init: Include this attribute in the __init__ parameters
+    :param repr: Include this attribute in the class __repr__
+    :param kw_only: Make this argument keyword only in init
+
+    :return: Attribute generated with these parameters.
+    """
+    return Attribute(
+        default=default,
+        default_factory=default_factory,
+        converter=converter,
+        init=init,
+        repr=repr,
+        kw_only=kw_only,
+    )
+
+
 def prefab(
         cls: type = None,
         *,
@@ -226,6 +254,9 @@ def prefab(
         repr=True,
         eq=True,
         iter=False,
+
+        compile_prefab=False,
+        compile_settings=None,
 ):
     if cls is None:
         # Called as () method to change defaults
