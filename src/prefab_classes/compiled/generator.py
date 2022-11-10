@@ -4,7 +4,10 @@ from typing import Union
 
 DECORATOR_NAME = 'prefab'
 ATTRIBUTE_CLASSNAME = 'Attribute'
-FIELDS_ATTRIBUTE = '_PREFAB_FIELDS'
+FIELDS_ATTRIBUTE = 'PREFAB_FIELDS'
+COMPILE_ARGUMENT = 'compile_prefab'
+PLAIN_CLASS = 'compile_plain'
+COMPILED_FLAG = 'COMPILED'
 
 assignment_type = Union[ast.AnnAssign, ast.Assign]
 
@@ -236,14 +239,34 @@ def generate_eq(field_names: list[str]) -> ast.FunctionDef:
 
 class TransformPrefab(ast.NodeTransformer):
     def visit_ClassDef(self, node: ast.ClassDef):
-        decorator_name = [item for item in node.decorator_list if item.id == DECORATOR_NAME]
+        # Looking for a call to DECORATOR_NAME with COMPILE_ARGUMENT == True
+        # Check for plain classes, these will have the decorator removed and no fields defined
+        prefab_decorator = None
+        plain_class = False
+        for item in node.decorator_list:
+            if isinstance(item, ast.Call) and getattr(item.func, 'id') == DECORATOR_NAME:
+                for keyword in item.keywords:
+                    if keyword.arg == COMPILE_ARGUMENT and getattr(keyword.value, 'value') is True:
+                        prefab_decorator = item
+                    if keyword.arg == PLAIN_CLASS and getattr(keyword.value, 'value') is True:
+                        plain_class = True
+            if prefab_decorator:
+                break
 
-        if decorator_name:
-            node.decorator_list.remove(decorator_name[0])
+        if prefab_decorator:
             field_names, fields = discover_fields(node)
 
-            field_assignment = generate_fields(field_names)
-            node.body.insert(0, field_assignment)
+            if plain_class:
+                node.decorator_list.remove(prefab_decorator)
+            else:
+                compiled_flag = ast.Assign(
+                    targets=[ast.Name(id=COMPILED_FLAG, ctx=ast.Store())],
+                    value=ast.Constant(value=True)
+                )
+                node.body.insert(0, compiled_flag)
+
+                field_assignment = generate_fields(field_names)
+                node.body.insert(1, field_assignment)
 
             node.body.append(generate_init(fields))
 
