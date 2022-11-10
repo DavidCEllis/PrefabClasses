@@ -81,12 +81,28 @@ def get_init_maker():
             else (name, f'DefaultFactory("{name}")')
             for name, attrib in cls._attributes.items()
         )
+
+        pre_init_call = (
+            "    try:\n"
+            "        self.__prefab_pre_init__()\n"
+            "    except AttributeError:\n"
+            "        pass\n"
+        )
+
         body = '\n'.join(
             f"    self.{name} = {value}"
             for name, value in assignments
         )
 
-        code = f"def __init__(self, {args}):\n{body}\n"
+        post_init_call = (
+            "    try:\n"
+            "        self.__prefab_post_init__()\n"
+            "    except AttributeError:\n"
+            "        pass\n"
+        )
+
+        code = f"def __init__(self, {args}):\n{pre_init_call}\n{body}\n{post_init_call}\n"
+
         return code
     return autogen(__init__)
 
