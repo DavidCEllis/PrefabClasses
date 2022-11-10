@@ -241,7 +241,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
         if attrib.default is not _NOTHING or attrib.default_factory is not _NOTHING:
             default_defined.append(name)
         else:
-            if default_defined:
+            if default_defined and not attrib.kw_only:
                 names = ', '.join(default_defined)
                 raise SyntaxError(
                     "non-default argument follows default argument",
@@ -268,6 +268,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     return cls
 
 
+# noinspection PyUnusedLocal
 @dataclass_transform(field_specifiers=(attribute, Attribute))
 def prefab(
         cls: type = None,
@@ -291,7 +292,7 @@ def prefab(
     :param iter: generate __iter__
 
     :param compile_prefab: Direct the prefab compiler to compile this class
-    :param compile_fallback: Fallback to this dynamic class if not compiled
+    :param compile_fallback: Fail with a prefab error if the class has not been compiled
     :param compile_plain: Remove any extra code from the resulting class
     :return: class with __ methods defined
     """
@@ -301,8 +302,17 @@ def prefab(
     # If the class is not compiled but has the instruction to compile, fail
     elif compile_prefab and not compile_fallback:
         raise PrefabError("Class has not been compiled! Dynamic code still executing!")
+
     # Otherwise make the 'live' version of the class
     if cls is None:
         # Called as () method to change defaults
-        return partial(_make_prefab, init=init, repr=repr, eq=eq, iter=iter)
+        return partial(
+            prefab,
+            init=init,
+            repr=repr,
+            eq=eq,
+            iter=iter,
+            compile_prefab=compile_prefab,
+            compile_fallback=compile_fallback
+        )
     return _make_prefab(cls, init=init, repr=repr, eq=eq, iter=iter)
