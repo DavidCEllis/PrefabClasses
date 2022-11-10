@@ -20,24 +20,6 @@ def test_todict():
     assert as_dict(x) == expected_dict
 
 
-def test_todict_init_only():
-    @prefab
-    class Coordinate3D:
-        x = attribute()
-        y = attribute()
-        z = attribute(default=0, init=False)
-
-    x = Coordinate3D(1, 2)
-
-    expected_dict = {'x': 1, 'y': 2, 'z': 0}
-
-    assert as_dict(x) == expected_dict
-
-    expected_dict = {'x': 1, 'y': 2}
-
-    assert as_dict(x, init_attributes_only=True) == expected_dict
-
-
 def test_tojson():
     import json
 

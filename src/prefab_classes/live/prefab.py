@@ -249,6 +249,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
                     f"non_default after default: {name}"
                 )
 
+    cls.PREFAB_FIELDS = [name for name in attributes]
     cls._attributes = attributes
     cls.__match_args__ = tuple(name for name in attributes)
 
@@ -277,8 +278,30 @@ def prefab(
         iter=False,
 
         compile_prefab=False,
-        compile_settings=None,
+        compile_fallback=False,
+        compile_plain=False,
 ):
+    """
+    Generate boilerplate code for dunder methods in a class.
+
+    :param cls: Class to convert to a prefab
+    :param init: generate __init__
+    :param repr: generate __repr__
+    :param eq: generate __eq__
+    :param iter: generate __iter__
+
+    :param compile_prefab: Direct the prefab compiler to compile this class
+    :param compile_fallback: Fallback to this dynamic class if not compiled
+    :param compile_plain: Remove any extra code from the resulting class
+    :return: class with __ methods defined
+    """
+    # Do not recompile compiled classes
+    if hasattr(cls, 'COMPILED'):
+        return cls
+    # If the class is not compiled but has the instruction to compile, fail
+    elif compile_prefab and not compile_fallback:
+        raise PrefabError("Class has not been compiled! Dynamic code still executing!")
+    # Otherwise make the 'live' version of the class
     if cls is None:
         # Called as () method to change defaults
         return partial(_make_prefab, init=init, repr=repr, eq=eq, iter=iter)
