@@ -1,21 +1,26 @@
 import ast
 
+from typing import Union
+
 DECORATOR_NAME = 'prefab'
 ATTRIBUTE_CLASSNAME = 'Attribute'
 FIELDS_ATTRIBUTE = '_PREFAB_FIELDS'
+
+assignment_type = Union[ast.AnnAssign, ast.Assign]
 
 
 class CodeGeneratorError(Exception):
     pass
 
 
-def discover_fields(class_node):
+def discover_fields(class_node: ast.ClassDef) -> tuple[list[str], list[assignment_type]]:
     def funcid_or_none(value):
         """get .func.id or return None"""
         return getattr(getattr(value, 'func', None), 'id', None)
 
-    fields = []
-    field_names = []
+    fields: list[assignment_type] = []
+    field_names: list[str] = []
+
     for item in class_node.body:
         if isinstance(item, ast.AnnAssign):
             fields.append(item)
@@ -31,7 +36,7 @@ def discover_fields(class_node):
     return field_names, fields
 
 
-def generate_fields(field_names):
+def generate_fields(field_names: list[str]) -> ast.Assign:
     # generate and assign a list of fields for the class
     # _PREFAB_FIELDS = ['x', 'y', 'z', ...]
     field_consts = [ast.Constant(value=name) for name in field_names]
@@ -40,7 +45,7 @@ def generate_fields(field_names):
     return assignment
 
 
-def generate_init(fields):
+def generate_init(fields: list[assignment_type]) -> ast.FunctionDef:
     """Build the AST for an INIT function"""
 
     posonlyargs = []  # Unused
@@ -130,7 +135,7 @@ def generate_init(fields):
     return init_func
 
 
-def generate_repr(class_name, field_names):
+def generate_repr(class_name: str, field_names: list[str]):
 
     arguments = [ast.arg(arg='self')]
     args = ast.arguments(
@@ -173,7 +178,7 @@ def generate_repr(class_name, field_names):
     return repr_func
 
 
-def generate_eq(class_name, field_names):
+def generate_eq(field_names: list[str]) -> ast.FunctionDef:
     arguments = [ast.arg(arg='self'), ast.arg(arg='other')]
 
     class_elts = []
@@ -230,7 +235,7 @@ def generate_eq(class_name, field_names):
 
 
 class TransformPrefab(ast.NodeTransformer):
-    def visit_ClassDef(self, node):
+    def visit_ClassDef(self, node: ast.ClassDef):
         decorator_name = [item for item in node.decorator_list if item.id == DECORATOR_NAME]
 
         if decorator_name:
@@ -244,7 +249,7 @@ class TransformPrefab(ast.NodeTransformer):
 
             node.body.append(generate_repr(node.name, field_names))
 
-            node.body.append(generate_eq(node.name, field_names))
+            node.body.append(generate_eq(field_names))
 
             ast.fix_missing_locations(node)
 
@@ -262,11 +267,3 @@ def generate_prefabs(source):
     TransformPrefab().visit(tree)
 
     return tree
-
-
-if __name__ == '__main__':
-    from pathlib import Path
-    src = Path.home() / 'PycharmProjects/PrefabGenerator/scratch/parse_example.py'
-
-    out = ast.unparse(generate_prefabs(src.read_text()))
-    print(out)
