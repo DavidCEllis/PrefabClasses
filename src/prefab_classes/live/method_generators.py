@@ -43,7 +43,11 @@ from .default_sentinels import _NOTHING, DefaultFactory, DefaultValue
 from .autogen import autogen
 
 
-def get_init_maker():
+PRE_INIT_FUNC = '__prefab_pre_init__'
+POST_INIT_FUNC = '__prefab_post_init__'
+
+
+def get_init_maker(*, init_name='__init__'):
     def __init__(cls):
         arglist = []
         kw_only_arglist = []
@@ -82,26 +86,22 @@ def get_init_maker():
             for name, attrib in cls._attributes.items()
         )
 
-        pre_init_call = (
-            "    try:\n"
-            "        self.__prefab_pre_init__()\n"
-            "    except AttributeError:\n"
-            "        pass\n"
-        )
+        if hasattr(cls, PRE_INIT_FUNC):
+            pre_init_call = f"    self.{PRE_INIT_FUNC}()\n"
+        else:
+            pre_init_call = ""
 
         body = '\n'.join(
             f"    self.{name} = {value}"
             for name, value in assignments
         )
 
-        post_init_call = (
-            "    try:\n"
-            "        self.__prefab_post_init__()\n"
-            "    except AttributeError:\n"
-            "        pass\n"
-        )
+        if hasattr(cls, POST_INIT_FUNC):
+            post_init_call = f"    self.{POST_INIT_FUNC}()\n"
+        else:
+            post_init_call = ""
 
-        code = f"def __init__(self, {args}):\n{pre_init_call}\n{body}\n{post_init_call}\n"
+        code = f"def {init_name}(self, {args}):\n{pre_init_call}\n{body}\n{post_init_call}\n"
 
         return code
     return autogen(__init__)
@@ -142,6 +142,7 @@ def get_iter_maker():
 
 
 init_maker = get_init_maker()
+prefab_init_maker = get_init_maker(init_name='__prefab_init__')
 repr_maker = get_repr_maker()
 eq_maker = get_eq_maker()
 iter_maker = get_iter_maker()

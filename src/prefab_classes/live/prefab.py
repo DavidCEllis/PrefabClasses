@@ -46,10 +46,12 @@ Replaces attrs.
 Based on ideas (and some code) from Cluegen by David Beazley https://github.com/dabeaz/cluegen
 """
 from functools import partial
+# noinspection PyUnresolvedReferences
+from typing import dataclass_transform
 
 from ..exceptions import PrefabError
 from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
-from .method_generators import init_maker, repr_maker, eq_maker, iter_maker
+from .method_generators import init_maker, repr_maker, eq_maker, iter_maker, prefab_init_maker
 
 prefab_register = {}
 
@@ -143,6 +145,38 @@ class Attribute:
         self.kw_only = kw_only
 
 
+def attribute(
+        *,
+        default=_NOTHING,
+        default_factory=_NOTHING,
+        converter=None,
+        init=True,
+        repr=True,
+        kw_only=False
+):
+    """
+    Get an Attribute instance - indirect to allow for potential changes in the future
+
+    :param default: Default value for this attribute
+    :param default_factory: No argument callable to give a default value (for otherwise mutable defaults)
+    :param converter: prefab.attr = x -> prefab.attr = converter(x)
+    :param init: Include this attribute in the __init__ parameters
+    :param repr: Include this attribute in the class __repr__
+    :param kw_only: Make this argument keyword only in init
+
+    :return: Attribute generated with these parameters.
+    """
+    return Attribute(
+        default=default,
+        default_factory=default_factory,
+        converter=converter,
+        init=init,
+        repr=repr,
+        kw_only=kw_only,
+    )
+
+
+@dataclass_transform(field_specifiers=(attribute, Attribute))
 def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     """
     Generate boilerplate code for dunder methods in a class.
@@ -220,6 +254,8 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
 
     if init:
         setattr(cls, '__init__', init_maker)
+    else:
+        setattr(cls, '__prefab_init__', prefab_init_maker)
     if repr:
         setattr(cls, '__repr__', repr_maker)
     if eq:
@@ -231,37 +267,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     return cls
 
 
-def attribute(
-        *,
-        default=_NOTHING,
-        default_factory=_NOTHING,
-        converter=None,
-        init=True,
-        repr=True,
-        kw_only=False
-):
-    """
-    Get an Attribute instance - indirect to allow for potential changes in the future
-
-    :param default: Default value for this attribute
-    :param default_factory: No argument callable to give a default value (for otherwise mutable defaults)
-    :param converter: prefab.attr = x -> prefab.attr = converter(x)
-    :param init: Include this attribute in the __init__ parameters
-    :param repr: Include this attribute in the class __repr__
-    :param kw_only: Make this argument keyword only in init
-
-    :return: Attribute generated with these parameters.
-    """
-    return Attribute(
-        default=default,
-        default_factory=default_factory,
-        converter=converter,
-        init=init,
-        repr=repr,
-        kw_only=kw_only,
-    )
-
-
+@dataclass_transform(field_specifiers=(attribute, Attribute))
 def prefab(
         cls: type = None,
         *,
