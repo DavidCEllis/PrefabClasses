@@ -68,9 +68,14 @@ class Attribute:
         # Make a new list for this class if it doesn't exist.
         # The class name is used to avoid sharing a list with a parent class.
         attribute_var = f'_{owner.__name__}_attributes'
-        sub_attributes = getattr(owner, attribute_var, {})
+
+        try:
+            sub_attributes = getattr(owner, attribute_var)
+        except AttributeError:
+            sub_attributes = {}
+            setattr(owner, attribute_var, sub_attributes)
+
         sub_attributes[name] = self
-        setattr(owner, attribute_var, sub_attributes)
 
         self.private_name = f'_prefab_attribute_{name}'
 
