@@ -5,10 +5,9 @@ import sys
 
 from importlib.machinery import PathFinder, SourceFileLoader
 from importlib.util import decode_source
-from .generator import generate_prefabs
 
 
-HOOK_REWRITE = '#PARSE_PREFAB'
+HOOK_REWRITE = '#COMPILE_PREFABS'
 
 
 def check_parse(module_path):
@@ -39,6 +38,9 @@ class PrefabHacker(SourceFileLoader):
         return super().__getattribute__(item)
 
     def source_to_code(self, data, path, *, _optimize=-1):
+        # Only import the generator code if it is actually going to be used
+        from .generator import generate_prefabs
+
         sys.stderr.write(f'Prefab Converted File: {path}\n')
         src = decode_source(data)
         prefab_src = generate_prefabs(src)
@@ -57,7 +59,7 @@ class PrefabFinder(PathFinder):
         return None
 
 
-def insert_prefab_finder():
+def insert_prefab_importhook():
     """
     Add the prefab import hook to sys.meta_path
     :return:
