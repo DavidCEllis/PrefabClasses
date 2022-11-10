@@ -39,7 +39,7 @@
 # greater good.
 # ----------------------------------------------------------------------
 
-from .default_sentinels import _NOTHING, DefaultFactory
+from .default_sentinels import _NOTHING, DefaultFactory, DefaultValue
 from .autogen import autogen
 
 
@@ -125,7 +125,14 @@ def get_iter_maker():
     return autogen(__iter__)
 
 
+def get_setattr_maker():
+    def __setattr__(self, name, value):
+        super(self.__class__, self).__setattr__(name, value)
+    return __setattr__
+
+
 init_maker = get_init_maker()
 repr_maker = get_repr_maker()
 eq_maker = get_eq_maker()
 iter_maker = get_iter_maker()
+setattr_maker = get_setattr_maker()

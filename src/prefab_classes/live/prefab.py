@@ -49,7 +49,7 @@ from functools import partial
 
 from ..exceptions import PrefabError
 from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
-from .method_generators import init_maker, repr_maker, eq_maker, iter_maker
+from .method_generators import init_maker, repr_maker, eq_maker, iter_maker, setattr_maker
 
 prefab_register = {}
 
@@ -144,6 +144,16 @@ class Attribute:
 
 
 def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
+    """
+    Generate boilerplate code for dunder methods in a class.
+
+    :param cls: Class to convert to a prefab
+    :param init: generate __init__
+    :param repr: generate __repr__
+    :param eq: generate __eq__
+    :param iter: generate __iter__
+    :return: class with __ methods defined
+    """
     if cls.__qualname__ in prefab_register:
         raise PrefabError(
             f"Class with name {cls.__qualname__} "
@@ -216,6 +226,8 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
         setattr(cls, '__eq__', eq_maker)
     if iter:
         setattr(cls, '__iter__', iter_maker)
+
+    setattr(cls, '__setattr__', setattr_maker)
 
     prefab_register[cls.__qualname__] = cls
     return cls
