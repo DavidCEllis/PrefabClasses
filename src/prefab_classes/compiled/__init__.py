@@ -1,1 +1,1 @@
-from .import_hook import insert_prefab_finder
+from .import_hook import insert_prefab_importhook
