@@ -1,9 +1,12 @@
 import ast
 
-from typing import Union
+from typing import Any, Union
+from collections.abc import Callable
+
+from ..live import prefab
 
 DECORATOR_NAME = 'prefab'
-ATTRIBUTE_CLASSNAME = 'Attribute'
+ATTRIBUTE_FUNCNAME = 'attribute'
 FIELDS_ATTRIBUTE = 'PREFAB_FIELDS'
 COMPILE_ARGUMENT = 'compile_prefab'
 PLAIN_CLASS = 'compile_plain'
@@ -14,6 +17,19 @@ assignment_type = Union[ast.AnnAssign, ast.Assign]
 
 class CodeGeneratorError(Exception):
     pass
+
+
+@prefab
+class Field:
+    name: str
+    default_value: Any
+    default_factory: Callable[[], Any]
+    type_: type
+    init_: bool
+    repr_: bool
+    eq_: bool
+    iter_: bool
+    attribute_call: bool
 
 
 def discover_fields(class_node: ast.ClassDef) -> tuple[list[str], list[assignment_type]]:
@@ -41,7 +57,7 @@ def discover_fields(class_node: ast.ClassDef) -> tuple[list[str], list[assignmen
 
 def generate_fields(field_names: list[str]) -> ast.Assign:
     # generate and assign a list of fields for the class
-    # _PREFAB_FIELDS = ['x', 'y', 'z', ...]
+    # PREFAB_FIELDS = ['x', 'y', 'z', ...]
     field_consts = [ast.Constant(value=name) for name in field_names]
     target = ast.Name(id=FIELDS_ATTRIBUTE, ctx=ast.Store())
     assignment = ast.Assign(targets=[target], value=ast.List(elts=field_consts, ctx=ast.Load()))
