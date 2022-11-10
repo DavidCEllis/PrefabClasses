@@ -49,7 +49,7 @@ from functools import partial
 
 from ..exceptions import PrefabError
 from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
-from .method_generators import init_maker, repr_maker, eq_maker, iter_maker, setattr_maker
+from .method_generators import init_maker, repr_maker, eq_maker, iter_maker
 
 prefab_register = {}
 
@@ -226,8 +226,6 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
         setattr(cls, '__eq__', eq_maker)
     if iter:
         setattr(cls, '__iter__', iter_maker)
-
-    setattr(cls, '__setattr__', setattr_maker)
 
     prefab_register[cls.__qualname__] = cls
     return cls
