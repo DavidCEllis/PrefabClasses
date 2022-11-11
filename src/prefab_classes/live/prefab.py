@@ -313,7 +313,7 @@ def prefab(
     if hasattr(cls, "COMPILED"):
         return cls
     # If the class is not compiled but has the instruction to compile, fail
-    elif compile_prefab and not compile_fallback:
+    elif cls and (compile_prefab and not compile_fallback):
         raise PrefabError("Class has not been compiled! Dynamic code still executing!")
 
     # Otherwise make the 'live' version of the class
