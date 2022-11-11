@@ -7,7 +7,7 @@ from importlib.machinery import PathFinder, SourceFileLoader
 from importlib.util import decode_source
 
 
-HOOK_REWRITE = "#COMPILE_PREFABS"
+HOOK_REWRITE = "# COMPILE_PREFABS"
 
 
 def check_parse(module_path):
@@ -34,16 +34,16 @@ def check_parse(module_path):
 # noinspection PyMethodOverriding,PyArgumentList
 class PrefabHacker(SourceFileLoader):
     def __getattribute__(self, item):
-        # print(item)
         return super().__getattribute__(item)
 
     def source_to_code(self, data, path, *, _optimize=-1):
         # Only import the generator code if it is actually going to be used
         from .generator import compile_prefabs
 
-        sys.stderr.write(f"Prefab Converted File: {path}\n")
+        sys.stdout.write(f"Prefab Converted File: {path}\n")
         src = decode_source(data)
         prefab_src = compile_prefabs(src)
+
         return super().source_to_code(prefab_src, path, _optimize=_optimize)
 
 
@@ -73,3 +73,7 @@ def insert_prefab_importhook():
 
     # Make PrefabFinder the first importer before other PathFinders
     sys.meta_path.insert(index, PrefabFinder)
+
+
+def remove_prefab_importhook():
+    sys.meta_path.remove(PrefabFinder)
