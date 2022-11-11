@@ -68,6 +68,7 @@ Usage for the 'compiled' form is slightly more complicated.
 
 example_compiled.py
 ```python
+# COMPILE_PREFABS
 from prefab_classes import prefab
 
 @prefab(compile_prefab=True)
@@ -77,7 +78,34 @@ class Settings:
 ```
 
 The prefab will then be compiled to a .pyc file when imported in another file
-with the import hook included.
+with the import hook included. The resulting code can be previewed using the 
+`preview` function.
+
+`preview(Path('example_compiled.py'))`
+```python
+from prefab_classes import prefab
+
+@prefab(compile_prefab=True)
+class Settings:
+    COMPILED = True
+    PREFAB_FIELDS = ["hostname", "template_folder"]
+
+    def __init__(self, hostname: str = "localhost", template_folder: str = "base/path"):
+        self.hostname = hostname
+        self.template_folder = template_folder
+
+    def __repr__(self):
+        return f"Settings(hostname={self.hostname!r}, template_folder={self.template_folder!r})"
+
+    def __eq__(self, other):
+        return (
+            (self.hostname, self.template_folder)
+            == (other.hostname, other.template_folder)
+            if self.__class__ == other.__class__
+            else NotImplemented
+        )
+```
+
 
 use_compiled.py
 ```python
