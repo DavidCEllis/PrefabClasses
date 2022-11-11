@@ -8,12 +8,7 @@ Initially wanting to remove a dependency on attrs I had seen
 [David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
 and wanted to see if something like that could work for the 
 project. With some modification I ended up with the first
-version of this. 
-
-**The 'compiled' method has not yet been implemented in this
-package but soon will be. 
-See [PrefabGenerator](https://github.com/DavidCEllis/PrefabGenerator)
-for the proof of concept.**
+version of this.
 
 This package provides 2 different methods of code generation
 depending on the use case and speed requirements.
@@ -30,9 +25,12 @@ is no overhead once the .pyc has been generated as the result
 is a plain python class in the .pyc. The trade-off is that this
 method has some additional restrictions so is slightly less
 flexible. Most notably inheritance does not work across .py files
-as each file is compiled in isolation.
+as each file is compiled in isolation. This method can also not
+be used interactively.
 
-Usage is pretty much what you would expect:
+## Usage Examples ##
+
+Usage for the 'live' form is pretty much what you would expect:
 
 ```python
 from prefab_classes import attribute, prefab
@@ -64,4 +62,28 @@ class Settings:
 >>> settings = Settings(hostname='127.0.0.1')
 >>> settings.template_folder
 PureWindowsPath('base/path')
+```
+
+Usage for the 'compiled' form is slightly more complicated.
+
+example_compiled.py
+```python
+from prefab_classes import prefab
+
+@prefab(compile_prefab=True)
+class Settings:
+    hostname: str = "localhost"
+    template_folder: str = 'base/path'
+```
+
+The prefab will then be compiled to a .pyc file when imported in another file
+with the import hook included.
+
+use_compiled.py
+```python
+from prefab_classes import insert_prefab_importhook
+insert_prefab_importhook()
+
+from example_compiled import Settings
+...
 ```
