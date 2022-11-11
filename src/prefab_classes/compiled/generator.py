@@ -1,7 +1,6 @@
 import ast
 
 from typing import Any, Union
-from collections.abc import Callable
 
 from ..live import prefab
 
@@ -19,38 +18,125 @@ class CodeGeneratorError(Exception):
     pass
 
 
+# noinspection PyArgumentList
+@prefab
+class PrefabDetails:
+    name: str
+    node: ast.ClassDef
+    fields: dict[str, "Field"]
+    decorator: Any
+    init_: bool = True
+    repr_: bool = True
+    eq_: bool = True
+    iter_: bool = False
+    plain_class: bool = False
+    parents: Any = None
+
+
+# noinspection PyArgumentList
 @prefab
 class Field:
     name: str
-    default_value: Any
-    default_factory: Callable[[], Any]
-    type_: type
-    init_: bool
-    repr_: bool
-    eq_: bool
-    iter_: bool
-    attribute_call: bool
+    field: Any
+    default: Any = None
+    default_factory: Any = None
+    converter: Any = None
+    init_: bool = True
+    repr_: bool = True
+    kw_only: bool = False
+    annotation: Any = None
+    attribute_func: bool = False
+
+    @property
+    def default_factory_call(self):
+        return ast.Call(func=self.default_factory, args=[], keywords=[])
+
+    def converter_call(self, arg):
+        return ast.Call(func=self.converter, args=[arg], keywords=[])
+
+    @classmethod
+    def from_keywords(cls, name, field, keywords, annotation=None):
+        keys = {k.arg: k.value for k in keywords}
+        default = keys.get("default", None)
+        default_factory = keys.get("default_factory", None)
+        converter = keys.get("converter", None)
+        try:
+            init_ = keys['init'].value
+        except KeyError:
+            init_ = True
+        try:
+            repr_ = keys['repr'].value
+        except KeyError:
+            repr_ = True
+        try:
+            kw_only = keys['kw_only'].value
+        except KeyError:
+            kw_only = False
+
+        if default and default_factory:
+            raise CodeGeneratorError("Cannot define both default and default_factory")
+
+        return cls(
+            name=name,
+            field=field,
+            default=default,
+            default_factory=default_factory,
+            converter=converter,
+            init_=init_,
+            repr_=repr_,
+            kw_only=kw_only,
+            annotation=annotation,
+            attribute_func=True
+        )
 
 
-def discover_fields(class_node: ast.ClassDef) -> tuple[list[str], list[assignment_type]]:
+def discover_fields(class_node: ast.ClassDef) -> tuple[list[str], list[Field]]:
     def funcid_or_none(value):
         """get .func.id or return None"""
         return getattr(getattr(value, 'func', None), 'id', None)
 
-    fields: list[assignment_type] = []
-    field_names: list[str] = []
+    fields: list[Field] = []
+
+    # If there are any plain assignments, annotated assignments that
+    # do not use attribute() calls must be remove to match 'live'
+    # behaviour.
+    require_attribute_func = False
 
     for item in class_node.body:
         if isinstance(item, ast.AnnAssign):
-            fields.append(item)
-            field_names.append(getattr(item.target, 'id'))
-        elif isinstance(item, ast.Assign) and funcid_or_none(item.value):
-            fields.append(item)
-            field_names.append(getattr(item.targets[0], 'id'))
+            field_name = getattr(item.target, 'id')
+            # Case that the value is an attribute() call
+            if funcid_or_none(item.value) == ATTRIBUTE_FUNCNAME:
+                field = Field.from_keywords(
+                    name=field_name,
+                    field=item,
+                    keywords=item.value.keywords,
+                    annotation=item.annotation,
+                )
+            else:
+                field = Field(name=field_name, field=item, default=item.value, annotation=item.annotation)
+            fields.append(field)
+        elif (isinstance(item, ast.Assign)
+              and len(item.targets) == 1
+              and isinstance(item.value, ast.Call)):
+            field_name = getattr(item.targets[0], 'id')
+            field = Field.from_keywords(
+                name=field_name,
+                field=item,
+                keywords=item.value.keywords
+            )
+            fields.append(field)
+            require_attribute_func = True
+
+    # Clear fields that are generated just by annotations
+    if require_attribute_func:
+        fields = [field for field in fields if field.attribute_func]
 
     # Clear the fields from he class_node body
     for item in fields:
-        class_node.body.remove(item)
+        class_node.body.remove(item.field)
+
+    field_names = [field.name for field in fields]
 
     return field_names, fields
 
@@ -64,13 +150,13 @@ def generate_fields(field_names: list[str]) -> ast.Assign:
     return assignment
 
 
-def generate_init(fields: list[assignment_type]) -> ast.FunctionDef:
+def generate_init(fields: list[Field]) -> ast.FunctionDef:
     """Build the AST for an INIT function"""
 
     posonlyargs = []  # Unused
     args = []
-    kwonlyargs = []  # Unused
-    kw_defaults = []  # Unused
+    kwonlyargs = []
+    kw_defaults = []
     defaults = []
 
     body = []
@@ -81,57 +167,71 @@ def generate_init(fields: list[assignment_type]) -> ast.FunctionDef:
     args.append(ast.arg(arg='self'))
 
     for field in fields:
-        # Define the init signature
-        target = field.target if hasattr(field, 'target') else field.targets[0]
-        assignment_value = ast.Name(id=target.id, ctx=ast.Load())
-        if field.value:
-            # Declare that there's a parameter with default value
-            # in order to fail if there's one declared afterwards
-            # This might not be necessary if it will fail later?
-            has_default = True
+        # Skip if init_ is false
+        if field.init_ is False:
+            continue
 
+        # Define the init signature
+        assignment_value = ast.Name(id=field.name, ctx=ast.Load())
+        if field.default or field.default_factory:
             # Include the annotation if this is an annotated value
             if hasattr(field, 'annotation'):
-                arg = ast.arg(arg=target.id, annotation=field.annotation)
+                arg = ast.arg(arg=field.name, annotation=field.annotation)
             else:
-                arg = ast.arg(arg=target.id)
+                arg = ast.arg(arg=field.name)
 
-            # For the body, defaults which are constant can be used
-            # directly, potentially mutable defaults are instead
-            # defined inside the body of the __init__ function,
-            # guarded by an if expression
-            if isinstance(field.value, ast.Constant):
-                defaults.append(field.value)
+            # For regular defaults, assign in the signature as expected
+            if field.default:
+                if field.kw_only:
+                    kw_defaults.append(field.default)
+                else:
+                    defaults.append(field.default)
+            # For factories, call the function in the body if the value is None
             else:
-                defaults.append(ast.Constant(value=None))
+                if field.kw_only:
+                    kw_defaults.append(ast.Constant(value=None))
+                else:
+                    defaults.append(ast.Constant(value=None))
+
                 assignment_value = ast.IfExp(
                     test=ast.Compare(
-                        left=ast.Name(id=target.id, ctx=ast.Load()),
+                        left=ast.Name(id=field.name, ctx=ast.Load()),
                         ops=[ast.IsNot()],
                         comparators=[ast.Constant(value=None)]
                     ),
-                    body=ast.Name(id=target.id, ctx=ast.Load()),
-                    orelse=field.value
+                    body=ast.Name(id=field.name, ctx=ast.Load()),
+                    orelse=field.default_factory_call
                 )
-            args.append(arg)
+            if field.kw_only:
+                kwonlyargs.append(arg)
+            else:
+                # Declare that there's a parameter with default value
+                # in order to fail if there's one declared afterwards
+                has_default = True
+                args.append(arg)
 
         # Simpler code for values with no defaults
         else:
-            if has_default:
+            if has_default and not field.kw_only:
                 raise CodeGeneratorError(
                     "Field without default defined after field with default."
                 )
             if field.annotation:
-                arg = ast.arg(arg=target.id, annotation=field.annotation)
+                arg = ast.arg(arg=field.name, annotation=field.annotation)
             else:
-                arg = ast.arg(arg=target.id)
-            args.append(arg)
+                arg = ast.arg(arg=field.name)
+
+            if field.kw_only:
+                kw_defaults.append(None)
+                kwonlyargs.append(arg)
+            else:
+                args.append(arg)
 
         # Define the body
         body.append(
             ast.Assign(
-                targets=[ast.Attribute(value=self_target, attr=target.id, ctx=ast.Store())],
-                value=assignment_value
+                targets=[ast.Attribute(value=self_target, attr=field.name, ctx=ast.Store())],
+                value=field.converter_call(assignment_value) if field.converter else assignment_value
             )
         )
 
@@ -254,6 +354,10 @@ def generate_eq(field_names: list[str]) -> ast.FunctionDef:
 
 
 class TransformPrefab(ast.NodeTransformer):
+    def __init__(self):
+        super().__init__()
+        self.prefabs = {}
+
     def visit_ClassDef(self, node: ast.ClassDef):
         # Looking for a call to DECORATOR_NAME with COMPILE_ARGUMENT == True
         # Check for plain classes, these will have the decorator removed and no fields defined
@@ -295,7 +399,7 @@ class TransformPrefab(ast.NodeTransformer):
         return node
 
 
-def generate_prefabs(source):
+def generate_prefabs(source: str) -> ast.Module:
     """
     Generate the AST tree with the modified code for prefab classes
 
@@ -303,6 +407,7 @@ def generate_prefabs(source):
     :return:
     """
     tree = ast.parse(source)
-    TransformPrefab().visit(tree)
+    tranformer = TransformPrefab()
+    tranformer.visit(tree)
 
     return tree
