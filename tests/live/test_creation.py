@@ -10,11 +10,14 @@ def test_kw_not_in_init():
         class Construct:
             x = attribute(default="test", kw_only=True, init=False)
 
-    assert e_info.value.args[0] == "Attribute cannot be keyword only if it is not in init."
+    assert (
+        e_info.value.args[0] == "Attribute cannot be keyword only if it is not in init."
+    )
 
 
 def test_positional_after_kw_error():
     with raises(SyntaxError) as e_info:
+
         @prefab
         class FailSyntax:
             x = attribute(default=0)
@@ -23,6 +26,7 @@ def test_positional_after_kw_error():
     assert e_info.value.args[0] == "non-default argument follows default argument"
 
     with raises(SyntaxError) as e_info:
+
         @prefab
         class FailFactorySyntax:
             x = attribute(default_factory=list)
@@ -38,21 +42,29 @@ def test_no_default_no_init_error():
         class Construct:
             x = attribute(init=False)
 
-    assert e_info.value.args[0] == "Must provide a default value/factory if the attribute is not in init."
+    assert (
+        e_info.value.args[0]
+        == "Must provide a default value/factory if the attribute is not in init."
+    )
 
 
 def test_default_value_and_factory_error():
     """Error if defining both a value and a factory"""
     with raises(PrefabError) as e_info:
+
         @prefab
         class Construct:
             x = attribute(default=12, default_factory=list)
 
-    assert e_info.value.args[0] == "Cannot define both a default value and a default factory."
+    assert (
+        e_info.value.args[0]
+        == "Cannot define both a default value and a default factory."
+    )
 
 
 def test_no_attributes_error():
     with raises(PrefabError) as e_info:
+
         @prefab
         class Empty:
             pass
@@ -66,8 +78,12 @@ def test_created_twice():
         x = attribute()
 
     with raises(PrefabError) as e_info:
+
         @prefab
         class DejaVu:
             x = attribute()
 
-    assert e_info.value.args[0] == "Class with name test_created_twice.<locals>.DejaVu already registered as a prefab."
+    assert (
+        e_info.value.args[0]
+        == "Class with name test_created_twice.<locals>.DejaVu already registered as a prefab."
+    )

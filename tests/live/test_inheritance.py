@@ -3,7 +3,6 @@ from prefab_classes import prefab, attribute
 
 
 def test_basic_inheritance():
-
     @prefab
     class Coordinate:
         x = attribute()
@@ -19,7 +18,6 @@ def test_basic_inheritance():
 
 
 def test_multiple_inheritance():
-
     @prefab
     class Coordinate:
         x = attribute()

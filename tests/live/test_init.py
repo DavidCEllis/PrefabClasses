@@ -42,7 +42,6 @@ def test_kw_only():
 
 
 def test_only_kw_only():
-
     @prefab
     class Coordinate:
         x = attribute(kw_only=True)
@@ -81,6 +80,7 @@ def test_basic_with_defaults():
 
 def test_mutable_defaults_bad():
     """Test mutable defaults behave as they would in a regular class"""
+
     @prefab
     class MutableDefault:
         x = attribute(default=list())
@@ -124,6 +124,7 @@ def test_difficult_defaults():
         """
         Global persistent settings handler
         """
+
         output_file = attribute(default=Path("Settings.json"))
 
     x = Settings()

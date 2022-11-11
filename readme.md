@@ -35,18 +35,18 @@ as each file is compiled in isolation.
 Usage is pretty much what you would expect:
 
 ```python
-from prefab_classes import Attribute, prefab
+from prefab_classes import attribute, prefab
    
 
 @prefab
 class Coordinate:
-    x = Attribute()
-    y = Attribute()
+    x: float
+    y: float
 
 
 @prefab
 class Coordinate3D(Coordinate):
-    z = Attribute(default=0)
+    z: float = 0.0
 
 >>> point = Coordinate3D(1, 2)
 Coordinate3D(x=1, y=2, z=0)
@@ -57,8 +57,8 @@ from pathlib import PurePath
 
 @prefab
 class Settings:
-    hostname = Attribute(default="localhost")
-    template_folder = Attribute(default='base/path', converter=PurePath)
+    hostname = attribute(default="localhost")
+    template_folder = attribute(default='base/path', converter=PurePath)
 
 
 >>> settings = Settings(hostname='127.0.0.1')
