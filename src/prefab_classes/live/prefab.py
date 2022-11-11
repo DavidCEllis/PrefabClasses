@@ -299,7 +299,7 @@ def prefab(
     Generate boilerplate code for dunder methods in a class.
 
     :param cls: Class to convert to a prefab
-    :param init: generate __init__
+    :param init: generates __init__ if true or __prefab_init__ if false
     :param repr: generate __repr__
     :param eq: generate __eq__
     :param iter: generate __iter__
