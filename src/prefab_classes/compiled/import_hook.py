@@ -7,7 +7,7 @@ from importlib.machinery import PathFinder, SourceFileLoader
 from importlib.util import decode_source
 
 
-HOOK_REWRITE = '#COMPILE_PREFABS'
+HOOK_REWRITE = "#COMPILE_PREFABS"
 
 
 def check_parse(module_path):
@@ -19,9 +19,9 @@ def check_parse(module_path):
     """
     parse_module = False
     try:
-        with open(module_path, 'r') as f:
+        with open(module_path, "r") as f:
             for line in f:
-                if line[0] != '#':
+                if line[0] != "#":
                     break
                 elif line.strip() == HOOK_REWRITE:
                     parse_module = True
@@ -41,7 +41,7 @@ class PrefabHacker(SourceFileLoader):
         # Only import the generator code if it is actually going to be used
         from .generator import compile_prefabs
 
-        sys.stderr.write(f'Prefab Converted File: {path}\n')
+        sys.stderr.write(f"Prefab Converted File: {path}\n")
         src = decode_source(data)
         prefab_src = compile_prefabs(src)
         return super().source_to_code(prefab_src, path, _optimize=_optimize)
@@ -51,7 +51,7 @@ class PrefabFinder(PathFinder):
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
         spec = PathFinder.find_spec(fullname, path, target)
-        origin = getattr(spec, 'origin', None)
+        origin = getattr(spec, "origin", None)
         if origin and check_parse(origin):
             new_loader = PrefabHacker(spec.loader.name, spec.loader.path)
             spec.loader = new_loader

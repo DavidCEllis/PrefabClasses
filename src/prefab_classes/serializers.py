@@ -41,7 +41,10 @@ def to_json(inst, *, excludes=None, indent=2, default=None, **kwargs):
             return as_dict(o)
         elif default is not None:
             return default(o)
-        raise TypeError(f"Object of type {o.__class__.__name__} is not JSON Serializable")
+        raise TypeError(
+            f"Object of type {o.__class__.__name__} is not JSON Serializable"
+        )
 
     import json  # Only import JSON if needed
+
     return json.dumps(out_dict, indent=indent, default=default_func, **kwargs)

@@ -3,11 +3,11 @@ from typing import Any, Union
 
 from ..live import prefab, attribute
 
-DECORATOR_NAME = 'prefab'
-ATTRIBUTE_FUNCNAME = 'attribute'
-FIELDS_ATTRIBUTE = 'PREFAB_FIELDS'
-COMPILE_ARGUMENT = 'compile_prefab'
-COMPILED_FLAG = 'COMPILED'
+DECORATOR_NAME = "prefab"
+ATTRIBUTE_FUNCNAME = "attribute"
+FIELDS_ATTRIBUTE = "PREFAB_FIELDS"
+COMPILE_ARGUMENT = "compile_prefab"
+COMPILED_FLAG = "COMPILED"
 
 assignment_type = Union[ast.AnnAssign, ast.Assign]
 
@@ -44,15 +44,15 @@ class Field:
         default_factory = keys.get("default_factory", None)
         converter = keys.get("converter", None)
         try:
-            init_ = keys['init'].value
+            init_ = keys["init"].value
         except KeyError:
             init_ = True
         try:
-            repr_ = keys['repr'].value
+            repr_ = keys["repr"].value
         except KeyError:
             repr_ = True
         try:
-            kw_only = keys['kw_only'].value
+            kw_only = keys["kw_only"].value
         except KeyError:
             kw_only = False
 
@@ -69,7 +69,7 @@ class Field:
             repr_=repr_,
             kw_only=kw_only,
             annotation=annotation,
-            attribute_func=True
+            attribute_func=True,
         )
 
 
@@ -107,7 +107,7 @@ class PrefabDetails:
     def discover_fields(self):
         def funcid_or_none(value):
             """get .func.id or return None"""
-            return getattr(getattr(value, 'func', None), 'id', None)
+            return getattr(getattr(value, "func", None), "id", None)
 
         fields: list["Field"] = []
 
@@ -118,7 +118,7 @@ class PrefabDetails:
 
         for item in self.node.body:
             if isinstance(item, ast.AnnAssign):
-                field_name = getattr(item.target, 'id')
+                field_name = getattr(item.target, "id")
                 # Case that the value is an attribute() call
                 if funcid_or_none(item.value) == ATTRIBUTE_FUNCNAME:
                     field = Field.from_keywords(
@@ -128,16 +128,21 @@ class PrefabDetails:
                         annotation=item.annotation,
                     )
                 else:
-                    field = Field(name=field_name, field=item, default=item.value, annotation=item.annotation)
+                    field = Field(
+                        name=field_name,
+                        field=item,
+                        default=item.value,
+                        annotation=item.annotation,
+                    )
                 fields.append(field)
-            elif (isinstance(item, ast.Assign)
-                  and len(item.targets) == 1
-                  and isinstance(item.value, ast.Call)):
-                field_name = getattr(item.targets[0], 'id')
+            elif (
+                isinstance(item, ast.Assign)
+                and len(item.targets) == 1
+                and isinstance(item.value, ast.Call)
+            ):
+                field_name = getattr(item.targets[0], "id")
                 field = Field.from_keywords(
-                    name=field_name,
-                    field=item,
-                    keywords=item.value.keywords
+                    name=field_name, field=item, keywords=item.value.keywords
                 )
                 fields.append(field)
                 require_attribute_func = True
@@ -160,13 +165,15 @@ class PrefabDetails:
         else:
             compiled_flag = ast.Assign(
                 targets=[ast.Name(id=COMPILED_FLAG, ctx=ast.Store())],
-                value=ast.Constant(value=True)
+                value=ast.Constant(value=True),
             )
             self.node.body.insert(0, compiled_flag)
 
             field_consts = [ast.Constant(value=name) for name in self.field_names]
             target = ast.Name(id=FIELDS_ATTRIBUTE, ctx=ast.Store())
-            assignment = ast.Assign(targets=[target], value=ast.List(elts=field_consts, ctx=ast.Load()))
+            assignment = ast.Assign(
+                targets=[target], value=ast.List(elts=field_consts, ctx=ast.Load())
+            )
 
             self.node.body.insert(1, assignment)
 
@@ -176,7 +183,7 @@ class PrefabDetails:
         if self._generated_init:
             return
 
-        funcname = '__init__' if self.init else '__prefab_init__'
+        funcname = "__init__" if self.init else "__prefab_init__"
 
         posonlyargs = []  # Unused
         args = []
@@ -188,8 +195,8 @@ class PrefabDetails:
 
         has_default = False
 
-        self_target = ast.Name(id='self', ctx=ast.Load())
-        args.append(ast.arg(arg='self'))
+        self_target = ast.Name(id="self", ctx=ast.Load())
+        args.append(ast.arg(arg="self"))
 
         for field in self.field_list:
             # Skip if init_ is false
@@ -200,7 +207,7 @@ class PrefabDetails:
             assignment_value = ast.Name(id=field.name, ctx=ast.Load())
             if field.default or field.default_factory:
                 # Include the annotation if this is an annotated value
-                if hasattr(field, 'annotation'):
+                if hasattr(field, "annotation"):
                     arg = ast.arg(arg=field.name, annotation=field.annotation)
                 else:
                     arg = ast.arg(arg=field.name)
@@ -222,10 +229,10 @@ class PrefabDetails:
                         test=ast.Compare(
                             left=ast.Name(id=field.name, ctx=ast.Load()),
                             ops=[ast.IsNot()],
-                            comparators=[ast.Constant(value=None)]
+                            comparators=[ast.Constant(value=None)],
                         ),
                         body=ast.Name(id=field.name, ctx=ast.Load()),
-                        orelse=field.default_factory_call
+                        orelse=field.default_factory_call,
                     )
                 if field.kw_only:
                     kwonlyargs.append(arg)
@@ -255,8 +262,14 @@ class PrefabDetails:
             # Define the body
             body.append(
                 ast.Assign(
-                    targets=[ast.Attribute(value=self_target, attr=field.name, ctx=ast.Store())],
-                    value=field.converter_call(assignment_value) if field.converter else assignment_value
+                    targets=[
+                        ast.Attribute(
+                            value=self_target, attr=field.name, ctx=ast.Store()
+                        )
+                    ],
+                    value=field.converter_call(assignment_value)
+                    if field.converter
+                    else assignment_value,
                 )
             )
 
@@ -265,15 +278,11 @@ class PrefabDetails:
             args=args,
             kwonlyargs=kwonlyargs,
             kw_defaults=kw_defaults,
-            defaults=defaults
+            defaults=defaults,
         )
 
         init_func = ast.FunctionDef(
-            name=funcname,
-            args=arguments,
-            body=body,
-            decorator_list=[],
-            returns=None
+            name=funcname, args=arguments, body=body, decorator_list=[], returns=None
         )
 
         self.node.body.append(init_func)
@@ -283,29 +292,21 @@ class PrefabDetails:
         if self._generated_repr or not self.repr:
             return
 
-        arguments = [ast.arg(arg='self')]
+        arguments = [ast.arg(arg="self")]
         args = ast.arguments(
-            posonlyargs=[],
-            args=arguments,
-            kwonlyargs=[],
-            kw_defaults=[],
-            defaults=[]
+            posonlyargs=[], args=arguments, kwonlyargs=[], kw_defaults=[], defaults=[]
         )
 
-        self_name = ast.Name(id='self', ctx=ast.Load())
+        self_name = ast.Name(id="self", ctx=ast.Load())
 
         field_strings = [ast.Constant(value=f"{self.name}(")]
         for i, name in enumerate(self.field_names):
             if i > 0:
-                field_strings.append(ast.Constant(value=', '))
+                field_strings.append(ast.Constant(value=", "))
             target = ast.Constant(value=f"{name}=")
             value = ast.FormattedValue(
-                value=ast.Attribute(
-                    value=self_name,
-                    attr=f'{name}',
-                    ctx=ast.Load()
-                ),
-                conversion=114  # REPR formatting
+                value=ast.Attribute(value=self_name, attr=f"{name}", ctx=ast.Load()),
+                conversion=114,  # REPR formatting
             )
             field_strings.extend([target, value])
 
@@ -315,11 +316,7 @@ class PrefabDetails:
         body = [ast.Return(value=repr_string)]
 
         repr_func = ast.FunctionDef(
-            name='__repr__',
-            args=args,
-            body=body,
-            decorator_list=[],
-            returns=None
+            name="__repr__", args=args, body=body, decorator_list=[], returns=None
         )
 
         self.node.body.append(repr_func)
@@ -329,18 +326,18 @@ class PrefabDetails:
         if self._generated_eq or not self.eq:
             return
 
-        arguments = [ast.arg(arg='self'), ast.arg(arg='other')]
+        arguments = [ast.arg(arg="self"), ast.arg(arg="other")]
 
         class_elts = []
         other_elts = []
 
         for name in self.field_names:
-            for obj_name, elt_list in [('self', class_elts), ('other', other_elts)]:
+            for obj_name, elt_list in [("self", class_elts), ("other", other_elts)]:
                 elt_list.append(
                     ast.Attribute(
                         value=ast.Name(id=obj_name, ctx=ast.Load()),
                         attr=name,
-                        ctx=ast.Load()
+                        ctx=ast.Load(),
                     )
                 )
 
@@ -348,38 +345,34 @@ class PrefabDetails:
         other_tuple = ast.Tuple(elts=other_elts, ctx=ast.Load())
 
         # (self.x, self.y, ...) == (other.x, other.y, ...)
-        eq_comparison = ast.Compare(left=class_tuple, ops=[ast.Eq()], comparators=[other_tuple])
+        eq_comparison = ast.Compare(
+            left=class_tuple, ops=[ast.Eq()], comparators=[other_tuple]
+        )
 
         # (self.x, ...) == (other.x, ...) if self.__class__ == other.__class__ else NotImplemented
-        left_ifexp = ast.Attribute(value=ast.Name(id='self', ctx=ast.Load()), attr='__class__', ctx=ast.Load())
-        right_ifexp = ast.Attribute(value=ast.Name(id='other', ctx=ast.Load()), attr='__class__', ctx=ast.Load())
+        left_ifexp = ast.Attribute(
+            value=ast.Name(id="self", ctx=ast.Load()), attr="__class__", ctx=ast.Load()
+        )
+        right_ifexp = ast.Attribute(
+            value=ast.Name(id="other", ctx=ast.Load()), attr="__class__", ctx=ast.Load()
+        )
 
         class_expr = ast.IfExp(
             test=ast.Compare(
-                left=left_ifexp,
-                ops=[ast.Eq()],
-                comparators=[right_ifexp]
+                left=left_ifexp, ops=[ast.Eq()], comparators=[right_ifexp]
             ),
             body=eq_comparison,
-            orelse=ast.Name(id='NotImplemented', ctx=ast.Load())
+            orelse=ast.Name(id="NotImplemented", ctx=ast.Load()),
         )
 
         args = ast.arguments(
-            posonlyargs=[],
-            args=arguments,
-            kwonlyargs=[],
-            kw_defaults=[],
-            defaults=[]
+            posonlyargs=[], args=arguments, kwonlyargs=[], kw_defaults=[], defaults=[]
         )
 
         body = [ast.Return(value=class_expr)]
 
         eq_func = ast.FunctionDef(
-            name='__eq__',
-            args=args,
-            body=body,
-            decorator_list=[],
-            returns=None
+            name="__eq__", args=args, body=body, decorator_list=[], returns=None
         )
         self.node.body.append(eq_func)
         self._generated_eq = True
@@ -403,9 +396,15 @@ class GatherPrefabs(ast.NodeVisitor):
         # Check for plain classes, these will have the decorator removed and no fields defined
         prefab_decorator = None
         for item in node.decorator_list:
-            if isinstance(item, ast.Call) and getattr(item.func, 'id') == DECORATOR_NAME:
+            if (
+                isinstance(item, ast.Call)
+                and getattr(item.func, "id") == DECORATOR_NAME
+            ):
                 for keyword in item.keywords:
-                    if keyword.arg == COMPILE_ARGUMENT and getattr(keyword.value, 'value') is True:
+                    if (
+                        keyword.arg == COMPILE_ARGUMENT
+                        and getattr(keyword.value, "value") is True
+                    ):
                         prefab_decorator = item
                         break
             if prefab_decorator:
@@ -413,14 +412,10 @@ class GatherPrefabs(ast.NodeVisitor):
 
         if prefab_decorator:
             keywords = {
-                kw.arg: getattr(kw.value, 'value')
-                for kw in prefab_decorator.keywords
+                kw.arg: getattr(kw.value, "value") for kw in prefab_decorator.keywords
             }
             prefab_details = PrefabDetails(
-                name=node.name,
-                node=node,
-                decorator=prefab_decorator,
-                **keywords
+                name=node.name, node=node, decorator=prefab_decorator, **keywords
             )
 
             self.prefabs[prefab_details.name] = prefab_details
