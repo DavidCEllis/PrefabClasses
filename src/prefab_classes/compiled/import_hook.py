@@ -39,11 +39,11 @@ class PrefabHacker(SourceFileLoader):
 
     def source_to_code(self, data, path, *, _optimize=-1):
         # Only import the generator code if it is actually going to be used
-        from .generator import generate_prefabs
+        from .generator import compile_prefabs
 
         sys.stderr.write(f'Prefab Converted File: {path}\n')
         src = decode_source(data)
-        prefab_src = generate_prefabs(src)
+        prefab_src = compile_prefabs(src)
         return super().source_to_code(prefab_src, path, _optimize=_optimize)
 
 
