@@ -3,7 +3,7 @@ from pathlib import Path, PurePosixPath, PurePath
 
 from prefab_classes import prefab, attribute
 from prefab_classes.serializers import as_dict, to_json
-from smalltest.tools import raises
+from pytest import raises
 
 
 # Serialization tests

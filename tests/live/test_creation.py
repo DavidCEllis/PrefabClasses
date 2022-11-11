@@ -1,6 +1,6 @@
 """Tests for errors raised on class creation"""
 from prefab_classes import prefab, attribute, PrefabError
-from smalltest.tools import raises
+from pytest import raises
 
 
 def test_kw_not_in_init():

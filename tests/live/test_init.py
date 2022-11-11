@@ -2,7 +2,7 @@
 from pathlib import Path
 
 from prefab_classes import prefab, attribute
-from smalltest.tools import raises
+from pytest import raises
 
 
 def test_basic():
