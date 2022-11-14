@@ -1,2 +1,2 @@
-from .import_hook import insert_prefab_importhook, remove_prefab_importhook
+from .import_hook import prefab_compiler
 from .preview_source import preview

@@ -81,6 +81,7 @@ The prefab will then be compiled to a .pyc file when imported in another file
 with the import hook included. The resulting code can be previewed using the 
 `preview` function.
 
+`from prefab_classes.compiled import preview`
 `preview(Path('example_compiled.py'))`
 ```python
 from prefab_classes import prefab
@@ -106,12 +107,15 @@ class Settings:
         )
 ```
 
+In order to convert the class on the generation of the .pyc the imports must be done
+with the prefab compiler import hook in place. This is done using the prefab_compiler
+context manager before imports.
 
 use_compiled.py
 ```python
-from prefab_classes import insert_prefab_importhook
-insert_prefab_importhook()
+from prefab_classes import prefab_compiler
 
-from example_compiled import Settings
+with prefab_compiler():
+    from example_compiled import Settings
 ...
 ```

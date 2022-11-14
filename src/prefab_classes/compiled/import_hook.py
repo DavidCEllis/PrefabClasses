@@ -2,6 +2,7 @@
 Hook into the import mechanism and sneakily translate our modules before python gets there
 """
 import sys
+import contextlib
 
 from importlib.machinery import PathFinder, SourceFileLoader
 from importlib.util import decode_source
@@ -40,11 +41,13 @@ class PrefabHacker(SourceFileLoader):
         # Only import the generator code if it is actually going to be used
         from .generator import compile_prefabs
 
-        sys.stdout.write(f"Prefab Converted File: {path}\n")
         src = decode_source(data)
         prefab_src = compile_prefabs(src)
 
-        return super().source_to_code(prefab_src, path, _optimize=_optimize)
+        code = super().source_to_code(prefab_src, path, _optimize=_optimize)
+        # sys.stdout.write(f"Prefab Converted File: {path}\n")
+
+        return code
 
 
 class PrefabFinder(PathFinder):
@@ -64,6 +67,10 @@ def insert_prefab_importhook():
     Add the prefab import hook to sys.meta_path
     :return:
     """
+    # Don't insert the prefab finder if it is already in the list
+    if PrefabFinder in sys.meta_path:
+        return
+
     index = 0
     for i, finder in enumerate(sys.meta_path):
         finder = finder if type(finder) is type else type(finder)
@@ -76,4 +83,16 @@ def insert_prefab_importhook():
 
 
 def remove_prefab_importhook():
-    sys.meta_path.remove(PrefabFinder)
+    try:
+        sys.meta_path.remove(PrefabFinder)
+    except ValueError:  # PrefabFinder not in the list
+        pass
+
+
+@contextlib.contextmanager
+def prefab_compiler():
+    insert_prefab_importhook()
+    try:
+        yield
+    finally:
+        remove_prefab_importhook()

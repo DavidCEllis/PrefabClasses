@@ -314,7 +314,7 @@ def prefab(
         return cls
     # If the class is not compiled but has the instruction to compile, fail
     elif cls and (compile_prefab and not compile_fallback):
-        raise PrefabError("Class has not been compiled! Dynamic code still executing!")
+        raise PrefabError(f"Class {cls.__name__} has not been compiled! Dynamic code still executing!")
 
     # Otherwise make the 'live' version of the class
     if cls is None:
