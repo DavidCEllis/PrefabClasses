@@ -1,4 +1,4 @@
-from .live.prefab import prefab_register
+from .register import prefab_register
 
 
 def as_dict(inst, *, excludes=None):

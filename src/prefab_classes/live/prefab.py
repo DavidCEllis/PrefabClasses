@@ -51,6 +51,7 @@ from functools import partial
 from typing import dataclass_transform
 
 from ..exceptions import PrefabError
+from ..register import prefab_register
 from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
 from .method_generators import (
     init_maker,
@@ -60,7 +61,6 @@ from .method_generators import (
     prefab_init_maker,
 )
 
-prefab_register = {}
 
 
 class Attribute:
