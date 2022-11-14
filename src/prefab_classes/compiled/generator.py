@@ -112,7 +112,7 @@ class PrefabDetails:
         fields: list["Field"] = []
 
         # If there are any plain assignments, annotated assignments that
-        # do not use attribute() calls must be remove to match 'live'
+        # do not use attribute() calls must be removed to match 'live'
         # behaviour.
         require_attribute_func = False
 

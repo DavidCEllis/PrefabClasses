@@ -309,8 +309,9 @@ def prefab(
     :param compile_plain: Remove any extra code from the resulting class
     :return: class with __ methods defined
     """
-    # Do not recompile compiled classes
+    # Register but do not recompile compiled classes
     if hasattr(cls, "COMPILED"):
+        prefab_register[cls.__qualname__] = cls
         return cls
     # If the class is not compiled but has the instruction to compile, fail
     elif cls and (compile_prefab and not compile_fallback):
