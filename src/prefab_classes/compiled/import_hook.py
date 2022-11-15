@@ -7,6 +7,8 @@ import contextlib
 from importlib.machinery import PathFinder, SourceFileLoader
 from importlib.util import decode_source
 
+from .. import PREFAB_MAGIC_BYTES
+
 
 HOOK_REWRITE = "# COMPILE_PREFABS"
 
@@ -52,31 +54,31 @@ class PrefabHacker(SourceFileLoader):
     # noinspection PyUnresolvedReferences,PyProtectedMember
     def get_code(self, fullname):
         """
-        Modified from importlib._bootstrap_external
+        Modified from importlib._bootstrap_external method in _bootstrap_external
         Need the whole function in order to modify the invalidation method.
 
         For compilation to work correctly this Loader must invalidate .pyc files
         compiled by python's own loader and vice versa. Updates to python and
         updates to the generator must also invalidate .pyc files.
 
+        This works by adding PREFAB_MAGIC_BYTES to the data before the hash is
+        generated.
+
         Concrete implementation of InspectLoader.get_code.
         Reading of bytecode requires path_stats to be implemented. To write
         bytecode, set_data must also be implemented.
         """
         # These imports are all needed just for this function.
-        import _imp
-        from importlib import _bootstrap
+        from importlib.util import source_hash
         from importlib._bootstrap_external import (
-            cache_from_source, _classify_pyc, _RAW_MAGIC_NUMBER,
-            _validate_hash_pyc, _validate_timestamp_pyc, _compile_bytecode,
-            _code_to_hash_pyc, _code_to_timestamp_pyc
+            cache_from_source, _classify_pyc,
+            _validate_hash_pyc, _compile_bytecode,
+            _code_to_hash_pyc
         )
 
         source_path = self.get_filename(fullname)
-        source_mtime = None
         source_bytes = None
-        source_hash = None
-        hash_based = False
+        source_hash_data = None
         check_source = True
         try:
             bytecode_path = cache_from_source(source_path)
@@ -84,65 +86,50 @@ class PrefabHacker(SourceFileLoader):
             bytecode_path = None
         else:
             try:
-                st = self.path_stats(source_path)
+                data = self.get_data(bytecode_path)
             except OSError:
                 pass
             else:
-                source_mtime = int(st['mtime'])
+                exc_details = {
+                    'name': fullname,
+                    'path': bytecode_path,
+                }
                 try:
-                    data = self.get_data(bytecode_path)
-                except OSError:
+                    flags = _classify_pyc(data, fullname, exc_details)
+                    bytes_data = memoryview(data)[16:]
+                    used_hash = flags & 0b1 != 0
+                    if used_hash:
+                        source_bytes = self.get_data(source_path)
+
+                        hash_input_bytes = b"".join([PREFAB_MAGIC_BYTES, source_bytes])
+
+                        source_hash_data = source_hash(hash_input_bytes)
+
+                        _validate_hash_pyc(data, source_hash_data, fullname,
+                                           exc_details)
+                    else:
+                        raise ImportError("Timestamp based .pyc validation is invalid for this loader")
+                except (ImportError, EOFError):
                     pass
                 else:
-                    exc_details = {
-                        'name': fullname,
-                        'path': bytecode_path,
-                    }
-                    try:
-                        flags = _classify_pyc(data, fullname, exc_details)
-                        bytes_data = memoryview(data)[16:]
-                        hash_based = flags & 0b1 != 0
-                        if hash_based:
-                            check_source = flags & 0b10 != 0
-                            if (_imp.check_hash_based_pycs != 'never' and
-                                    (check_source or
-                                     _imp.check_hash_based_pycs == 'always')):
-                                source_bytes = self.get_data(source_path)
-                                source_hash = _imp.source_hash(
-                                    _RAW_MAGIC_NUMBER,
-                                    source_bytes,
-                                )
-                                _validate_hash_pyc(data, source_hash, fullname,
-                                                   exc_details)
-                        else:
-                            _validate_timestamp_pyc(
-                                data,
-                                source_mtime,
-                                st['size'],
-                                fullname,
-                                exc_details,
-                            )
-                    except (ImportError, EOFError):
-                        pass
-                    else:
-                        _bootstrap._verbose_message('{} matches {}', bytecode_path,
-                                                    source_path)
-                        return _compile_bytecode(bytes_data, name=fullname,
-                                                 bytecode_path=bytecode_path,
-                                                 source_path=source_path)
+                    # _bootstrap._verbose_message('{} matches {}', bytecode_path,
+                    #                            source_path)
+                    return _compile_bytecode(bytes_data, name=fullname,
+                                             bytecode_path=bytecode_path,
+                                             source_path=source_path)
+
         if source_bytes is None:
             source_bytes = self.get_data(source_path)
         code_object = self.source_to_code(source_bytes, source_path)
-        _bootstrap._verbose_message('code object from {}', source_path)
-        if (not sys.dont_write_bytecode and bytecode_path is not None and
-                source_mtime is not None):
-            if hash_based:
-                if source_hash is None:
-                    source_hash = _imp.source_hash(_RAW_MAGIC_NUMBER, source_bytes)
-                data = _code_to_hash_pyc(code_object, source_hash, check_source)
-            else:
-                data = _code_to_timestamp_pyc(code_object, source_mtime,
-                                              len(source_bytes))
+        # _bootstrap._verbose_message('code object from {}', source_path)
+        if not sys.dont_write_bytecode and bytecode_path is not None:
+
+            if source_hash_data is None:
+                hash_input_bytes = b"".join([PREFAB_MAGIC_BYTES, source_bytes])
+                source_hash_data = source_hash(hash_input_bytes)
+
+            data = _code_to_hash_pyc(code_object, source_hash_data, check_source)
+
             try:
                 self._cache_bytecode(source_path, bytecode_path, data)
             except NotImplementedError:
