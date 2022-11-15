@@ -1,6 +1,10 @@
-# PrefabClasses - Clueless cluegen #
+# PrefabClasses - Python Class Boilerplate Generator  #
 
-Class boilerplate generator. Yet another variation on attrs/dataclasses.
+Writes the class boilerplate code so you don't have to. 
+Yet another variation on attrs/dataclasses.
+
+Either written lazily when you first access the methods or
+eagerly when the class is compiled into a .pyc.
 
 # Why are you remaking this again? #
 
@@ -10,8 +14,8 @@ and wanted to see if something like that could work for the
 project. With some modification I ended up with the first
 version of this.
 
-This package provides 2 different methods of code generation
-depending on the use case and speed requirements.
+There are now 2 different methods of handling the boilerplate
+generation in this project.
 
 The 'live' method works as *cluegen* worked, generating the 
 required methods only when they are first accessed. Compared to
@@ -20,13 +24,13 @@ This also means that if a class method is never accessed then
 it is not generated.
 
 The 'compiled' method instead generates all of the code when the 
-module is first *compiled* into a .pyc file. Subsequently there 
-is no overhead once the .pyc has been generated as the result 
-is a plain python class in the .pyc. The trade-off is that this
-method has some additional restrictions so is slightly less
-flexible. Most notably inheritance does not work across .py files
-as each file is compiled in isolation. This method can also not
-be used interactively.
+module is first *compiled* into a .pyc file by modifying the AST. 
+Subsequently there is almost no overhead once the .pyc has been 
+generated as the result is a plain python class in the .pyc. 
+The trade-off is that this method has some additional restrictions 
+so is slightly less flexible. Most notably inheritance does not 
+work across .py files as each file is compiled in isolation. 
+This method can also not be used interactively.
 
 ## Usage Examples ##
 
