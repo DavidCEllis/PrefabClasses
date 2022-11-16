@@ -9,7 +9,7 @@ def test_code_result_simple():
     code = (
         "from prefab_classes import prefab\n"
         "\n"
-        "@prefab(compile_prefab=True)\n"
+        "@prefab(compile_prefab=True, iter=True)\n"
         "class Coordinate:\n"
         "    COMPILED = True\n"
         "    PREFAB_FIELDS = ['x', 'y']\n"
@@ -23,7 +23,11 @@ def test_code_result_simple():
         "\n"
         "    def __eq__(self, other):\n"
         "        return (self.x, self.y) == (other.x, other.y) "
-        "if self.__class__ == other.__class__ else NotImplemented"
+        "if self.__class__ == other.__class__ else NotImplemented\n"
+        "\n"
+        "    def __iter__(self):\n"
+        "        yield self.x\n"
+        "        yield self.y"
     )
 
     assert result == code

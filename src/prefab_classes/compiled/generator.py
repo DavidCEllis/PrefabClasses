@@ -37,6 +37,15 @@ class Field:
     def converter_call(self, arg):
         return ast.Call(func=self.converter, args=[arg], keywords=[])
 
+    def ast_attribute(self, obj_name='self', ctx=ast.Load):
+        """Get the ast.Attribute form for loading this attribute"""
+        attrib = ast.Attribute(
+            value=ast.Name(id=obj_name, ctx=ast.Load()),
+            attr=self.name,
+            ctx=ctx()
+        )
+        return attrib
+
     @classmethod
     def from_keywords(cls, name, field, keywords, annotation=None):
         keys = {k.arg: k.value for k in keywords}
@@ -328,6 +337,8 @@ class PrefabDetails:
 
         arguments = [ast.arg(arg="self"), ast.arg(arg="other")]
 
+        # elt = element I guess - but this is the terminology used in the
+        # tuple AST function so elt it is.
         class_elts = []
         other_elts = []
 
@@ -377,6 +388,27 @@ class PrefabDetails:
         self.node.body.append(eq_func)
         self._generated_eq = True
 
+    def generate_iter(self):
+        if self._generated_iter or not self.iter:
+            return
+
+        arguments = [ast.arg(arg='self')]
+        body = [
+            ast.Expr(value=ast.Yield(value=field.ast_attribute()))
+            for field in self.field_list
+        ]
+
+        args = ast.arguments(
+            posonlyargs=[], args=arguments, kwonlyargs=[], kw_defaults=[], defaults=[]
+        )
+
+        iter_func = ast.FunctionDef(
+            name="__iter__", args=args, body=body, decorator_list=[], returns=None
+        )
+
+        self.node.body.append(iter_func)
+        self._generated_iter = True
+
     def generate_ast(self):
         if not self.fields:
             self.discover_fields()
@@ -384,6 +416,7 @@ class PrefabDetails:
         self.generate_init()
         self.generate_repr()
         self.generate_eq()
+        self.generate_iter()
 
 
 class GatherPrefabs(ast.NodeVisitor):
