@@ -62,7 +62,6 @@ from .method_generators import (
 )
 
 
-
 class Attribute:
     """
     Descriptor class to define attributes.
@@ -200,10 +199,6 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     :param iter: generate __iter__
     :return: class with __ methods defined
     """
-    if cls.__qualname__ in prefab_register:
-        raise PrefabError(
-            f"Class with name {cls.__qualname__} " f"already registered as a prefab."
-        )
     # Here first we need to look at type hints for the type hint
     # syntax variant.
     # If a key exists and is *NOT* in __annotations__ then all
@@ -309,18 +304,7 @@ def prefab(
     :param compile_plain: Remove any extra code from the resulting class
     :return: class with __ methods defined
     """
-    # Register but do not recompile compiled classes
-    if getattr(cls, "COMPILED", False):
-        prefab_register[cls.__qualname__] = cls
-        return cls
-    # If the class is not compiled but has the instruction to compile, fail
-    elif cls and (compile_prefab and not compile_fallback):
-        raise PrefabError(f"Class {cls.__name__} has not been compiled! Dynamic code still executing!")
-    elif cls:
-        setattr(cls, "COMPILED", False)
-
-    # Otherwise make the 'live' version of the class
-    if cls is None:
+    if not cls:
         # Called as () method to change defaults
         return partial(
             prefab,
@@ -331,4 +315,19 @@ def prefab(
             compile_prefab=compile_prefab,
             compile_fallback=compile_fallback,
         )
-    return _make_prefab(cls, init=init, repr=repr, eq=eq, iter=iter)
+    else:
+        if cls.__qualname__ in prefab_register:
+            raise PrefabError(
+                f"Class with name {cls.__qualname__} " f"already registered as a prefab."
+            )
+        elif getattr(cls, "COMPILED", False):
+            # Register but do not recompile compiled classes
+            prefab_register[cls.__qualname__] = cls
+            return cls
+        # If the class is not compiled but has the instruction to compile, fail
+        elif compile_prefab and not compile_fallback:
+            raise PrefabError(f"Class {cls.__name__} has not been compiled! Dynamic code still executing!")
+        else:
+            # Create Live Version
+            setattr(cls, "COMPILED", False)
+            return _make_prefab(cls, init=init, repr=repr, eq=eq, iter=iter)

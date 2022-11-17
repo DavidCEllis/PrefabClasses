@@ -5,6 +5,7 @@ from prefab_classes.exceptions import PrefabError
 
 
 # noinspection PyUnresolvedReferences
+@pytest.mark.usefixtures("compile_folder_modules")
 def test_annotations():
     with prefab_compiler():
         from example_annotations import X
@@ -17,6 +18,7 @@ def test_annotations():
 
 
 # noinspection PyUnresolvedReferences
+@pytest.mark.usefixtures("compile_folder_modules")
 def test_mixed_annotations():
     with prefab_compiler():
         from example_mixed_annotations import Y
@@ -31,6 +33,7 @@ def test_mixed_annotations():
 
 
 # noinspection PyUnresolvedReferences
+@pytest.mark.usefixtures("compile_folder_modules")
 def test_no_annotations():
     with prefab_compiler():
         from example_no_annotations import Z
@@ -44,6 +47,7 @@ def test_no_annotations():
     assert repr(z) == "Z(v=12, w=Decimal('3.14'), x=[], y='pints', z=(42, 'trees'))"
 
 
+@pytest.mark.usefixtures("compile_folder_modules")
 def test_not_compiled_error():
     with pytest.raises(PrefabError) as e_info:
         import example_importfail
