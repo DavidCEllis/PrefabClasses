@@ -37,7 +37,7 @@ class Field:
     def converter_call(self, arg):
         return ast.Call(func=self.converter, args=[arg], keywords=[])
 
-    def ast_attribute(self, obj_name='self', ctx=ast.Load):
+    def ast_attribute(self, obj_name='self', ctx: Union[type[ast.Load], type[ast.Store]] = ast.Load):
         """Get the ast.Attribute form for loading this attribute"""
         attrib = ast.Attribute(
             value=ast.Name(id=obj_name, ctx=ast.Load()),
@@ -204,7 +204,6 @@ class PrefabDetails:
 
         has_default = False
 
-        self_target = ast.Name(id="self", ctx=ast.Load())
         args.append(ast.arg(arg="self"))
 
         for field in self.field_list:
@@ -271,11 +270,7 @@ class PrefabDetails:
             # Define the body
             body.append(
                 ast.Assign(
-                    targets=[
-                        ast.Attribute(
-                            value=self_target, attr=field.name, ctx=ast.Store()
-                        )
-                    ],
+                    targets=[field.ast_attribute(ctx=ast.Store)],
                     value=field.converter_call(assignment_value)
                     if field.converter
                     else assignment_value,
@@ -309,12 +304,12 @@ class PrefabDetails:
         self_name = ast.Name(id="self", ctx=ast.Load())
 
         field_strings = [ast.Constant(value=f"{self.name}(")]
-        for i, name in enumerate(self.field_names):
+        for i, field in enumerate(self.field_list):
             if i > 0:
                 field_strings.append(ast.Constant(value=", "))
-            target = ast.Constant(value=f"{name}=")
+            target = ast.Constant(value=f"{field.name}=")
             value = ast.FormattedValue(
-                value=ast.Attribute(value=self_name, attr=f"{name}", ctx=ast.Load()),
+                value=field.ast_attribute(),
                 conversion=114,  # REPR formatting
             )
             field_strings.extend([target, value])
@@ -342,15 +337,9 @@ class PrefabDetails:
         class_elts = []
         other_elts = []
 
-        for name in self.field_names:
+        for field in self.field_list:
             for obj_name, elt_list in [("self", class_elts), ("other", other_elts)]:
-                elt_list.append(
-                    ast.Attribute(
-                        value=ast.Name(id=obj_name, ctx=ast.Load()),
-                        attr=name,
-                        ctx=ast.Load(),
-                    )
-                )
+                elt_list.append(field.ast_attribute(obj_name))
 
         class_tuple = ast.Tuple(elts=class_elts, ctx=ast.Load())
         other_tuple = ast.Tuple(elts=other_elts, ctx=ast.Load())
