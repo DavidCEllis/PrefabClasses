@@ -71,9 +71,11 @@ class PrefabHacker(SourceFileLoader):
         # These imports are all needed just for this function.
         from importlib.util import source_hash
         from importlib._bootstrap_external import (
-            cache_from_source, _classify_pyc,
-            _validate_hash_pyc, _compile_bytecode,
-            _code_to_hash_pyc
+            cache_from_source,
+            _classify_pyc,
+            _validate_hash_pyc,
+            _compile_bytecode,
+            _code_to_hash_pyc,
         )
 
         source_path = self.get_filename(fullname)
@@ -91,8 +93,8 @@ class PrefabHacker(SourceFileLoader):
                 pass
             else:
                 exc_details = {
-                    'name': fullname,
-                    'path': bytecode_path,
+                    "name": fullname,
+                    "path": bytecode_path,
                 }
                 try:
                     flags = _classify_pyc(data, fullname, exc_details)
@@ -101,22 +103,29 @@ class PrefabHacker(SourceFileLoader):
                     if used_hash:
                         source_bytes = self.get_data(source_path)
 
+                        # Modify the data given to the hash with extra data
                         hash_input_bytes = b"".join([PREFAB_MAGIC_BYTES, source_bytes])
 
                         source_hash_data = source_hash(hash_input_bytes)
 
-                        _validate_hash_pyc(data, source_hash_data, fullname,
-                                           exc_details)
+                        _validate_hash_pyc(
+                            data, source_hash_data, fullname, exc_details
+                        )
                     else:
-                        raise ImportError("Timestamp based .pyc validation is invalid for this loader")
+                        raise ImportError(
+                            "Timestamp based .pyc validation is invalid for this loader"
+                        )
                 except (ImportError, EOFError):
                     pass
                 else:
                     # _bootstrap._verbose_message('{} matches {}', bytecode_path,
                     #                            source_path)
-                    return _compile_bytecode(bytes_data, name=fullname,
-                                             bytecode_path=bytecode_path,
-                                             source_path=source_path)
+                    return _compile_bytecode(
+                        bytes_data,
+                        name=fullname,
+                        bytecode_path=bytecode_path,
+                        source_path=source_path,
+                    )
 
         if source_bytes is None:
             source_bytes = self.get_data(source_path)

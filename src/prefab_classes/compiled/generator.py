@@ -37,12 +37,12 @@ class Field:
     def converter_call(self, arg):
         return ast.Call(func=self.converter, args=[arg], keywords=[])
 
-    def ast_attribute(self, obj_name='self', ctx: Union[type[ast.Load], type[ast.Store]] = ast.Load):
+    def ast_attribute(
+        self, obj_name="self", ctx: Union[type[ast.Load], type[ast.Store]] = ast.Load
+    ):
         """Get the ast.Attribute form for loading this attribute"""
         attrib = ast.Attribute(
-            value=ast.Name(id=obj_name, ctx=ast.Load()),
-            attr=self.name,
-            ctx=ctx()
+            value=ast.Name(id=obj_name, ctx=ast.Load()), attr=self.name, ctx=ctx()
         )
         return attrib
 
@@ -381,7 +381,7 @@ class PrefabDetails:
         if self._generated_iter or not self.iter:
             return
 
-        arguments = [ast.arg(arg='self')]
+        arguments = [ast.arg(arg="self")]
         body = [
             ast.Expr(value=ast.Yield(value=field.ast_attribute()))
             for field in self.field_list

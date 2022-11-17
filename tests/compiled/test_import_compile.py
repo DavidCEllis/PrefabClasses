@@ -25,7 +25,7 @@ def test_mixed_annotations():
 
     assert Y.COMPILED
 
-    assert Y.PREFAB_FIELDS == ['w', 'x', 'y', 'z']
+    assert Y.PREFAB_FIELDS == ["w", "x", "y", "z"]
 
     y = Y(y="pints")
 
@@ -40,7 +40,7 @@ def test_no_annotations():
 
     assert Z.COMPILED
 
-    assert Z.PREFAB_FIELDS == ['v', 'w', 'x', 'y', 'z']
+    assert Z.PREFAB_FIELDS == ["v", "w", "x", "y", "z"]
 
     z = Z(12, y="pints")
 
@@ -52,4 +52,7 @@ def test_not_compiled_error():
     with pytest.raises(PrefabError) as e_info:
         import example_importfail
 
-    assert e_info.value.args[0] == "Class X has not been compiled! Dynamic code still executing!"
+    assert (
+        e_info.value.args[0]
+        == "Class X has not been compiled! Dynamic code still executing!"
+    )

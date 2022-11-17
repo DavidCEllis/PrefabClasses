@@ -13,7 +13,7 @@ def clear_relative_modules(base_path):
     :return:
     """
     for name, module in sys.modules.copy().items():
-        pth = getattr(module, '__file__', None)
+        pth = getattr(module, "__file__", None)
         if pth:
             pth = Path(pth)
             if pth.is_relative_to(base_path):

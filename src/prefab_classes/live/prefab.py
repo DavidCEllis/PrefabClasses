@@ -318,7 +318,8 @@ def prefab(
     else:
         if cls.__qualname__ in prefab_register:
             raise PrefabError(
-                f"Class with name {cls.__qualname__} " f"already registered as a prefab."
+                f"Class with name {cls.__qualname__} "
+                f"already registered as a prefab."
             )
         elif getattr(cls, "COMPILED", False):
             # Register but do not recompile compiled classes
@@ -326,7 +327,9 @@ def prefab(
             return cls
         # If the class is not compiled but has the instruction to compile, fail
         elif compile_prefab and not compile_fallback:
-            raise PrefabError(f"Class {cls.__name__} has not been compiled! Dynamic code still executing!")
+            raise PrefabError(
+                f"Class {cls.__name__} has not been compiled! Dynamic code still executing!"
+            )
         else:
             # Create Live Version
             setattr(cls, "COMPILED", False)
