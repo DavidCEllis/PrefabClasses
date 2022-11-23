@@ -1,7 +1,7 @@
 import pytest
 
 from prefab_classes import prefab_compiler
-from prefab_classes.exceptions import PrefabError
+from prefab_classes.exceptions import PrefabCompilationError
 
 
 # noinspection PyUnresolvedReferences
@@ -49,10 +49,9 @@ def test_no_annotations():
 
 @pytest.mark.usefixtures("compile_folder_modules")
 def test_not_compiled_error():
-    with pytest.raises(PrefabError) as e_info:
+    with pytest.raises(PrefabCompilationError) as e_info:
         import example_importfail
 
-    assert (
-        e_info.value.args[0]
-        == "Class X has not been compiled! Dynamic code still executing!"
-    )
+    error_message = "Class X has not been compiled and compiled_fallback=False."
+
+    assert e_info.value.args[0] == error_message

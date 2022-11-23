@@ -23,3 +23,7 @@
 
 class PrefabError(Exception):
     pass
+
+
+class PrefabCompilationError(PrefabError):
+    pass

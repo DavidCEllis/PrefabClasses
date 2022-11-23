@@ -50,7 +50,7 @@ from functools import partial
 # noinspection PyUnresolvedReferences
 from typing import dataclass_transform
 
-from ..exceptions import PrefabError
+from ..exceptions import PrefabError, PrefabCompilationError
 from ..register import prefab_register
 from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
 from .method_generators import (
@@ -327,8 +327,11 @@ def prefab(
             return cls
         # If the class is not compiled but has the instruction to compile, fail
         elif compile_prefab and not compile_fallback:
-            raise PrefabError(
-                f"Class {cls.__name__} has not been compiled! Dynamic code still executing!"
+            raise PrefabCompilationError(
+                f"Class {cls.__name__} has not been compiled and compiled_fallback=False.",
+                f"Make sure the comment '# COMPILE_PREFABS' is at the "
+                f"top of the module {cls.__module__}\n"
+                f"and the module is imported in a 'with prefab_compiler():' block",
             )
         else:
             # Create Live Version
