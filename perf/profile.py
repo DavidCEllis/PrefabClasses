@@ -207,6 +207,13 @@ def write_perftemp(count, template, setup):
 
 
 def main(reps, test_everything=False, exclude_compile=False):
+    """
+
+    :param reps: Number of repeat imports
+    :param test_everything: test against dataclasses/attrs/pydantic/cluegen/dataklasses
+    :param exclude_compile: Exclude the time for 1 cycle to generate the .pyc file.
+    :return:
+    """
     write_perftemp(100, standard_template, '')
     run_test('standard classes', reps, exclude_compile=exclude_compile)
 
@@ -271,4 +278,4 @@ if __name__ == '__main__':
         reps = int(sys.argv[1])
     else:
         reps = 100
-    main(reps, test_everything=True, exclude_compile=True)
+    main(reps, test_everything=False, exclude_compile=True)
