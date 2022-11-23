@@ -51,6 +51,13 @@ class PrefabHacker(SourceFileLoader):
 
         return code
 
+    @staticmethod
+    def make_pyc_hash(source_bytes):
+        from importlib import util
+        # Modify the data given to the hash with extra data
+        hash_input_bytes = b"".join([PREFAB_MAGIC_BYTES, source_bytes])
+        return util.source_hash(hash_input_bytes)
+
     # noinspection PyUnresolvedReferences,PyProtectedMember
     def get_code(self, fullname):
         """
@@ -69,7 +76,6 @@ class PrefabHacker(SourceFileLoader):
         bytecode, set_data must also be implemented.
         """
         # These imports are all needed just for this function.
-        from importlib.util import source_hash
         from importlib._bootstrap_external import (
             cache_from_source,
             _classify_pyc,
@@ -102,12 +108,7 @@ class PrefabHacker(SourceFileLoader):
                     used_hash = flags & 0b1 != 0
                     if used_hash:
                         source_bytes = self.get_data(source_path)
-
-                        # Modify the data given to the hash with extra data
-                        hash_input_bytes = b"".join([PREFAB_MAGIC_BYTES, source_bytes])
-
-                        source_hash_data = source_hash(hash_input_bytes)
-
+                        source_hash_data = self.make_pyc_hash(source_bytes)
                         _validate_hash_pyc(
                             data, source_hash_data, fullname, exc_details
                         )
@@ -118,8 +119,6 @@ class PrefabHacker(SourceFileLoader):
                 except (ImportError, EOFError):
                     pass
                 else:
-                    # _bootstrap._verbose_message('{} matches {}', bytecode_path,
-                    #                            source_path)
                     return _compile_bytecode(
                         bytes_data,
                         name=fullname,
@@ -134,8 +133,7 @@ class PrefabHacker(SourceFileLoader):
         if not sys.dont_write_bytecode and bytecode_path is not None:
 
             if source_hash_data is None:
-                hash_input_bytes = b"".join([PREFAB_MAGIC_BYTES, source_bytes])
-                source_hash_data = source_hash(hash_input_bytes)
+                source_hash_data = self.make_pyc_hash(source_bytes)
 
             data = _code_to_hash_pyc(code_object, source_hash_data, check_source)
 
