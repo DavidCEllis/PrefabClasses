@@ -1,5 +1,5 @@
 import ast
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from ..live import prefab, attribute
 
@@ -82,7 +82,7 @@ class Field:
         )
 
 
-# noinspection PyArgumentList
+# noinspection PyArgumentList,PyAttributeOutsideInit
 @prefab
 class PrefabDetails:
     name: str
@@ -96,9 +96,10 @@ class PrefabDetails:
     compile_prefab: bool = False
     compile_plain: bool = False
     compile_fallback: bool = False
-    parents: list[str] = attribute(default_factory=list)
+    parents: Optional[list[str]] = None
 
     def __prefab_post_init__(self):
+        self._resolved_parents = False
         self._generated_fields = False
         self._generated_init = False
         self._generated_repr = False
@@ -165,6 +166,38 @@ class PrefabDetails:
             self.node.body.remove(item.field)
 
         self.fields = {field.name: field for field in fields}
+
+    def discover_parents(self):
+        if self.parents is None:
+            self.parents = [getattr(item, 'id') for item in self.node.bases]
+        if self.name in self.parents:
+            raise CodeGeneratorError(f"Class {self.name} cannot inherit from itself.")
+
+    def resolve_field_inheritance(self, prefabs: dict[str, "PrefabDetails"]):
+        """
+        Work out the complete list of fields in the inheritance tree.
+
+        :param prefabs: The full dict of prefabs
+        :return:
+        """
+
+        if self._resolved_parents:
+            return self.fields
+
+        new_fields: dict[str, 'Field'] = {}
+        for parent_name in reversed(self.parents):
+            if parent_name not in prefabs:
+                raise CodeGeneratorError(
+                    f"Compiled prefabs can only inherit from other compiled prefabs in the same module.",
+                    f"{self.name} attempted to inherit from {parent_name}"
+                )
+            parent_fields = prefabs[parent_name].resolve_field_inheritance(prefabs)
+            new_fields.update(parent_fields)
+
+        new_fields.update(self.fields)
+        self.fields = new_fields
+        self._resolved_parents = True
+        return self.fields
 
     def generate_fields(self):
         if self._generated_fields:
@@ -398,9 +431,13 @@ class PrefabDetails:
         self.node.body.append(iter_func)
         self._generated_iter = True
 
-    def generate_ast(self):
-        if not self.fields:
-            self.discover_fields()
+    def generate_ast(self, prefabs: dict[str, "PrefabDetails"]):
+        # Discover required details
+        self.discover_fields()
+        self.discover_parents()
+        self.resolve_field_inheritance(prefabs)
+
+        # Rewrite AST
         self.generate_fields()
         self.generate_init()
         self.generate_repr()
@@ -411,7 +448,7 @@ class PrefabDetails:
 class GatherPrefabs(ast.NodeVisitor):
     def __init__(self):
         super().__init__()
-        self.prefabs = {}
+        self.prefabs: dict[str, PrefabDetails] = {}
 
     def visit_ClassDef(self, node: ast.ClassDef):
         # Looking for a call to DECORATOR_NAME with COMPILE_ARGUMENT == True
@@ -456,8 +493,9 @@ def compile_prefabs(source: str) -> ast.Module:
 
     prefabs = gatherer.prefabs
 
+    # First gather field lists and parent class names
     for p in prefabs.values():
-        p.generate_ast()
+        p.generate_ast(prefabs)
 
     ast.fix_missing_locations(tree)
 
