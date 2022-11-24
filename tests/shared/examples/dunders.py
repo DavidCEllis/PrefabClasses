@@ -33,4 +33,3 @@ class CoordinateNoXRepr:
 class CoordinateIter:
     x: float
     y: float
-
