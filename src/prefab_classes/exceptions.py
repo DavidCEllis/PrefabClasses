@@ -25,5 +25,10 @@ class PrefabError(Exception):
     pass
 
 
-class PrefabCompilationError(PrefabError):
+class LivePrefabError(PrefabError):
     pass
+
+
+class CompiledPrefabError(PrefabError):
+    pass
+

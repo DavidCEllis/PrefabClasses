@@ -2,6 +2,7 @@ import ast
 from typing import Any, Optional, Union
 
 from ..live import prefab, attribute
+from ..exceptions import CompiledPrefabError
 
 DECORATOR_NAME = "prefab"
 ATTRIBUTE_FUNCNAME = "attribute"
@@ -10,10 +11,6 @@ COMPILE_ARGUMENT = "compile_prefab"
 COMPILED_FLAG = "COMPILED"
 
 assignment_type = Union[ast.AnnAssign, ast.Assign]
-
-
-class CodeGeneratorError(Exception):
-    pass
 
 
 # noinspection PyArgumentList
@@ -65,8 +62,18 @@ class Field:
         except KeyError:
             kw_only = False
 
+        if not init_ and default is None and default_factory is None:
+            raise CompiledPrefabError(
+                "Must provide a default value/factory if the attribute is not in init."
+            )
+
+        if kw_only and not init_:
+            raise CompiledPrefabError("Attribute cannot be keyword only if it is not in init.")
+
         if default and default_factory:
-            raise CodeGeneratorError("Cannot define both default and default_factory")
+            raise CompiledPrefabError(
+                "Cannot define both a default value and a default factory."
+            )
 
         return cls(
             name=name,
@@ -171,7 +178,7 @@ class PrefabDetails:
         if self.parents is None:
             self.parents = [getattr(item, 'id') for item in self.node.bases]
         if self.name in self.parents:
-            raise CodeGeneratorError(f"Class {self.name} cannot inherit from itself.")
+            raise CompiledPrefabError(f"Class {self.name} cannot inherit from itself.")
 
     def resolve_field_inheritance(self, prefabs: dict[str, "PrefabDetails"]):
         """
@@ -187,7 +194,7 @@ class PrefabDetails:
         new_fields: dict[str, 'Field'] = {}
         for parent_name in reversed(self.parents):
             if parent_name not in prefabs:
-                raise CodeGeneratorError(
+                raise CompiledPrefabError(
                     f"Compiled prefabs can only inherit from other compiled prefabs in the same module.",
                     f"{self.name} attempted to inherit from {parent_name}"
                 )
@@ -196,7 +203,11 @@ class PrefabDetails:
 
         new_fields.update(self.fields)
         self.fields = new_fields
+        if not self.fields:
+            raise CompiledPrefabError("Class must contain at least 1 attribute.")
+        
         self._resolved_parents = True
+
         return self.fields
 
     def generate_fields(self):
@@ -286,8 +297,8 @@ class PrefabDetails:
             # Simpler code for values with no defaults
             else:
                 if has_default and not field.kw_only:
-                    raise CodeGeneratorError(
-                        "Field without default defined after field with default."
+                    raise SyntaxError(
+                        "non-default argument follows default argument"
                     )
                 if field.annotation:
                     arg = ast.arg(arg=field.name, annotation=field.annotation)

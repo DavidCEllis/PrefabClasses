@@ -50,7 +50,8 @@ from functools import partial
 # noinspection PyUnresolvedReferences
 from typing import dataclass_transform
 
-from ..exceptions import PrefabError, PrefabCompilationError
+
+from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
 from ..register import prefab_register
 from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
 from .method_generators import (
@@ -135,15 +136,15 @@ class Attribute:
         :param kw_only: Make this argument keyword only in init
         """
         if not init and default is _NOTHING and default_factory is _NOTHING:
-            raise PrefabError(
+            raise LivePrefabError(
                 "Must provide a default value/factory if the attribute is not in init."
             )
         if default is not _NOTHING and default_factory is not _NOTHING:
-            raise PrefabError(
+            raise LivePrefabError(
                 "Cannot define both a default value and a default factory."
             )
         if kw_only and not init:
-            raise PrefabError("Attribute cannot be keyword only if it is not in init.")
+            raise LivePrefabError("Attribute cannot be keyword only if it is not in init.")
 
         self.default = default
         self.default_factory = default_factory
@@ -243,7 +244,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     if not attributes:
         # It's easier to throw an error than to rewrite
         # The code for the useless case of a class with no attributes.
-        raise PrefabError("Class must contain at least 1 attribute.")
+        raise LivePrefabError("Class must contain at least 1 attribute.")
 
     default_defined = []
     for name, attrib in attributes.items():
@@ -327,7 +328,7 @@ def prefab(
             return cls
         # If the class is not compiled but has the instruction to compile, fail
         elif compile_prefab and not compile_fallback:
-            raise PrefabCompilationError(
+            raise CompiledPrefabError(
                 f"Class {cls.__name__} has not been compiled and compiled_fallback=False.",
                 f"Make sure the comment '# COMPILE_PREFABS' is at the "
                 f"top of the module {cls.__module__}\n"

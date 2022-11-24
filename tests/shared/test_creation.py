@@ -3,44 +3,30 @@ from prefab_classes import prefab, attribute, PrefabError
 from pytest import raises
 
 
-def test_kw_not_in_init():
+def test_kw_not_in_init(importer):
     with raises(PrefabError) as e_info:
-
-        @prefab
-        class Construct:
-            x = attribute(default="test", kw_only=True, init=False)
+        from fails.creation_1 import Construct
 
     assert (
         e_info.value.args[0] == "Attribute cannot be keyword only if it is not in init."
     )
 
 
-def test_positional_after_kw_error():
+def test_positional_after_kw_error(importer):
     with raises(SyntaxError) as e_info:
-
-        @prefab
-        class FailSyntax:
-            x = attribute(default=0)
-            y = attribute()
+        from fails.creation_2 import FailSyntax
 
     assert e_info.value.args[0] == "non-default argument follows default argument"
 
     with raises(SyntaxError) as e_info:
-
-        @prefab
-        class FailFactorySyntax:
-            x = attribute(default_factory=list)
-            y = attribute()
+        from fails.creation_3 import FailSyntax
 
     assert e_info.value.args[0] == "non-default argument follows default argument"
 
 
-def test_no_default_no_init_error():
+def test_no_default_no_init_error(importer):
     with raises(PrefabError) as e_info:
-
-        @prefab
-        class Construct:
-            x = attribute(init=False)
+        from fails.creation_4 import Construct
 
     assert (
         e_info.value.args[0]
@@ -48,13 +34,10 @@ def test_no_default_no_init_error():
     )
 
 
-def test_default_value_and_factory_error():
+def test_default_value_and_factory_error(importer):
     """Error if defining both a value and a factory"""
     with raises(PrefabError) as e_info:
-
-        @prefab
-        class Construct:
-            x = attribute(default=12, default_factory=list)
+        from fails.creation_5 import Construct
 
     assert (
         e_info.value.args[0]
@@ -62,28 +45,19 @@ def test_default_value_and_factory_error():
     )
 
 
-def test_no_attributes_error():
+def test_no_attributes_error(importer):
     with raises(PrefabError) as e_info:
 
-        @prefab
-        class Empty:
-            pass
+        from fails.creation_6 import Empty
 
     assert e_info.value.args[0] == "Class must contain at least 1 attribute."
 
 
-def test_created_twice():
-    @prefab
-    class DejaVu:
-        x = attribute()
-
+def test_created_twice(importer):
     with raises(PrefabError) as e_info:
-
-        @prefab
-        class DejaVu:
-            x = attribute()
+        import fails.creation_7
 
     assert (
         e_info.value.args[0]
-        == "Class with name test_created_twice.<locals>.DejaVu already registered as a prefab."
+        == "Class with name DejaVu already registered as a prefab."
     )

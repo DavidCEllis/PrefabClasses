@@ -1,37 +1,32 @@
-"""Test the converter parameter works as intended"""
+import pytest
 from pathlib import Path
 
-from prefab_classes import prefab, attribute
 
-
-def test_converter():
-    @prefab
-    class SystemPath:
-        path = attribute(converter=Path)
+def test_converter(importer):
+    from converter import SystemPath
+    assert SystemPath.COMPILED == importer
 
     pth = SystemPath("fake/directory")
 
     assert pth.path == Path("fake/directory")
 
 
-def test_default_converter():
+def test_default_converter(importer):
     """Check the converter works on default arguments"""
 
-    @prefab
-    class SystemPath:
-        path = attribute(default="fake/directory", converter=Path)
+    from converter import SystemPathDefault
+    assert SystemPathDefault.COMPILED == importer
 
-    pth = SystemPath()
+    pth = SystemPathDefault()
 
     assert pth.path == Path("fake/directory")
 
 
-def test_converter_only_init():
+def test_converter_only_init(importer):
     """Check the converter only runs on init"""
 
-    @prefab
-    class SystemPath:
-        path = attribute(converter=Path)
+    from converter import SystemPath
+    assert SystemPath.COMPILED == importer
 
     pth = SystemPath("fake/directory")
 
