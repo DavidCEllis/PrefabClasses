@@ -6,3 +6,4 @@ references
 scratch/
 *.egg-info/
 build/
+perftemp.py

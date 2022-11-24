@@ -45,11 +45,22 @@ Replaces attrs.
 
 Based on ideas (and some code) from Cluegen by David Beazley https://github.com/dabeaz/cluegen
 """
-from ..exceptions import PrefabError
-from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
-from .method_generators import init_maker, repr_maker, eq_maker, iter_maker
+from functools import partial
 
-prefab_register = {}
+# noinspection PyUnresolvedReferences
+from typing import dataclass_transform
+
+
+from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
+from ..register import prefab_register
+from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
+from .method_generators import (
+    init_maker,
+    repr_maker,
+    eq_maker,
+    iter_maker,
+    prefab_init_maker,
+)
 
 
 class Attribute:
@@ -58,6 +69,7 @@ class Attribute:
 
     This replaces the use of type hints in cluegen.
     """
+
     # noinspection PyProtectedMember
     def __set_name__(self, owner, name):
         # Here we append any generated attributes to a private variable
@@ -65,12 +77,17 @@ class Attribute:
 
         # Make a new list for this class if it doesn't exist.
         # The class name is used to avoid sharing a list with a parent class.
-        attribute_var = f'_{owner.__name__}_attributes'
-        sub_attributes = getattr(owner, attribute_var, {})
-        sub_attributes[name] = self
-        setattr(owner, attribute_var, sub_attributes)
+        attribute_var = f"_{owner.__name__}_attributes"
 
-        self.private_name = f'_prefab_attribute_{name}'
+        try:
+            sub_attributes = getattr(owner, attribute_var)
+        except AttributeError:
+            sub_attributes = {}
+            setattr(owner, attribute_var, sub_attributes)
+
+        sub_attributes[name] = self
+
+        self.private_name = f"_prefab_attribute_{name}"
 
     def __get__(self, obj, objtype=None):
         # The default values here should only be used in the __init__ method
@@ -93,22 +110,21 @@ class Attribute:
         elif isinstance(value, DefaultFactory):
             # noinspection PyCallingNonCallable
             value = self.default_factory()
-        if self.converter and (self._converter_unused or self.always_convert):
-            self._converter_unused = False
+        if self.converter and not self._converted:
+            self._converted = True
             value = self.converter(value)
         setattr(obj, self.private_name, value)
 
     # noinspection PyShadowingBuiltins
     def __init__(
-            self,
-            *,
-            default=_NOTHING,
-            default_factory=_NOTHING,
-            converter=None,
-            init=True,
-            repr=True,
-            kw_only=False,
-            always_convert=False
+        self,
+        *,
+        default=_NOTHING,
+        default_factory=_NOTHING,
+        converter=None,
+        init=True,
+        repr=True,
+        kw_only=False,
     ):
         """
         Create an Attribute for a prefab
@@ -118,40 +134,79 @@ class Attribute:
         :param init: Include this attribute in the __init__ parameters
         :param repr: Include this attribute in the class __repr__
         :param kw_only: Make this argument keyword only in init
-        :param always_convert: Run the converter whenever the argument is set, not just in init
         """
         if not init and default is _NOTHING and default_factory is _NOTHING:
-            raise PrefabError("Must provide a default value/factory if the attribute is not in init.")
+            raise LivePrefabError(
+                "Must provide a default value/factory if the attribute is not in init."
+            )
         if default is not _NOTHING and default_factory is not _NOTHING:
-            raise PrefabError("Cannot define both a default value and a default factory.")
+            raise LivePrefabError(
+                "Cannot define both a default value and a default factory."
+            )
         if kw_only and not init:
-            raise PrefabError("Attribute cannot be keyword only if it is not in init.")
+            raise LivePrefabError("Attribute cannot be keyword only if it is not in init.")
 
         self.default = default
         self.default_factory = default_factory
 
         self.converter = converter
-        self.always_convert = always_convert
-        self._converter_unused = True
+        self._converted = False
 
         self.init = init
         self.repr = repr
         self.kw_only = kw_only
 
 
-def prefab(cls: type):
-    if cls.__qualname__ in prefab_register:
-        raise PrefabError(
-            f"Class with name {cls.__qualname__} "
-            f"already registered as a prefab."
-        )
+def attribute(
+    *,
+    default=_NOTHING,
+    default_factory=_NOTHING,
+    converter=None,
+    init=True,
+    repr=True,
+    kw_only=False,
+):
+    """
+    Get an Attribute instance - indirect to allow for potential changes in the future
+
+    :param default: Default value for this attribute
+    :param default_factory: No argument callable to give a default value (for otherwise mutable defaults)
+    :param converter: prefab.attr = x -> prefab.attr = converter(x)
+    :param init: Include this attribute in the __init__ parameters
+    :param repr: Include this attribute in the class __repr__
+    :param kw_only: Make this argument keyword only in init
+
+    :return: Attribute generated with these parameters.
+    """
+    return Attribute(
+        default=default,
+        default_factory=default_factory,
+        converter=converter,
+        init=init,
+        repr=repr,
+        kw_only=kw_only,
+    )
+
+
+@dataclass_transform(field_specifiers=(attribute, Attribute))
+def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
+    """
+    Generate boilerplate code for dunder methods in a class.
+
+    :param cls: Class to convert to a prefab
+    :param init: generate __init__
+    :param repr: generate __repr__
+    :param eq: generate __eq__
+    :param iter: generate __iter__
+    :return: class with __ methods defined
+    """
     # Here first we need to look at type hints for the type hint
     # syntax variant.
     # If a key exists and is *NOT* in __annotations__ then all
     # annotations will be ignored as it becomes complex to fix the
     # ordering.
-    annotation_names = getattr(cls, '__annotations__', {}).keys()
-    cls_attributes = getattr(cls, f'_{cls.__name__}_attributes', {})
+    annotation_names = getattr(cls, "__annotations__", {}).keys()
+    cls_attributes = getattr(cls, f"_{cls.__name__}_attributes", {})
     attribute_names = cls_attributes.keys()
 
     if set(annotation_names).issuperset(set(attribute_names)):
@@ -166,48 +221,120 @@ def prefab(cls: type):
                     new_attributes[name] = cls_attributes[name]
                 else:
                     attribute_default = getattr(cls, name)
-                    attrib = Attribute(default=attribute_default)
+                    attrib = attribute(default=attribute_default)
                     # Set private_name because set_name is never called
-                    attrib.private_name = f'_prefab_attribute_{name}'
+                    attrib.private_name = f"_prefab_attribute_{name}"
                     setattr(cls, name, attrib)
                     new_attributes[name] = attrib
             else:
-                attrib = Attribute()
+                attrib = attribute()
                 # Set private_name because set_name is never called
-                attrib.private_name = f'_prefab_attribute_{name}'
+                attrib.private_name = f"_prefab_attribute_{name}"
                 setattr(cls, name, attrib)
                 new_attributes[name] = attrib
 
-        setattr(cls, f'_{cls.__name__}_attributes', new_attributes)
+        setattr(cls, f"_{cls.__name__}_attributes", new_attributes)
 
     # Handle attributes
-    attributes = {name: attrib for c in reversed(cls.__mro__)
-                  for name, attrib in getattr(c, f'_{c.__name__}_attributes', {}).items()}
+    attributes = {
+        name: attrib
+        for c in reversed(cls.__mro__)
+        for name, attrib in getattr(c, f"_{c.__name__}_attributes", {}).items()
+    }
     if not attributes:
         # It's easier to throw an error than to rewrite
         # The code for the useless case of a class with no attributes.
-        raise PrefabError("Class must contain at least 1 attribute.")
+        raise LivePrefabError("Class must contain at least 1 attribute.")
 
     default_defined = []
     for name, attrib in attributes.items():
         if attrib.default is not _NOTHING or attrib.default_factory is not _NOTHING:
             default_defined.append(name)
         else:
-            if default_defined:
-                names = ', '.join(default_defined)
+            if default_defined and not attrib.kw_only:
+                names = ", ".join(default_defined)
                 raise SyntaxError(
                     "non-default argument follows default argument",
                     f"defaults: {names}",
-                    f"non_default after default: {name}"
+                    f"non_default after default: {name}",
                 )
 
+    cls.PREFAB_FIELDS = [name for name in attributes]
     cls._attributes = attributes
     cls.__match_args__ = tuple(name for name in attributes)
 
-    setattr(cls, '__init__', init_maker)
-    setattr(cls, '__repr__', repr_maker)
-    setattr(cls, '__eq__', eq_maker)
-    setattr(cls, '__iter__', iter_maker)
+    if init:
+        setattr(cls, "__init__", init_maker)
+    else:
+        setattr(cls, "__prefab_init__", prefab_init_maker)
+    if repr:
+        setattr(cls, "__repr__", repr_maker)
+    if eq:
+        setattr(cls, "__eq__", eq_maker)
+    if iter:
+        setattr(cls, "__iter__", iter_maker)
 
     prefab_register[cls.__qualname__] = cls
     return cls
+
+
+# noinspection PyUnusedLocal
+@dataclass_transform(field_specifiers=(attribute, Attribute))
+def prefab(
+    cls: type = None,
+    *,
+    init=True,
+    repr=True,
+    eq=True,
+    iter=False,
+    compile_prefab=False,
+    compile_fallback=False,
+    compile_plain=False,
+):
+    """
+    Generate boilerplate code for dunder methods in a class.
+
+    :param cls: Class to convert to a prefab
+    :param init: generates __init__ if true or __prefab_init__ if false
+    :param repr: generate __repr__
+    :param eq: generate __eq__
+    :param iter: generate __iter__
+
+    :param compile_prefab: Direct the prefab compiler to compile this class
+    :param compile_fallback: Fail with a prefab error if the class has not been compiled
+    :param compile_plain: Remove any extra code from the resulting class
+    :return: class with __ methods defined
+    """
+    if not cls:
+        # Called as () method to change defaults
+        return partial(
+            prefab,
+            init=init,
+            repr=repr,
+            eq=eq,
+            iter=iter,
+            compile_prefab=compile_prefab,
+            compile_fallback=compile_fallback,
+        )
+    else:
+        if cls.__qualname__ in prefab_register:
+            raise PrefabError(
+                f"Class with name {cls.__qualname__} "
+                f"already registered as a prefab."
+            )
+        elif getattr(cls, "COMPILED", False):
+            # Register but do not recompile compiled classes
+            prefab_register[cls.__qualname__] = cls
+            return cls
+        # If the class is not compiled but has the instruction to compile, fail
+        elif compile_prefab and not compile_fallback:
+            raise CompiledPrefabError(
+                f"Class {cls.__name__} has not been compiled and compiled_fallback=False.",
+                f"Make sure the comment '# COMPILE_PREFABS' is at the "
+                f"top of the module {cls.__module__}\n"
+                f"and the module is imported in a 'with prefab_compiler():' block",
+            )
+        else:
+            # Create Live Version
+            setattr(cls, "COMPILED", False)
+            return _make_prefab(cls, init=init, repr=repr, eq=eq, iter=iter)

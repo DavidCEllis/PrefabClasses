@@ -20,5 +20,15 @@
 # SOFTWARE.
 # ==============================================================================
 
+
 class PrefabError(Exception):
     pass
+
+
+class LivePrefabError(PrefabError):
+    pass
+
+
+class CompiledPrefabError(PrefabError):
+    pass
+

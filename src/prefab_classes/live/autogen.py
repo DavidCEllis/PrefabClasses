@@ -50,6 +50,7 @@ def autogen(func):
     Using this as a decorator indicates that the function will return a string
     which should be used to replace the function itself for that specific class.
     """
+
     def __get__(self, instance, cls):
         # Include the defaultvalue class used as a placeholder for defaults
         global_vars = {"DefaultValue": DefaultValue, "DefaultFactory": DefaultFactory}
@@ -63,4 +64,4 @@ def autogen(func):
         setattr(cls, func.__name__, method)
         return method.__get__(instance, cls)
 
-    return type(f'AutoGen_{func.__name__}', (), dict(__get__=__get__))()
+    return type(f"AutoGen_{func.__name__}", (), dict(__get__=__get__))()

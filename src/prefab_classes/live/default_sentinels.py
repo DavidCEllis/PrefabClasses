@@ -31,6 +31,7 @@ _NOTHING = object()
 # instead stores the default value of the descriptor
 class Default:
     """Base Dummy Value Class"""
+
     def __init__(self, value=None):
         pass
 

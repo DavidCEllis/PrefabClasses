@@ -39,11 +39,15 @@
 # greater good.
 # ----------------------------------------------------------------------
 
-from .default_sentinels import _NOTHING, DefaultFactory
+from .default_sentinels import _NOTHING, DefaultFactory, DefaultValue
 from .autogen import autogen
 
 
-def get_init_maker():
+PRE_INIT_FUNC = "__prefab_pre_init__"
+POST_INIT_FUNC = "__prefab_post_init__"
+
+
+def get_init_maker(*, init_name="__init__"):
     def __init__(cls):
         arglist = []
         kw_only_arglist = []
@@ -52,7 +56,7 @@ def get_init_maker():
                 if hasattr(cls, name):
                     attr_value = getattr(cls, name)
                     if isinstance(attr_value, (str, int, float, bool)):
-                        arg = f'{name}={attr_value!r}'
+                        arg = f"{name}={attr_value!r}"
                     elif isinstance(attr_value, DefaultFactory):
                         # factory values will specifically return defaultfactory
                         arg = f'{name}=DefaultFactory("{name}")'
@@ -64,8 +68,8 @@ def get_init_maker():
                     kw_only_arglist.append(arg)
                 else:
                     arglist.append(arg)
-        pos_args = ', '.join(arglist)
-        kw_args = ', '.join(kw_only_arglist)
+        pos_args = ", ".join(arglist)
+        kw_args = ", ".join(kw_only_arglist)
         if pos_args and kw_args:
             args = f"{pos_args}, *, {kw_args}"
         elif kw_args:
@@ -81,32 +85,43 @@ def get_init_maker():
             else (name, f'DefaultFactory("{name}")')
             for name, attrib in cls._attributes.items()
         )
-        body = '\n'.join(
-            f"    self.{name} = {value}"
-            for name, value in assignments
-        )
 
-        code = f"def __init__(self, {args}):\n{body}\n"
+        if hasattr(cls, PRE_INIT_FUNC):
+            pre_init_call = f"    self.{PRE_INIT_FUNC}()\n"
+        else:
+            pre_init_call = ""
+
+        body = "\n".join(f"    self.{name} = {value}" for name, value in assignments)
+
+        if hasattr(cls, POST_INIT_FUNC):
+            post_init_call = f"    self.{POST_INIT_FUNC}()\n"
+        else:
+            post_init_call = ""
+
+        code = f"def {init_name}(self, {args}):\n{pre_init_call}\n{body}\n{post_init_call}\n"
+
         return code
+
     return autogen(__init__)
 
 
 def get_repr_maker():
     def __repr__(cls):
-        content = ', '.join(
+        content = ", ".join(
             f"{name}={{self.{name}!r}}"
             for name, attrib in cls._attributes.items()
             if attrib.repr
         )
         code = f"def __repr__(self):\n    return f'{{type(self).__name__}}({content})'"
         return code
+
     return autogen(__repr__)
 
 
 def get_eq_maker():
     def __eq__(cls):
-        selfvals = ','.join(f'self.{name}' for name in cls._attributes.keys())
-        othervals = ','.join(f'other.{name}' for name in cls._attributes.keys())
+        selfvals = ",".join(f"self.{name}" for name in cls._attributes.keys())
+        othervals = ",".join(f"other.{name}" for name in cls._attributes.keys())
         class_comparison = "self.__class__ is other.__class__"
         instance_comparison = f"({selfvals},) == ({othervals},)"
         code = (
@@ -114,18 +129,21 @@ def get_eq_maker():
             f"    return {instance_comparison} if {class_comparison} else NotImplemented\n"
         )
         return code
+
     return autogen(__eq__)
 
 
 def get_iter_maker():
     def __iter__(cls):
-        values = '\n'.join(f'    yield self.{name} ' for name in cls._attributes.keys())
+        values = "\n".join(f"    yield self.{name} " for name in cls._attributes.keys())
         code = f"def __iter__(self):\n{values}"
         return code
+
     return autogen(__iter__)
 
 
 init_maker = get_init_maker()
+prefab_init_maker = get_init_maker(init_name="__prefab_init__")
 repr_maker = get_repr_maker()
 eq_maker = get_eq_maker()
 iter_maker = get_iter_maker()
