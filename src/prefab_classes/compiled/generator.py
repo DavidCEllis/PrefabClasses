@@ -205,7 +205,7 @@ class PrefabDetails:
         self.fields = new_fields
         if not self.fields:
             raise CompiledPrefabError("Class must contain at least 1 attribute.")
-        
+
         self._resolved_parents = True
 
         return self.fields
@@ -251,65 +251,68 @@ class PrefabDetails:
         args.append(ast.arg(arg="self"))
 
         for field in self.field_list:
-            # Skip if init_ is false
+            # if init is false, just assign the default value in the body
             if field.init_ is False:
-                continue
-
-            # Define the init signature
-            assignment_value = ast.Name(id=field.name, ctx=ast.Load())
-            if field.default or field.default_factory:
-                # Include the annotation if this is an annotated value
-                if hasattr(field, "annotation"):
-                    arg = ast.arg(arg=field.name, annotation=field.annotation)
-                else:
-                    arg = ast.arg(arg=field.name)
-
-                # For regular defaults, assign in the signature as expected
                 if field.default:
-                    if field.kw_only:
-                        kw_defaults.append(field.default)
-                    else:
-                        defaults.append(field.default)
-                # For factories, call the function in the body if the value is None
+                    assignment_value = field.default
                 else:
-                    if field.kw_only:
-                        kw_defaults.append(ast.Constant(value=None))
-                    else:
-                        defaults.append(ast.Constant(value=None))
-
-                    assignment_value = ast.IfExp(
-                        test=ast.Compare(
-                            left=ast.Name(id=field.name, ctx=ast.Load()),
-                            ops=[ast.IsNot()],
-                            comparators=[ast.Constant(value=None)],
-                        ),
-                        body=ast.Name(id=field.name, ctx=ast.Load()),
-                        orelse=field.default_factory_call,
-                    )
-                if field.kw_only:
-                    kwonlyargs.append(arg)
-                else:
-                    # Declare that there's a parameter with default value
-                    # in order to fail if there's one declared afterwards
-                    has_default = True
-                    args.append(arg)
-
-            # Simpler code for values with no defaults
+                    assignment_value = field.default_factory_call
             else:
-                if has_default and not field.kw_only:
-                    raise SyntaxError(
-                        "non-default argument follows default argument"
-                    )
-                if field.annotation:
-                    arg = ast.arg(arg=field.name, annotation=field.annotation)
-                else:
-                    arg = ast.arg(arg=field.name)
+                # Define the init signature
+                assignment_value = ast.Name(id=field.name, ctx=ast.Load())
+                if field.default or field.default_factory:
+                    # Include the annotation if this is an annotated value
+                    if hasattr(field, "annotation"):
+                        arg = ast.arg(arg=field.name, annotation=field.annotation)
+                    else:
+                        arg = ast.arg(arg=field.name)
 
-                if field.kw_only:
-                    kw_defaults.append(None)
-                    kwonlyargs.append(arg)
+                    # For regular defaults, assign in the signature as expected
+                    if field.default:
+                        if field.kw_only:
+                            kw_defaults.append(field.default)
+                        else:
+                            defaults.append(field.default)
+                    # For factories, call the function in the body if the value is None
+                    else:
+                        if field.kw_only:
+                            kw_defaults.append(ast.Constant(value=None))
+                        else:
+                            defaults.append(ast.Constant(value=None))
+
+                        assignment_value = ast.IfExp(
+                            test=ast.Compare(
+                                left=ast.Name(id=field.name, ctx=ast.Load()),
+                                ops=[ast.IsNot()],
+                                comparators=[ast.Constant(value=None)],
+                            ),
+                            body=ast.Name(id=field.name, ctx=ast.Load()),
+                            orelse=field.default_factory_call,
+                        )
+                    if field.kw_only:
+                        kwonlyargs.append(arg)
+                    else:
+                        # Declare that there's a parameter with default value
+                        # in order to fail if there's one declared afterwards
+                        has_default = True
+                        args.append(arg)
+
+                # Simpler code for values with no defaults
                 else:
-                    args.append(arg)
+                    if has_default and not field.kw_only:
+                        raise SyntaxError(
+                            "non-default argument follows default argument"
+                        )
+                    if field.annotation:
+                        arg = ast.arg(arg=field.name, annotation=field.annotation)
+                    else:
+                        arg = ast.arg(arg=field.name)
+
+                    if field.kw_only:
+                        kw_defaults.append(None)
+                        kwonlyargs.append(arg)
+                    else:
+                        args.append(arg)
 
             # Define the body
             body.append(
