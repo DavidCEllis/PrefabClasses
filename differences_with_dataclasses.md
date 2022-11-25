@@ -11,7 +11,7 @@ on intentional differences. Unintentional differences may be patched
 or will be added to this list.
 
 ## Functional differences ##
-1. the `as_dict` method in `prefab_classes.serializers` does *not* recurse.
+1. the `as_dict` method in `prefab_classes` does *not* recurse.
     * I don't think this is the correct behaviour to have by default.
     * A prefab may contain other prefabs that you might not want to serialize
       in the same way and so this shouldn't make that decision for you.
