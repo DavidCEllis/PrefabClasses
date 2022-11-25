@@ -223,6 +223,10 @@ class PrefabDetails:
         if self._resolved_parents:
             return self.fields
 
+        # Because this uses a python dict and dicts preserve
+        # order this means if a subclass replaces a value
+        # it will remain in its original place in the init function
+        # but with the new default value (or with the default removed)
         new_fields: dict[str, "Field"] = {}
         for parent_name in reversed(self.parents):
             if parent_name not in prefabs:
