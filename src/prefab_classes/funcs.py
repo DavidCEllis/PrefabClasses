@@ -5,6 +5,10 @@ def is_prefab(o):
     return hasattr(o, FIELDS_ATTRIBUTE)
 
 
+def is_prefab_instance(o):
+    return is_prefab(o) and not isinstance(o, type)
+
+
 def as_dict(inst, *, excludes=None):
     """
     Represent the prefab as a dictionary of attribute names and values.
