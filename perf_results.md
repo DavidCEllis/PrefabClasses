@@ -10,9 +10,7 @@ test file.
 
 ## 2018 Macbook Pro ##
 
-2.3 GHz Quad-Core Intel Core i5 
-8 GB 2133 MHz LPDDR3
-Run from pycharm
+2.3 GHz Quad-Core Intel Core i5 / 8 GB 2133 MHz LPDDR3
 
 ```
 Python Version 3.11.0 (main, Oct 26 2022, 01:05:56) [Clang 13.0.0 (clang-1300.0.29.30)]
