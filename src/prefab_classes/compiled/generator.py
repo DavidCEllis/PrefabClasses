@@ -1,6 +1,7 @@
 import ast
 from typing import Any, Optional, Union
 
+from ..constants import PRE_INIT_FUNC, POST_INIT_FUNC, PREFAB_INIT_FUNC
 from ..live import prefab, attribute
 from ..exceptions import CompiledPrefabError
 
@@ -236,7 +237,7 @@ class PrefabDetails:
         if self._generated_init:
             return
 
-        funcname = "__init__" if self.init else "__prefab_init__"
+        funcname = "__init__" if self.init else PREFAB_INIT_FUNC
 
         posonlyargs = []  # Unused
         args = []
@@ -347,8 +348,6 @@ class PrefabDetails:
         args = ast.arguments(
             posonlyargs=[], args=arguments, kwonlyargs=[], kw_defaults=[], defaults=[]
         )
-
-        self_name = ast.Name(id="self", ctx=ast.Load())
 
         field_strings = [ast.Constant(value=f"{self.name}(")]
         for i, field in enumerate(self.field_list):

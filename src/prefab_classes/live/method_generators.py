@@ -39,12 +39,9 @@
 # greater good.
 # ----------------------------------------------------------------------
 
-from .default_sentinels import _NOTHING, DefaultFactory, DefaultValue
+from ..constants import PRE_INIT_FUNC, POST_INIT_FUNC, PREFAB_INIT_FUNC
+from .default_sentinels import _NOTHING, DefaultFactory
 from .autogen import autogen
-
-
-PRE_INIT_FUNC = "__prefab_pre_init__"
-POST_INIT_FUNC = "__prefab_post_init__"
 
 
 def get_init_maker(*, init_name="__init__"):
@@ -143,7 +140,7 @@ def get_iter_maker():
 
 
 init_maker = get_init_maker()
-prefab_init_maker = get_init_maker(init_name="__prefab_init__")
+prefab_init_maker = get_init_maker(init_name=PREFAB_INIT_FUNC)
 repr_maker = get_repr_maker()
 eq_maker = get_eq_maker()
 iter_maker = get_iter_maker()
