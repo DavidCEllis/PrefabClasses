@@ -109,11 +109,13 @@ class PrefabDetails:
     compile_prefab: bool = False
     compile_plain: bool = False
     compile_fallback: bool = False
+    compile_slots: bool = False
     parents: Optional[list[str]] = None
 
     def __prefab_post_init__(self):
         self._resolved_parents = False
         self._generated_fields = False
+        self._generated_slots = False
         self._generated_init = False
         self._generated_repr = False
         self._generated_eq = False
@@ -269,11 +271,21 @@ class PrefabDetails:
 
         self._generated_fields = True
 
+    def generate_slots(self):
+        if self._generated_slots or not self.compile_slots:
+            return
+
+        slot_consts = [ast.Constant(value=name) for name in self.field_names]
+        target = ast.Name(id='__slots__', ctx=ast.Store())
+        assignment = ast.Assign(
+            targets=[target], value=ast.Tuple(elts=slot_consts, ctx=ast.Load())
+        )
+
+        self.node.body.insert(2, assignment)
+
     def generate_init(self):
         if self._generated_init:
             return
-
-        _ = self.method_names
 
         funcname = "__init__" if self.init else PREFAB_INIT_FUNC
 
@@ -496,6 +508,7 @@ class PrefabDetails:
 
         # Rewrite AST
         self.generate_fields()
+        self.generate_slots()
         self.generate_init()
         self.generate_repr()
         self.generate_eq()

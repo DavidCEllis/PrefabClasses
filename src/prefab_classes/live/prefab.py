@@ -296,6 +296,7 @@ def prefab(
     compile_prefab=False,
     compile_fallback=False,
     compile_plain=False,
+    compile_slots=False,
 ):
     """
     Generate boilerplate code for dunder methods in a class.
@@ -309,6 +310,7 @@ def prefab(
     :param compile_prefab: Direct the prefab compiler to compile this class
     :param compile_fallback: Fail with a prefab error if the class has not been compiled
     :param compile_plain: Do not include the COMPILED and PREFAB_FIELDS attributes after compilation
+    :param compile_slots: Make the resulting compiled class use slots
     :return: class with __ methods defined
     """
     if not cls:
@@ -334,6 +336,8 @@ def prefab(
                 f"top of the module {cls.__module__}\n"
                 f"and the module is imported in a 'with prefab_compiler():' block",
             )
+        elif compile_slots:
+            raise PrefabError("Slots are not supported on 'live' Prefabs.")
         else:
             # Create Live Version
             setattr(cls, COMPILED_FLAG, False)
