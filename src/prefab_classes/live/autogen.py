@@ -60,6 +60,7 @@ def autogen(func):
         # Having executed the code, the method should now exist
         # and can be retrieved by name from the dict
         method = local_vars[func.__name__]
+        method.__qualname__ = f"{cls.__qualname__}.{method.__name__}"
         # Replace the attribute with the real function - this will only be called once.
         setattr(cls, func.__name__, method)
         return method.__get__(instance, cls)

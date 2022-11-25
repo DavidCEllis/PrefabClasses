@@ -48,7 +48,7 @@ Based on ideas (and some code) from Cluegen by David Beazley https://github.com/
 from functools import partial
 
 # noinspection PyUnresolvedReferences
-from typing import dataclass_transform
+# from typing import dataclass_transform
 
 
 from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG
@@ -195,7 +195,7 @@ def attribute(
     )
 
 
-@dataclass_transform(field_specifiers=(attribute, Attribute))
+# @dataclass_transform(field_specifiers=(attribute, Attribute))
 def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     """
     Generate boilerplate code for dunder methods in a class.
@@ -285,7 +285,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
 
 
 # noinspection PyUnusedLocal
-@dataclass_transform(field_specifiers=(attribute, Attribute))
+# @dataclass_transform(field_specifiers=(attribute, Attribute))
 def prefab(
     cls: type = None,
     *,
@@ -296,6 +296,7 @@ def prefab(
     compile_prefab=False,
     compile_fallback=False,
     compile_plain=False,
+    compile_slots=False,
 ):
     """
     Generate boilerplate code for dunder methods in a class.
@@ -309,6 +310,7 @@ def prefab(
     :param compile_prefab: Direct the prefab compiler to compile this class
     :param compile_fallback: Fail with a prefab error if the class has not been compiled
     :param compile_plain: Do not include the COMPILED and PREFAB_FIELDS attributes after compilation
+    :param compile_slots: Make the resulting compiled class use slots
     :return: class with __ methods defined
     """
     if not cls:
@@ -334,6 +336,8 @@ def prefab(
                 f"top of the module {cls.__module__}\n"
                 f"and the module is imported in a 'with prefab_compiler():' block",
             )
+        elif compile_slots:
+            raise PrefabError("Slots are not supported on 'live' Prefabs.")
         else:
             # Create Live Version
             setattr(cls, COMPILED_FLAG, False)

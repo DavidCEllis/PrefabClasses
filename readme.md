@@ -6,7 +6,7 @@ Yet another variation on attrs/dataclasses.
 Either written lazily when you first access the methods or
 eagerly when the class is compiled into a .pyc.
 
-# Why are you remaking this again? #
+## Why are you remaking this again? ##
 
 Initially wanting to remove a dependency on attrs I had seen 
 [David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
@@ -17,20 +17,41 @@ version of this.
 There are now 2 different methods of handling the boilerplate
 generation in this project.
 
+### Live/Interpreted ###
+
 The 'live' method works as *cluegen* worked, generating the 
 required methods only when they are first accessed. Compared to
 attrs this trades speed of first access for speed of import. 
 This also means that if a class method is never accessed then 
 it is not generated.
 
+### Compiled ###
+
 The 'compiled' method instead generates all of the code when the 
 module is first *compiled* into a .pyc file by modifying the AST. 
-Subsequently there is almost no overhead once the .pyc has been 
-generated as the result is a plain python class in the .pyc. 
-The trade-off is that this method has some additional restrictions 
-so is slightly less flexible. Most notably inheritance does not 
-work across .py files as each file is compiled in isolation. 
-This method can also not be used interactively.
+
+There are some trade-offs and differences between the two.
+
+* After the .pyc files have been compiled, compiled classes import
+  much more quickly than live ones as they are plain python classes.
+    * They are not *quite* as fast as modules with native classes,
+      as hash-based invalidation is used instead of timestamp
+      invalidation.
+* Due to .pyc files being created independently inheritance is
+  more restricted for compiled classes.
+    * Inheritance across modules is not supported
+    * Inheritance from non-prefab base classes is not supported
+* As the classes must be compiled into the .pyc files, compiled
+  classes can't be created interactively.
+* In order to compile classes a `# COMPILE_PREFABS` comment must
+  be at the top of a module. The module must also be imported in
+  a `with prefab_compiler():` block.
+    * This places an import hook that will compile prefabs in
+      these files.
+* Compiled classes support slots, live classes do not.
+    * While `attrs` supports this dynamically, it is forced to 
+      make a new class and copy over features. This can have some
+      side effects.
 
 ## Usage Examples ##
 

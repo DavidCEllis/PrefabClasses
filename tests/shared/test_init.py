@@ -1,4 +1,5 @@
 """Tests for the behaviour of __init__"""
+import sys
 from pathlib import Path
 
 from pytest import raises
@@ -78,14 +79,16 @@ def test_no_default(importer):
     with raises(TypeError) as e_info:
         x = Coordinate(1)
 
-    # Because the __init__ function is defined outside of the class then added for live
-    # prefabs, it does not inlude the class name while Compiled prefabs do.
-    if importer:
+    # Error message was changed in 3.10 to __qualname__ from __name__
+    if sys.version_info[:2] >= (3, 10):
         error_message = (
             "Coordinate.__init__() missing 1 required positional argument: 'y'"
         )
     else:
-        error_message = "__init__() missing 1 required positional argument: 'y'"
+        error_message = (
+            "__init__() missing 1 required positional argument: 'y'"
+        )
+
     assert e_info.value.args[0] == error_message
 
 

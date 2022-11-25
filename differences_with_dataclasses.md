@@ -43,3 +43,10 @@ or will be added to this list.
     * Usually you should use `attribute(default_factory=list)` or similar.
 6. If `init` is `False` in `@prefab(init=False)` the method is still generated
    but renamed to `__prefab_init__`.
+7. Slots are supported, but only in the compiled form.
+    * The live form has the same problems as `dataclasses` and `attrs` in that 
+      in order to properly support slots it is necessary to create a new class
+      and copy information over as it is impossible to add slots after the class
+      is defined.
+    * The compiled form modifies the class before it is defined so slots can
+      easily be added.
