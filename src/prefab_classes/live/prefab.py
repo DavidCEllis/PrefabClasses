@@ -64,9 +64,7 @@ from .method_generators import (
 
 
 def resolved_name(cls):
-    name = f"{cls.__module__}.{cls.__qualname__}"
-    print(name)
-    return name
+    return f"{cls.__module__}.{cls.__qualname__}"
 
 
 class Attribute:
