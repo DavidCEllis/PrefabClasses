@@ -59,5 +59,5 @@ def test_created_twice(importer):
 
     assert (
         e_info.value.args[0]
-        == "Class with name DejaVu already registered as a prefab."
+        == "Class fails.creation_7.DejaVu already registered as a prefab."
     )

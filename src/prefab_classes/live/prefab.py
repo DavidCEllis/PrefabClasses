@@ -63,6 +63,12 @@ from .method_generators import (
 )
 
 
+def resolved_name(cls):
+    name = f"{cls.__module__}.{cls.__qualname__}"
+    print(name)
+    return name
+
+
 class Attribute:
     """
     Descriptor class to define attributes.
@@ -274,7 +280,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     if iter:
         setattr(cls, "__iter__", iter_maker)
 
-    prefab_register[cls.__qualname__] = cls
+    prefab_register[resolved_name(cls)] = cls
     return cls
 
 
@@ -317,14 +323,14 @@ def prefab(
             compile_fallback=compile_fallback,
         )
     else:
-        if cls.__qualname__ in prefab_register:
+        if resolved_name(cls) in prefab_register:
             raise PrefabError(
-                f"Class with name {cls.__qualname__} "
+                f"Class {resolved_name(cls)} "
                 f"already registered as a prefab."
             )
         elif getattr(cls, "COMPILED", False):
             # Register but do not recompile compiled classes
-            prefab_register[cls.__qualname__] = cls
+            prefab_register[resolved_name(cls)] = cls
             return cls
         # If the class is not compiled but has the instruction to compile, fail
         elif compile_prefab and not compile_fallback:

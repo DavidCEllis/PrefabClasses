@@ -1,4 +1,5 @@
 from .register import prefab_register
+from .live.prefab import resolved_name
 
 
 def as_dict(inst, *, excludes=None):
@@ -37,7 +38,7 @@ def to_json(inst, *, excludes=None, indent=2, default=None, **kwargs):
     # If the user needs to serialize other classes their default will be called
     # only if the object is not an instance of Prefab
     def default_func(o):
-        if o.__class__.__qualname__ in prefab_register:
+        if resolved_name(o.__class__) in prefab_register:
             return as_dict(o)
         elif default is not None:
             return default(o)
