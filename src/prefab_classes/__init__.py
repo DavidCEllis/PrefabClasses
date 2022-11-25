@@ -1,4 +1,4 @@
-__version__ = "v0.6.0-alpha.2"
+__version__ = "v0.6.0-alpha.3"
 PREFAB_MAGIC_BYTES = b"_".join([b"PREFAB_CLASSES", __version__.encode()])
 
 from .live import prefab, attribute
