@@ -109,3 +109,10 @@ def test_post_init(importer):
 
     x = PostInitExample()
     assert hasattr(x, "post_init_ran")
+
+
+def test_replace_factory_default(importer):
+    from init_ex import FactoryDefault
+
+    mut1 = FactoryDefault(x=[1, 2, 3])
+    assert mut1.x == [1, 2, 3]
