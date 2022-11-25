@@ -1,6 +1,6 @@
 # COMPILE_PREFABS
 from prefab_classes import prefab, attribute
-
+from pathlib import Path
 
 @prefab(compile_prefab=True, compile_fallback=True)
 class Coordinate:
@@ -41,6 +41,20 @@ class Settings:
     """
     Global persistent settings handler
     """
-    from pathlib import Path
-
     output_file = attribute(default=Path("Settings.json"))
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class PreInitExample:
+    init_value: bool = True
+
+    def __prefab_pre_init__(self):
+        self.pre_init_ran = True
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class PostInitExample:
+    init_value: bool = True
+
+    def __prefab_post_init__(self):
+        self.post_init_ran = True

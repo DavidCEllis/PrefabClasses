@@ -113,6 +113,7 @@ class PrefabDetails:
         self._generated_repr = False
         self._generated_eq = False
         self._generated_iter = False
+        self._method_visitor = None
 
     @property
     def field_names(self):
@@ -121,6 +122,29 @@ class PrefabDetails:
     @property
     def field_list(self):
         return list(self.fields.values())
+
+    @property
+    def method_names(self):
+        if not self._method_visitor:
+            self._method_visitor = GatherFuncNames()
+            self._method_visitor.visit(self.node)
+        return self._method_visitor.methodnames
+
+    @staticmethod
+    def call_method(method_name, args=None, keywords=None):
+        args = args if args else []
+        keywords = keywords if keywords else []
+        attrib = ast.Attribute(value=ast.Name(id='self', ctx=ast.Load()), attr=method_name, ctx=ast.Load())
+        call = ast.Call(func=attrib, args=args, keywords=keywords)
+        return ast.Expr(value=call)
+
+    @property
+    def pre_init_call(self):
+        return self.call_method(PRE_INIT_FUNC)
+
+    @property
+    def post_init_call(self):
+        return self.call_method(POST_INIT_FUNC)
 
     def discover_fields(self):
         def funcid_or_none(value):
@@ -237,6 +261,8 @@ class PrefabDetails:
         if self._generated_init:
             return
 
+        _ = self.method_names
+
         funcname = "__init__" if self.init else PREFAB_INIT_FUNC
 
         posonlyargs = []  # Unused
@@ -246,6 +272,9 @@ class PrefabDetails:
         kw_defaults = []
 
         body = []
+
+        if PRE_INIT_FUNC in self.method_names:
+            body.append(self.pre_init_call)
 
         has_default = False
 
@@ -324,6 +353,9 @@ class PrefabDetails:
                     else assignment_value,
                 )
             )
+
+        if POST_INIT_FUNC in self.method_names:
+            body.append(self.post_init_call)
 
         arguments = ast.arguments(
             posonlyargs=posonlyargs,
@@ -456,6 +488,15 @@ class PrefabDetails:
         self.generate_repr()
         self.generate_eq()
         self.generate_iter()
+
+
+class GatherFuncNames(ast.NodeVisitor):
+    def __init__(self):
+        super().__init__()
+        self.methodnames = set()
+
+    def visit_FunctionDef(self, node: ast.FunctionDef):
+        self.methodnames.add(node.name)
 
 
 class GatherPrefabs(ast.NodeVisitor):

@@ -72,19 +72,38 @@ def test_default_factory_good(importer):
     assert mut1.x is not mut2.x
 
 
-def test_no_default():
+def test_no_default(importer):
     from init_ex import Coordinate
 
     with raises(TypeError) as e_info:
         x = Coordinate(1)
 
-    error_message = "__init__() missing 1 required positional argument: 'y'"
+    # Because the __init__ function is defined outside of the class then added for live
+    # prefabs, it does not inlude the class name while Compiled prefabs do.
+    if importer:
+        error_message = "Coordinate.__init__() missing 1 required positional argument: 'y'"
+    else:
+        error_message = "__init__() missing 1 required positional argument: 'y'"
     assert e_info.value.args[0] == error_message
 
 
-def test_difficult_defaults():
+def test_difficult_defaults(importer):
     from init_ex import Settings
 
     x = Settings()
 
     assert x.output_file == Path("Settings.json")
+
+
+def test_pre_init(importer):
+    from init_ex import PreInitExample
+
+    x = PreInitExample()
+    assert hasattr(x, "pre_init_ran")
+
+
+def test_post_init(importer):
+    from init_ex import PostInitExample
+
+    x = PostInitExample()
+    assert hasattr(x, "post_init_ran")
