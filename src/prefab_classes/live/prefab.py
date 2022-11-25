@@ -48,7 +48,7 @@ Based on ideas (and some code) from Cluegen by David Beazley https://github.com/
 from functools import partial
 
 # noinspection PyUnresolvedReferences
-from typing import dataclass_transform
+# from typing import dataclass_transform
 
 
 from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG
@@ -195,7 +195,7 @@ def attribute(
     )
 
 
-@dataclass_transform(field_specifiers=(attribute, Attribute))
+# @dataclass_transform(field_specifiers=(attribute, Attribute))
 def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     """
     Generate boilerplate code for dunder methods in a class.
