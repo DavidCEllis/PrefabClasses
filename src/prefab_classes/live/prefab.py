@@ -144,7 +144,9 @@ class Attribute:
                 "Cannot define both a default value and a default factory."
             )
         if kw_only and not init:
-            raise LivePrefabError("Attribute cannot be keyword only if it is not in init.")
+            raise LivePrefabError(
+                "Attribute cannot be keyword only if it is not in init."
+            )
 
         self.default = default
         self.default_factory = default_factory

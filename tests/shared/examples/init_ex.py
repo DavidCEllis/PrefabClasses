@@ -2,6 +2,7 @@
 from prefab_classes import prefab, attribute
 from pathlib import Path
 
+
 @prefab(compile_prefab=True, compile_fallback=True)
 class Coordinate:
     x: float
@@ -41,6 +42,7 @@ class Settings:
     """
     Global persistent settings handler
     """
+
     output_file = attribute(default=Path("Settings.json"))
 
 

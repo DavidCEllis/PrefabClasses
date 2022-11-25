@@ -31,4 +31,3 @@ class LivePrefabError(PrefabError):
 
 class CompiledPrefabError(PrefabError):
     pass
-

@@ -1,6 +1,7 @@
 from .funcs import is_prefab
 from .constants import FIELDS_ATTRIBUTE
 
+
 def as_dict(inst, *, excludes=None):
     """
     Represent the prefab as a dictionary of attribute names and values.
