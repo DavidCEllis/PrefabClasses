@@ -1,4 +1,3 @@
-import pytest
 from pathlib import Path
 
 
@@ -38,3 +37,12 @@ def test_converter_only_init(importer):
     pth.path = "alternate/directory"
 
     assert pth.path == "alternate/directory"  # This has not been converted to a path.
+
+
+def test_convert_twice(importer):
+    from converter import SystemPath
+
+    pth = SystemPath("fake/directory")
+    pth2 = SystemPath("fake/directory")
+
+    assert pth2.path == Path("fake/directory")

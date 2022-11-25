@@ -110,10 +110,16 @@ class Attribute:
         elif isinstance(value, DefaultFactory):
             # noinspection PyCallingNonCallable
             value = self.default_factory()
-        if self.converter and not self._converted:
-            self._converted = True
+
+        converted = getattr(obj, self.converted_flag, False)
+        if self.converter and not converted:
+            setattr(obj, self.converted_flag, True)
             value = self.converter(value)
         setattr(obj, self.private_name, value)
+
+    @property
+    def converted_flag(self):
+        return f"{self.private_name}_converted"
 
     # noinspection PyShadowingBuiltins
     def __init__(
@@ -152,7 +158,6 @@ class Attribute:
         self.default_factory = default_factory
 
         self.converter = converter
-        self._converted = False
 
         self.init = init
         self.repr = repr
