@@ -285,7 +285,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
 
 
 # noinspection PyUnusedLocal
-@dataclass_transform(field_specifiers=(attribute, Attribute))
+# @dataclass_transform(field_specifiers=(attribute, Attribute))
 def prefab(
     cls: type = None,
     *,
