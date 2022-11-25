@@ -1,5 +1,13 @@
 # perf.py results #
 
+These are the results from running perf.py on different machines I have access to.
+
+This is **NOT** an overall performance test. This is just intended to check how
+quickly a module with a large number of generated classes will import.
+
+These test results do not include the time for the initial .pyc compilation of the
+test file.
+
 ## 2018 Macbook Pro ##
 
 2.3 GHz Quad-Core Intel Core i5 
