@@ -1,15 +1,13 @@
 import ast
 from typing import Any, Optional, Union
 
-from ..constants import PRE_INIT_FUNC, POST_INIT_FUNC, PREFAB_INIT_FUNC
+from ..constants import (
+    PRE_INIT_FUNC, POST_INIT_FUNC, PREFAB_INIT_FUNC,
+    DECORATOR_NAME, ATTRIBUTE_FUNCNAME, FIELDS_ATTRIBUTE,
+    COMPILED_FLAG, COMPILE_ARGUMENT
+)
 from ..live import prefab, attribute
 from ..exceptions import CompiledPrefabError
-
-DECORATOR_NAME = "prefab"
-ATTRIBUTE_FUNCNAME = "attribute"
-FIELDS_ATTRIBUTE = "PREFAB_FIELDS"
-COMPILE_ARGUMENT = "compile_prefab"
-COMPILED_FLAG = "COMPILED"
 
 assignment_type = Union[ast.AnnAssign, ast.Assign]
 
@@ -238,9 +236,10 @@ class PrefabDetails:
     def generate_fields(self):
         if self._generated_fields:
             return  # Only generate once
-        if self.compile_plain:
-            self.node.decorator_list.remove(self.decorator)
-        else:
+
+        # Remove the decorator
+        self.node.decorator_list.remove(self.decorator)
+        if not self.compile_plain:
             compiled_flag = ast.Assign(
                 targets=[ast.Name(id=COMPILED_FLAG, ctx=ast.Store())],
                 value=ast.Constant(value=True),

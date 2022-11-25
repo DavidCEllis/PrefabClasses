@@ -5,7 +5,6 @@ from unittest import mock
 import pytest
 
 from prefab_classes import prefab_compiler
-from prefab_classes.register import prefab_register
 from prefab_classes.compiled.import_hook import PrefabFinder, PrefabHacker
 
 
@@ -37,8 +36,6 @@ def test_invalidation_from_compiled():
     # Check this is not a 'live' prefab
     assert example_fallback.Coordinate.COMPILED is True
 
-    prefab_register.clear()
-
     # remove the module
     del sys.modules["example_fallback"]
 
@@ -46,8 +43,6 @@ def test_invalidation_from_compiled():
 
     # Show this is now a 'live' prefab
     assert example_fallback.Coordinate.COMPILED is False
-
-    prefab_register.clear()
 
 
 @pytest.mark.usefixtures("compile_folder_modules")
@@ -61,15 +56,11 @@ def test_invalidation_to_compiled():
     # remove the module
     del sys.modules["example_fallback"]
 
-    prefab_register.clear()
-
     with prefab_compiler():
         import example_fallback
 
     # Show this is now a 'live' prefab
     assert example_fallback.Coordinate.COMPILED is True
-
-    prefab_register.clear()
 
 
 @pytest.mark.usefixtures("compile_folder_modules")
@@ -105,8 +96,7 @@ def test_cache_used():
 
     assert example_fallback.Coordinate.COMPILED  # Check the code is actually there
 
-    # Clear register and modules to allow second import
-    prefab_register.clear()
+    # Clear modules to allow second import
     del sys.modules["example_fallback"]
 
     # Patch the importer to test if a method is not called.

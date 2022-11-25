@@ -1,6 +1,5 @@
-from .register import prefab_register
-from .live.prefab import resolved_name
-
+from .funcs import is_prefab
+from .constants import FIELDS_ATTRIBUTE
 
 def as_dict(inst, *, excludes=None):
     """
@@ -13,7 +12,7 @@ def as_dict(inst, *, excludes=None):
     result = {}
     excludes = excludes or set()
 
-    attrib_names = inst.PREFAB_FIELDS
+    attrib_names = getattr(inst, FIELDS_ATTRIBUTE)
 
     for name in attrib_names:
         if name not in excludes:
@@ -38,7 +37,7 @@ def to_json(inst, *, excludes=None, indent=2, default=None, **kwargs):
     # If the user needs to serialize other classes their default will be called
     # only if the object is not an instance of Prefab
     def default_func(o):
-        if resolved_name(o.__class__) in prefab_register:
+        if is_prefab(o):
             return as_dict(o)
         elif default is not None:
             return default(o)
