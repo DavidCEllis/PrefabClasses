@@ -90,7 +90,6 @@ with the import hook included. The resulting code can be previewed using the
 ```python
 from prefab_classes import prefab
 
-@prefab(compile_prefab=True)
 class Settings:
     COMPILED = True
     PREFAB_FIELDS = ["hostname", "template_folder"]

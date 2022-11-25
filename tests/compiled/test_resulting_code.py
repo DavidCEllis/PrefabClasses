@@ -9,7 +9,6 @@ def test_code_result_simple():
     code = (
         "from prefab_classes import prefab\n"
         "\n"
-        "@prefab(compile_prefab=True, iter=True)\n"
         "class Coordinate:\n"
         "    COMPILED = True\n"
         "    PREFAB_FIELDS = ['x', 'y']\n"

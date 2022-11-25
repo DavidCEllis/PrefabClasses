@@ -51,8 +51,8 @@ from functools import partial
 from typing import dataclass_transform
 
 
+from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG
 from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
-from ..register import prefab_register
 from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
 from .method_generators import (
     init_maker,
@@ -61,10 +61,6 @@ from .method_generators import (
     iter_maker,
     prefab_init_maker,
 )
-
-
-def resolved_name(cls):
-    return f"{cls.__module__}.{cls.__qualname__}"
 
 
 class Attribute:
@@ -148,7 +144,9 @@ class Attribute:
                 "Cannot define both a default value and a default factory."
             )
         if kw_only and not init:
-            raise LivePrefabError("Attribute cannot be keyword only if it is not in init.")
+            raise LivePrefabError(
+                "Attribute cannot be keyword only if it is not in init."
+            )
 
         self.default = default
         self.default_factory = default_factory
@@ -263,9 +261,9 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
                     f"non_default after default: {name}",
                 )
 
-    cls.PREFAB_FIELDS = [name for name in attributes]
+    setattr(cls, FIELDS_ATTRIBUTE, [name for name in attributes])
     cls._attributes = attributes
-    cls.__match_args__ = tuple(name for name in attributes)
+    # cls.__match_args__ = tuple(name for name in attributes)
 
     if init:
         setattr(cls, "__init__", init_maker)
@@ -278,7 +276,6 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     if iter:
         setattr(cls, "__iter__", iter_maker)
 
-    prefab_register[resolved_name(cls)] = cls
     return cls
 
 
@@ -306,7 +303,7 @@ def prefab(
 
     :param compile_prefab: Direct the prefab compiler to compile this class
     :param compile_fallback: Fail with a prefab error if the class has not been compiled
-    :param compile_plain: Remove any extra code from the resulting class
+    :param compile_plain: Do not include the COMPILED and PREFAB_FIELDS attributes after compilation
     :return: class with __ methods defined
     """
     if not cls:
@@ -321,14 +318,8 @@ def prefab(
             compile_fallback=compile_fallback,
         )
     else:
-        if resolved_name(cls) in prefab_register:
-            raise PrefabError(
-                f"Class {resolved_name(cls)} "
-                f"already registered as a prefab."
-            )
-        elif getattr(cls, "COMPILED", False):
-            # Register but do not recompile compiled classes
-            prefab_register[resolved_name(cls)] = cls
+        if getattr(cls, COMPILED_FLAG, False):
+            # Do not recompile compiled classes
             return cls
         # If the class is not compiled but has the instruction to compile, fail
         elif compile_prefab and not compile_fallback:
@@ -340,5 +331,5 @@ def prefab(
             )
         else:
             # Create Live Version
-            setattr(cls, "COMPILED", False)
+            setattr(cls, COMPILED_FLAG, False)
             return _make_prefab(cls, init=init, repr=repr, eq=eq, iter=iter)

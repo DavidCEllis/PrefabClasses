@@ -251,9 +251,7 @@ def main(reps, test_everything=False, exclude_compile=False):
         write_perftemp(100, dataklass_eval_template, 'from dataklasses import dataklass\n')
         run_test('dataklasses_eval', reps, exclude_compile=exclude_compile)
 
-    prefab_import = "from prefab_classes import prefab, attribute\n" \
-                    "from prefab_classes.register import prefab_register\n" \
-                    "prefab_register.clear()\n"
+    prefab_import = "from prefab_classes import prefab, attribute\n"
 
     write_perftemp(100, prefab_template, prefab_import)
     run_test('prefab', reps, exclude_compile=exclude_compile)
@@ -262,9 +260,7 @@ def main(reps, test_everything=False, exclude_compile=False):
     run_test('prefab_eval', reps, exclude_compile=exclude_compile)
 
     compiled_prefab_import = "# COMPILE_PREFABS\n" \
-                             "from prefab_classes import prefab\n" \
-                             "from prefab_classes.register import prefab_register\n" \
-                             "prefab_register.clear()\n"
+                             "from prefab_classes import prefab\n"
 
     write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
     run_test('compiled_prefab', reps, exclude_compile=exclude_compile)

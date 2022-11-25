@@ -54,6 +54,7 @@ class PrefabHacker(SourceFileLoader):
     @staticmethod
     def make_pyc_hash(source_bytes):
         from importlib import util
+
         # Modify the data given to the hash with extra data
         hash_input_bytes = b"".join([PREFAB_MAGIC_BYTES, source_bytes])
         return util.source_hash(hash_input_bytes)

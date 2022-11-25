@@ -51,13 +51,3 @@ def test_no_attributes_error(importer):
         from fails.creation_6 import Empty
 
     assert e_info.value.args[0] == "Class must contain at least 1 attribute."
-
-
-def test_created_twice(importer):
-    with raises(PrefabError) as e_info:
-        import fails.creation_7
-
-    assert (
-        e_info.value.args[0]
-        == "Class fails.creation_7.DejaVu already registered as a prefab."
-    )

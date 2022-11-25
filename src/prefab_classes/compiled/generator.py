@@ -1,15 +1,18 @@
 import ast
 from typing import Any, Optional, Union
 
-from ..constants import PRE_INIT_FUNC, POST_INIT_FUNC, PREFAB_INIT_FUNC
+from ..constants import (
+    PRE_INIT_FUNC,
+    POST_INIT_FUNC,
+    PREFAB_INIT_FUNC,
+    DECORATOR_NAME,
+    ATTRIBUTE_FUNCNAME,
+    FIELDS_ATTRIBUTE,
+    COMPILED_FLAG,
+    COMPILE_ARGUMENT,
+)
 from ..live import prefab, attribute
 from ..exceptions import CompiledPrefabError
-
-DECORATOR_NAME = "prefab"
-ATTRIBUTE_FUNCNAME = "attribute"
-FIELDS_ATTRIBUTE = "PREFAB_FIELDS"
-COMPILE_ARGUMENT = "compile_prefab"
-COMPILED_FLAG = "COMPILED"
 
 assignment_type = Union[ast.AnnAssign, ast.Assign]
 
@@ -69,7 +72,9 @@ class Field:
             )
 
         if kw_only and not init_:
-            raise CompiledPrefabError("Attribute cannot be keyword only if it is not in init.")
+            raise CompiledPrefabError(
+                "Attribute cannot be keyword only if it is not in init."
+            )
 
         if default and default_factory:
             raise CompiledPrefabError(
@@ -134,7 +139,9 @@ class PrefabDetails:
     def call_method(method_name, args=None, keywords=None):
         args = args if args else []
         keywords = keywords if keywords else []
-        attrib = ast.Attribute(value=ast.Name(id='self', ctx=ast.Load()), attr=method_name, ctx=ast.Load())
+        attrib = ast.Attribute(
+            value=ast.Name(id="self", ctx=ast.Load()), attr=method_name, ctx=ast.Load()
+        )
         call = ast.Call(func=attrib, args=args, keywords=keywords)
         return ast.Expr(value=call)
 
@@ -201,7 +208,7 @@ class PrefabDetails:
 
     def discover_parents(self):
         if self.parents is None:
-            self.parents = [getattr(item, 'id') for item in self.node.bases]
+            self.parents = [getattr(item, "id") for item in self.node.bases]
         if self.name in self.parents:
             raise CompiledPrefabError(f"Class {self.name} cannot inherit from itself.")
 
@@ -216,12 +223,12 @@ class PrefabDetails:
         if self._resolved_parents:
             return self.fields
 
-        new_fields: dict[str, 'Field'] = {}
+        new_fields: dict[str, "Field"] = {}
         for parent_name in reversed(self.parents):
             if parent_name not in prefabs:
                 raise CompiledPrefabError(
                     f"Compiled prefabs can only inherit from other compiled prefabs in the same module.",
-                    f"{self.name} attempted to inherit from {parent_name}"
+                    f"{self.name} attempted to inherit from {parent_name}",
                 )
             parent_fields = prefabs[parent_name].resolve_field_inheritance(prefabs)
             new_fields.update(parent_fields)
@@ -238,9 +245,10 @@ class PrefabDetails:
     def generate_fields(self):
         if self._generated_fields:
             return  # Only generate once
-        if self.compile_plain:
-            self.node.decorator_list.remove(self.decorator)
-        else:
+
+        # Remove the decorator
+        self.node.decorator_list.remove(self.decorator)
+        if not self.compile_plain:
             compiled_flag = ast.Assign(
                 targets=[ast.Name(id=COMPILED_FLAG, ctx=ast.Store())],
                 value=ast.Constant(value=True),

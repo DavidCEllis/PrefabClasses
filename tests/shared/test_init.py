@@ -81,7 +81,9 @@ def test_no_default(importer):
     # Because the __init__ function is defined outside of the class then added for live
     # prefabs, it does not inlude the class name while Compiled prefabs do.
     if importer:
-        error_message = "Coordinate.__init__() missing 1 required positional argument: 'y'"
+        error_message = (
+            "Coordinate.__init__() missing 1 required positional argument: 'y'"
+        )
     else:
         error_message = "__init__() missing 1 required positional argument: 'y'"
     assert e_info.value.args[0] == error_message
