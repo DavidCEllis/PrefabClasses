@@ -7,6 +7,7 @@
 
 import sys
 import time
+import platform
 
 # Import everything here, prefab_classes has to be imported already for compilation to work.
 # To avoid the potential for unfairness import everything here.
@@ -44,6 +45,8 @@ class C{n}:
             return (self.a, self.b, self.c, self.d, self.e) == (other.a, other.b, other.c, other.d, other.e)
         else:
             return NotImplemented
+            
+C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 namedtuple_template = '''
@@ -57,6 +60,8 @@ class C{n}(NamedTuple):
     c : int
     d : int
     e : int
+    
+C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 dataclass_template = '''
@@ -67,6 +72,8 @@ class C{n}:
     c: int
     d: int
     e: int
+    
+C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 attr_template = '''
@@ -77,6 +84,8 @@ class C{n}:
     c: int
     d: int
     e: int
+    
+C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 pydantic_template = '''
@@ -86,6 +95,8 @@ class C{n}(BaseModel):
     c: int
     d: int
     e: int
+    
+C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 cluegen_template = '''
@@ -162,16 +173,8 @@ class C{n}:
     c: int
     d: int
     e: int
-'''
-
-compiled_plain_template = '''
-@prefab(compile_prefab=True, compile_plain=True)
-class C{n}:
-    a: int
-    b: int
-    c: int
-    d: int
-    e: int
+    
+C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 
@@ -196,7 +199,7 @@ def run_test(name, n, exclude_compile=False):
         del sys.modules['perftemp']
         n -= 1
     end = time.time()
-    print(name, (end - start))
+    print(f"| {name} | {end - start:.2f} |")
 
 
 def write_perftemp(count, template, setup):
@@ -214,6 +217,16 @@ def main(reps, test_everything=False, exclude_compile=False):
     :param exclude_compile: Exclude the time for 1 cycle to generate the .pyc file.
     :return:
     """
+    print(f"Python Version {sys.version}")
+    print(f"Platform: {platform.platform()}")
+    if exclude_compile:
+        print("Initial compilation time EXCLUDED")
+    else:
+        print("Initial compilation time INCLUDED")
+
+    print(f"Time for {reps} imports of 100 classes defined with 5 basic attributes")
+    print("| Method | Total Time (seconds) |")
+    print("| --- | --- |")
     write_perftemp(100, standard_template, '')
     run_test('standard classes', reps, exclude_compile=exclude_compile)
 
@@ -240,16 +253,16 @@ def main(reps, test_everything=False, exclude_compile=False):
             print("pydantic not installed")
 
         write_perftemp(100, cluegen_template, 'from cluegen import Datum\n')
-        run_test('cluegen', reps, exclude_compile=exclude_compile)
+        run_test('dabeaz/cluegen', reps, exclude_compile=exclude_compile)
 
         write_perftemp(100, cluegen_eval_template, 'from cluegen import Datum\n')
-        run_test('cluegen_eval', reps, exclude_compile=exclude_compile)
+        run_test('dabeaz/cluegen_eval', reps, exclude_compile=exclude_compile)
 
         write_perftemp(100, dataklass_template, 'from dataklasses import dataklass\n')
-        run_test('dataklasses', reps, exclude_compile=exclude_compile)
+        run_test('dabeaz/dataklasses', reps, exclude_compile=exclude_compile)
 
         write_perftemp(100, dataklass_eval_template, 'from dataklasses import dataklass\n')
-        run_test('dataklasses_eval', reps, exclude_compile=exclude_compile)
+        run_test('dabeaz/dataklasses_eval', reps, exclude_compile=exclude_compile)
 
     prefab_import = "from prefab_classes import prefab, attribute\n"
 
@@ -265,13 +278,10 @@ def main(reps, test_everything=False, exclude_compile=False):
     write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
     run_test('compiled_prefab', reps, exclude_compile=exclude_compile)
 
-    write_perftemp(100, compiled_plain_template, compiled_prefab_import)
-    run_test('compiled_prefab_plain', reps, exclude_compile=exclude_compile)
-
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         reps = int(sys.argv[1])
     else:
         reps = 100
-    main(reps, test_everything=False, exclude_compile=True)
+    main(reps, test_everything=True, exclude_compile=True)
