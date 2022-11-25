@@ -41,3 +41,5 @@ or will be added to this list.
       prefabs are supposed to behave like regular classes and regular classes
       let you make this mistake.
     * Usually you should use `attribute(default_factory=list)` or similar.
+6. If `init` is `False` in `@prefab(init=False)` the method is still generated
+   but renamed to `__prefab_init__`.
