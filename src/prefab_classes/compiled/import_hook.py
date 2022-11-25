@@ -29,7 +29,7 @@ def check_parse(module_path):
                 elif line.strip() == HOOK_REWRITE:
                     parse_module = True
                     break
-    except UnicodeError:
+    except (UnicodeError, FileNotFoundError):
         pass
     return parse_module
 
