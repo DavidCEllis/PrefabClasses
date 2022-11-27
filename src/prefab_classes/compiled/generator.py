@@ -281,7 +281,7 @@ class PrefabDetails:
             targets=[target], value=ast.Tuple(elts=slot_consts, ctx=ast.Load())
         )
 
-        self.node.body.insert(2, assignment)
+        self.node.body.insert(0, assignment)  # Put slots first
 
     def generate_init(self):
         if self._generated_init:
