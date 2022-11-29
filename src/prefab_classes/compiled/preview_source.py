@@ -1,8 +1,8 @@
 import ast
-from pathlib import Path
+import os
 
 
-def preview(pth: Path, use_black=True):
+def preview(pth: os.PathLike, use_black: bool = True):
     """
     Preview the result of running the generator on a python file
     This is mainly here for debugging and testing but can also be useful
@@ -15,9 +15,12 @@ def preview(pth: Path, use_black=True):
     """
     from .generator import compile_prefabs
 
-    source = pth.read_text()
+    with open(pth, mode="r", encoding="utf-8") as f:
+        source = f.read()
+
     tree = compile_prefabs(source)
-    if use_black:
+    # Black usage is not covered in case black changes formatting.
+    if use_black:  # pragma: no cover
         try:
             import black
 
