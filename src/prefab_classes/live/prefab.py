@@ -216,7 +216,8 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
             pass
         try:
             del cls.__annotations__[name]
-        except KeyError:
+        except (AttributeError, KeyError):
+            # AttributeError as 3.9 does not guarantee the existence of __annotations__
             pass
 
     # Handle attributes
