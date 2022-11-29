@@ -10,6 +10,7 @@ from ..constants import (
     FIELDS_ATTRIBUTE,
     COMPILED_FLAG,
     COMPILE_ARGUMENT,
+    CLASSVAR_NAME,
 )
 from ..live import prefab, attribute
 from ..exceptions import CompiledPrefabError
@@ -175,6 +176,19 @@ class PrefabDetails:
 
         for item in self.node.body:
             if isinstance(item, ast.AnnAssign):
+                # Code to check for ClassVar and ignore
+                if isinstance(item.annotation, ast.Constant):
+                    if CLASSVAR_NAME in item.annotation.value:
+                        continue
+                elif isinstance(item.annotation, ast.Subscript):
+                    v = item.annotation.value
+                    if isinstance(v, ast.Name):
+                        if CLASSVAR_NAME in v.id:
+                            continue
+                    elif isinstance(v, ast.Attribute):
+                        if CLASSVAR_NAME in v.attr:
+                            continue
+
                 field_name = getattr(item.target, "id")
                 # Case that the value is an attribute() call
                 if funcid_or_none(item.value) == ATTRIBUTE_FUNCNAME:
