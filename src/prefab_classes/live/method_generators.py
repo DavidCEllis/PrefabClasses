@@ -40,31 +40,48 @@
 # ----------------------------------------------------------------------
 
 from ..constants import PRE_INIT_FUNC, POST_INIT_FUNC, PREFAB_INIT_FUNC
-from .default_sentinels import _NOTHING, DefaultFactory
+from .default_sentinels import _NOTHING
 from .autogen import autogen
 
 
 def get_init_maker(*, init_name="__init__"):
+    globs = {}
+
     def __init__(cls):
         arglist = []
         kw_only_arglist = []
         for name, attrib in cls._attributes.items():
+            if attrib.converter:
+                globs[f'_{name}_converter'] = attrib.converter
             if attrib.init:
-                if hasattr(cls, name):
-                    attr_value = getattr(cls, name)
-                    if isinstance(attr_value, (str, int, float, bool)):
-                        arg = f"{name}={attr_value!r}"
-                    elif isinstance(attr_value, DefaultFactory):
-                        # factory values will specifically return defaultfactory
-                        arg = f'{name}=DefaultFactory("{name}")'
+                if attrib.default is not _NOTHING:
+                    if isinstance(attrib.default, (str, int, float, bool)):
+                        # Just use the literal in these cases
+                        arg = f"{name}={attrib.default!r}"
                     else:
-                        arg = f'{name}=DefaultValue("{name}")'
+                        # No guarantee repr will work for other objects
+                        # so store the value in a variable and put it
+                        # in the globals dict for eval
+                        arg = f'{name}=_{name}_default'
+                        globs[f'_{name}_default'] = attrib.default
+                elif attrib.default_factory is not _NOTHING:
+                    # Use NONE here and call the factory later
+                    # This matches the behaviour of compiled
+                    arg = f'{name}=None'
+                    globs[f'_{name}_factory'] = attrib.default_factory
                 else:
                     arg = name
                 if attrib.kw_only:
                     kw_only_arglist.append(arg)
                 else:
                     arglist.append(arg)
+            # Not in init, but need to set defaults
+            else:
+                if attrib.default is not _NOTHING:
+                    globs[f'_{name}_default'] = attrib.default
+                elif attrib.default_factory is not _NOTHING:
+                    globs[f'_{name}_factory'] = attrib.default_factory
+
         pos_args = ", ".join(arglist)
         kw_args = ", ".join(kw_only_arglist)
         if pos_args and kw_args:
@@ -74,14 +91,22 @@ def get_init_maker(*, init_name="__init__"):
         else:
             args = pos_args
 
-        assignments = (
-            (name, name)
-            if attrib.init
-            else (name, f'DefaultValue("{name}")')
-            if attrib.default is not _NOTHING
-            else (name, f'DefaultFactory("{name}")')
-            for name, attrib in cls._attributes.items()
-        )
+        assignments = []
+        for name, attrib in cls._attributes.items():
+            if attrib.init:
+                if attrib.default_factory is not _NOTHING:
+                    value = f"{name} if {name} else _{name}_factory()"
+                else:
+                    value = name
+            else:
+                if attrib.default_factory is not _NOTHING:
+                    value = f"_{name}_factory()"
+                else:
+                    value = f"_{name}_default"
+            if attrib.converter:
+                value = f"_{name}_converter({value})"
+
+            assignments.append((name, value))
 
         if hasattr(cls, PRE_INIT_FUNC):
             pre_init_call = f"    self.{PRE_INIT_FUNC}()\n"
@@ -99,7 +124,7 @@ def get_init_maker(*, init_name="__init__"):
 
         return code
 
-    return autogen(__init__)
+    return autogen(__init__, globs)
 
 
 def get_repr_maker():

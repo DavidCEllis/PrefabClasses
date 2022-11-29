@@ -39,10 +39,8 @@
 # greater good.
 # ----------------------------------------------------------------------
 
-from .default_sentinels import DefaultValue, DefaultFactory
 
-
-def autogen(func):
+def autogen(func, globs=None):
     """
     Basically the cluegen function from David Beazley's cluegen
     Modified slightly due to other changes.
@@ -50,13 +48,14 @@ def autogen(func):
     Using this as a decorator indicates that the function will return a string
     which should be used to replace the function itself for that specific class.
     """
+    # globs can be a given empty dict, so specifically check for None.
+    globs = globs if globs is not None else {}
 
     def __get__(self, instance, cls):
         # Include the defaultvalue class used as a placeholder for defaults
-        global_vars = {"DefaultValue": DefaultValue, "DefaultFactory": DefaultFactory}
         local_vars = {}
         code = func(cls)
-        exec(code, global_vars, local_vars)
+        exec(code, globs, local_vars)
         # Having executed the code, the method should now exist
         # and can be retrieved by name from the dict
         method = local_vars[func.__name__]
