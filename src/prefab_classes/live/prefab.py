@@ -204,9 +204,20 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
                 attrib = attribute()
                 new_attributes[name] = attrib
 
-        setattr(cls, f"_{cls.__name__}_attributes", new_attributes)
-    else:
-        setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
+        cls_attributes = new_attributes
+
+    setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
+
+    # Remove used attributes from the class dict and annotations to match compiled behaviour
+    for name in cls_attributes.keys():
+        try:
+            delattr(cls, name)
+        except AttributeError:
+            pass
+        try:
+            del cls.__annotations__[name]
+        except KeyError:
+            pass
 
     # Handle attributes
     attributes = {
