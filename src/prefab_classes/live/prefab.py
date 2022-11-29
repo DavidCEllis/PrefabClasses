@@ -45,6 +45,7 @@ Replaces attrs.
 
 Based on ideas (and some code) from Cluegen by David Beazley https://github.com/dabeaz/cluegen
 """
+import sys
 from functools import partial
 
 # noinspection PyUnresolvedReferences
@@ -181,7 +182,27 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     # If a key exists and is *NOT* in __annotations__ then all
     # annotations will be ignored as it becomes complex to fix the
     # ordering.
-    annotation_names = getattr(cls, "__annotations__", {}).keys()
+
+    annotations = getattr(cls, "__annotations__", {})
+    # Eliminate ClassVars - don't want to import typing if
+    # it's not already imported
+    if annotations:
+        _typing = sys.modules.get('typing')
+        if _typing:
+            new_annotations = {}
+            for key, value in annotations.items():
+                # Actual class used as annotation
+                if value is _typing.ClassVar or getattr(value, '__origin__', None) is _typing.ClassVar:
+                    continue
+                # String used as annotation
+                elif isinstance(value, str) and 'ClassVar' in value:
+                    continue
+                else:
+                    new_annotations[key] = value
+            annotations = new_annotations
+
+    annotation_names = annotations.keys()
+
     cls_attributes = {k: v for k, v in vars(cls).items() if isinstance(v, Attribute)}
 
     attribute_names = cls_attributes.keys()

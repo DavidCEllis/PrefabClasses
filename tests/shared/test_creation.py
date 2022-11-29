@@ -1,5 +1,6 @@
 """Tests for errors raised on class creation"""
-from prefab_classes import prefab, attribute, PrefabError
+from prefab_classes import PrefabError
+from prefab_classes.constants import FIELDS_ATTRIBUTE
 from pytest import raises
 
 
@@ -79,3 +80,17 @@ def test_removed_attributes(importer):
     removed_attributes = ['x', 'y', 'z']
     for attrib in removed_attributes:
         assert attrib not in getattr(AllPlainAssignment, '__dict__')
+
+
+def test_skipped_classvars(importer):
+    from creation import IgnoreClassVars
+
+    fields = getattr(IgnoreClassVars, FIELDS_ATTRIBUTE)
+    assert 'x' not in fields
+    assert 'y' not in fields
+    assert 'z' not in fields
+    assert 'actual' in fields
+
+    assert 'x' in getattr(IgnoreClassVars, '__dict__')
+    assert 'y' in getattr(IgnoreClassVars, '__dict__')
+    assert 'z' in getattr(IgnoreClassVars, '__dict__')
