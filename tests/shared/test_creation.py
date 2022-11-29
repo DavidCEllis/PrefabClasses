@@ -59,7 +59,7 @@ def test_removed_annotations(importer):
     removed_attributes = ['x', 'y', 'z']
     for attrib in removed_attributes:
         assert attrib not in getattr(OnlyHints, '__dict__')
-        assert attrib not in getattr(OnlyHints, '__annotations__')
+        assert attrib not in getattr(OnlyHints, '__annotations__', {})
 
 
 def test_removed_only_used_annotations(importer):
@@ -70,7 +70,7 @@ def test_removed_only_used_annotations(importer):
     removed_attributes = ['y', 'z']
     for attrib in removed_attributes:
         assert attrib not in getattr(MixedHints, '__dict__')
-        assert attrib not in getattr(MixedHints, '__annotations__')
+        assert attrib not in getattr(MixedHints, '__annotations__', {})
 
 
 def test_removed_attributes(importer):
