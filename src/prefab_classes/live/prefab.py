@@ -52,7 +52,7 @@ from functools import partial
 # from typing import dataclass_transform
 
 
-from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG
+from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG, CLASSVAR_NAME
 from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
 from .default_sentinels import _NOTHING
 from .method_generators import (
@@ -195,7 +195,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
                 if value is _typing.ClassVar or getattr(value, '__origin__', None) is _typing.ClassVar:
                     continue
                 # String used as annotation
-                elif isinstance(value, str) and 'ClassVar' in value:
+                elif isinstance(value, str) and CLASSVAR_NAME in value:
                     continue
                 else:
                     new_annotations[key] = value
