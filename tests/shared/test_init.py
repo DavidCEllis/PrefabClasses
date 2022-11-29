@@ -85,9 +85,7 @@ def test_no_default(importer):
             "Coordinate.__init__() missing 1 required positional argument: 'y'"
         )
     else:
-        error_message = (
-            "__init__() missing 1 required positional argument: 'y'"
-        )
+        error_message = "__init__() missing 1 required positional argument: 'y'"
 
     assert e_info.value.args[0] == error_message
 

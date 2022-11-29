@@ -6,4 +6,3 @@ from prefab_classes import prefab
 class Coordinate:
     x: float
     y: float
-

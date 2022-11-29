@@ -24,26 +24,3 @@
 # This shouldn't be used in any situation other than to compare with an is statement
 # So it doesn't need any complicated properties.
 _NOTHING = object()
-
-
-# Special Default Classes
-# When one of these is assigned to a descriptor the __set__ method
-# instead stores the default value of the descriptor
-class Default:
-    """Base Dummy Value Class"""
-
-    def __init__(self, value=None):
-        pass
-
-
-class DefaultValue(Default):
-    """
-    Dummy class for default values.
-    This avoids the actual default value being interpreted when exec is called.
-    """
-
-
-class DefaultFactory(Default):
-    """
-    Dummy class for default factories
-    """

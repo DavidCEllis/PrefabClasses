@@ -53,7 +53,7 @@ from functools import partial
 
 from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG
 from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
-from .default_sentinels import DefaultFactory, DefaultValue, _NOTHING
+from .default_sentinels import _NOTHING
 from .method_generators import (
     init_maker,
     repr_maker,
@@ -64,64 +64,15 @@ from .method_generators import (
 
 
 class Attribute:
-    """
-    Descriptor class to define attributes.
+    __slots__ = (
+        "default",
+        "default_factory",
+        "converter",
+        "init",
+        "repr",
+        "kw_only",
+    )
 
-    This replaces the use of type hints in cluegen.
-    """
-
-    # noinspection PyProtectedMember
-    def __set_name__(self, owner, name):
-        # Here we append any generated attributes to a private variable
-        # This will be used instead of cluegen's all_clues.
-
-        # Make a new list for this class if it doesn't exist.
-        # The class name is used to avoid sharing a list with a parent class.
-        attribute_var = f"_{owner.__name__}_attributes"
-
-        try:
-            sub_attributes = getattr(owner, attribute_var)
-        except AttributeError:
-            sub_attributes = {}
-            setattr(owner, attribute_var, sub_attributes)
-
-        sub_attributes[name] = self
-
-        self.private_name = f"_prefab_attribute_{name}"
-
-    def __get__(self, obj, objtype=None):
-        # The default values here should only be used in the __init__ method
-        # This means that for a factory all it needs to know is that the default
-        # is a factory and not its value. So the default return for factory
-        # Attributes is DefaultFactory() and NOT self.default_factory().
-        # The actual value is set during __init__.
-        if self.default is not _NOTHING:
-            return getattr(obj, self.private_name, self.default)
-        if self.default_factory is not _NOTHING:
-            # noinspection PyCallingNonCallable
-            return getattr(obj, self.private_name, DefaultFactory())
-        return getattr(obj, self.private_name)
-
-    def __set__(self, obj, value):
-        # Detect if the value is a default placeholder and replace
-        # it with the real value.
-        if isinstance(value, DefaultValue):
-            value = self.default
-        elif isinstance(value, DefaultFactory):
-            # noinspection PyCallingNonCallable
-            value = self.default_factory()
-
-        converted = getattr(obj, self.converted_flag, False)
-        if self.converter and not converted:
-            setattr(obj, self.converted_flag, True)
-            value = self.converter(value)
-        setattr(obj, self.private_name, value)
-
-    @property
-    def converted_flag(self):
-        return f"{self.private_name}_converted"
-
-    # noinspection PyShadowingBuiltins
     def __init__(
         self,
         *,
@@ -133,35 +84,51 @@ class Attribute:
         kw_only=False,
     ):
         """
-        Create an Attribute for a prefab
+        Initialize an Attribute
+
         :param default: Default value for this attribute
-        :param default_factory: No argument callable to give a default value (for otherwise mutable defaults)
+        :param default_factory: No argument callable to give a default value
+                                (for otherwise mutable defaults)
         :param converter: prefab.attr = x -> prefab.attr = converter(x)
         :param init: Include this attribute in the __init__ parameters
         :param repr: Include this attribute in the class __repr__
         :param kw_only: Make this argument keyword only in init
         """
+
         if not init and default is _NOTHING and default_factory is _NOTHING:
             raise LivePrefabError(
-                "Must provide a default value/factory if the attribute is not in init."
+                "Must provide a default value/factory "
+                "if the attribute is not in init."
             )
-        if default is not _NOTHING and default_factory is not _NOTHING:
-            raise LivePrefabError(
-                "Cannot define both a default value and a default factory."
-            )
+
         if kw_only and not init:
             raise LivePrefabError(
                 "Attribute cannot be keyword only if it is not in init."
             )
 
+        if default is not _NOTHING and default_factory is not _NOTHING:
+            raise LivePrefabError(
+                "Cannot define both a default value and a default factory."
+            )
+
         self.default = default
         self.default_factory = default_factory
-
         self.converter = converter
-
         self.init = init
         self.repr = repr
         self.kw_only = kw_only
+
+    def __repr__(self):
+        return (
+            f"Attribute("
+            f"default={self.default!r}, "
+            f"default_factory={self.default_factory!r}, "
+            f"converter={self.converter!r}, "
+            f"init={self.init!r}, "
+            f"repr={self.repr!r}, "
+            f"kw_only={self.kw_only!r}"
+            f")"
+        )
 
 
 def attribute(
@@ -174,10 +141,12 @@ def attribute(
     kw_only=False,
 ):
     """
-    Get an Attribute instance - indirect to allow for potential changes in the future
+    Get an Attribute instance
+    indirect to allow for potential changes in the future
 
     :param default: Default value for this attribute
-    :param default_factory: No argument callable to give a default value (for otherwise mutable defaults)
+    :param default_factory: No argument callable to give a default value
+                            (for otherwise mutable defaults)
     :param converter: prefab.attr = x -> prefab.attr = converter(x)
     :param init: Include this attribute in the __init__ parameters
     :param repr: Include this attribute in the class __repr__
@@ -213,7 +182,8 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     # annotations will be ignored as it becomes complex to fix the
     # ordering.
     annotation_names = getattr(cls, "__annotations__", {}).keys()
-    cls_attributes = getattr(cls, f"_{cls.__name__}_attributes", {})
+    cls_attributes = {k: v for k, v in vars(cls).items() if isinstance(v, Attribute)}
+
     attribute_names = cls_attributes.keys()
 
     if set(annotation_names).issuperset(set(attribute_names)):
@@ -229,18 +199,26 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
                 else:
                     attribute_default = getattr(cls, name)
                     attrib = attribute(default=attribute_default)
-                    # Set private_name because set_name is never called
-                    attrib.private_name = f"_prefab_attribute_{name}"
-                    setattr(cls, name, attrib)
                     new_attributes[name] = attrib
             else:
                 attrib = attribute()
-                # Set private_name because set_name is never called
-                attrib.private_name = f"_prefab_attribute_{name}"
-                setattr(cls, name, attrib)
                 new_attributes[name] = attrib
 
-        setattr(cls, f"_{cls.__name__}_attributes", new_attributes)
+        cls_attributes = new_attributes
+
+    setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
+
+    # Remove used attributes from the class dict and annotations to match compiled behaviour
+    for name in cls_attributes.keys():
+        try:
+            delattr(cls, name)
+        except AttributeError:
+            pass
+        try:
+            del cls.__annotations__[name]
+        except (AttributeError, KeyError):
+            # AttributeError as 3.9 does not guarantee the existence of __annotations__
+            pass
 
     # Handle attributes
     attributes = {
@@ -308,8 +286,10 @@ def prefab(
     :param iter: generate __iter__
 
     :param compile_prefab: Direct the prefab compiler to compile this class
-    :param compile_fallback: Fail with a prefab error if the class has not been compiled
-    :param compile_plain: Do not include the COMPILED and PREFAB_FIELDS attributes after compilation
+    :param compile_fallback: Fail with a prefab error
+                             if the class has not been compiled
+    :param compile_plain: Do not include the COMPILED and PREFAB_FIELDS
+                          attributes after compilation
     :param compile_slots: Make the resulting compiled class use slots
     :return: class with __ methods defined
     """
