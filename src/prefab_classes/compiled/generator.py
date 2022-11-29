@@ -214,6 +214,19 @@ class PrefabDetails:
 
         self.fields = {field.name: field for field in fields}
 
+    def generate_slots(self):
+        """Generate slots before looking at inheritance"""
+        if self._generated_slots or not self.compile_slots:
+            return
+
+        slot_consts = [ast.Constant(value=name) for name in self.field_names]
+        target = ast.Name(id="__slots__", ctx=ast.Store())
+        assignment = ast.Assign(
+            targets=[target], value=ast.Tuple(elts=slot_consts, ctx=ast.Load())
+        )
+
+        self.node.body.insert(0, assignment)  # Put slots first
+
     def discover_parents(self):
         if self.parents is None:
             self.parents = [getattr(item, "id") for item in self.node.bases]
@@ -277,18 +290,6 @@ class PrefabDetails:
             self.node.body.insert(1, assignment)
 
         self._generated_fields = True
-
-    def generate_slots(self):
-        if self._generated_slots or not self.compile_slots:
-            return
-
-        slot_consts = [ast.Constant(value=name) for name in self.field_names]
-        target = ast.Name(id="__slots__", ctx=ast.Store())
-        assignment = ast.Assign(
-            targets=[target], value=ast.Tuple(elts=slot_consts, ctx=ast.Load())
-        )
-
-        self.node.body.insert(0, assignment)  # Put slots first
 
     def generate_init(self):
         if self._generated_init:
@@ -541,12 +542,15 @@ class PrefabDetails:
     def generate_ast(self, prefabs: dict[str, "PrefabDetails"]):
         # Discover required details
         self.discover_fields()
+
+        # Write slot AST independent of parent details
+        self.generate_slots()  # Slots should only be defined by the current class
+
         self.discover_parents()
         self.resolve_field_inheritance(prefabs)
 
         # Rewrite AST
         self.generate_fields()
-        self.generate_slots()
         self.generate_init()
         self.generate_repr()
         self.generate_eq()
