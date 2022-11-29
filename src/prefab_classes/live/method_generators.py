@@ -52,7 +52,7 @@ def get_init_maker(*, init_name="__init__"):
         kw_only_arglist = []
         for name, attrib in cls._attributes.items():
             if attrib.converter:
-                globs[f'_{name}_converter'] = attrib.converter
+                globs[f"_{name}_converter"] = attrib.converter
             if attrib.init:
                 if attrib.default is not _NOTHING:
                     if isinstance(attrib.default, (str, int, float, bool)):
@@ -62,13 +62,13 @@ def get_init_maker(*, init_name="__init__"):
                         # No guarantee repr will work for other objects
                         # so store the value in a variable and put it
                         # in the globals dict for eval
-                        arg = f'{name}=_{name}_default'
-                        globs[f'_{name}_default'] = attrib.default
+                        arg = f"{name}=_{name}_default"
+                        globs[f"_{name}_default"] = attrib.default
                 elif attrib.default_factory is not _NOTHING:
                     # Use NONE here and call the factory later
                     # This matches the behaviour of compiled
-                    arg = f'{name}=None'
-                    globs[f'_{name}_factory'] = attrib.default_factory
+                    arg = f"{name}=None"
+                    globs[f"_{name}_factory"] = attrib.default_factory
                 else:
                     arg = name
                 if attrib.kw_only:
@@ -78,9 +78,9 @@ def get_init_maker(*, init_name="__init__"):
             # Not in init, but need to set defaults
             else:
                 if attrib.default is not _NOTHING:
-                    globs[f'_{name}_default'] = attrib.default
+                    globs[f"_{name}_default"] = attrib.default
                 elif attrib.default_factory is not _NOTHING:
-                    globs[f'_{name}_factory'] = attrib.default_factory
+                    globs[f"_{name}_factory"] = attrib.default_factory
 
         pos_args = ", ".join(arglist)
         kw_args = ", ".join(kw_only_arglist)
@@ -120,7 +120,10 @@ def get_init_maker(*, init_name="__init__"):
         else:
             post_init_call = ""
 
-        code = f"def {init_name}(self, {args}):\n{pre_init_call}\n{body}\n{post_init_call}\n"
+        code = (
+            f"def {init_name}(self, {args}):"
+            f"\n{pre_init_call}\n{body}\n{post_init_call}\n"
+        )
 
         return code
 

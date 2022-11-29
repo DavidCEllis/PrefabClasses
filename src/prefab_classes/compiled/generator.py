@@ -39,11 +39,15 @@ class Field:
         return ast.Call(func=self.converter, args=[arg], keywords=[])
 
     def ast_attribute(
-        self, obj_name="self", ctx: Union[type[ast.Load], type[ast.Store]] = ast.Load
+        self,
+        obj_name="self",
+        ctx: Union[type[ast.Load], type[ast.Store]] = ast.Load,
     ):
         """Get the ast.Attribute form for loading this attribute"""
         attrib = ast.Attribute(
-            value=ast.Name(id=obj_name, ctx=ast.Load()), attr=self.name, ctx=ctx()
+            value=ast.Name(id=obj_name, ctx=ast.Load()),
+            attr=self.name,
+            ctx=ctx(),
         )
         return attrib
 
@@ -142,7 +146,9 @@ class PrefabDetails:
         args = args if args else []
         keywords = keywords if keywords else []
         attrib = ast.Attribute(
-            value=ast.Name(id="self", ctx=ast.Load()), attr=method_name, ctx=ast.Load()
+            value=ast.Name(id="self", ctx=ast.Load()),
+            attr=method_name,
+            ctx=ast.Load(),
         )
         call = ast.Call(func=attrib, args=args, keywords=keywords)
         return ast.Expr(value=call)
@@ -264,7 +270,8 @@ class PrefabDetails:
             field_consts = [ast.Constant(value=name) for name in self.field_names]
             target = ast.Name(id=FIELDS_ATTRIBUTE, ctx=ast.Store())
             assignment = ast.Assign(
-                targets=[target], value=ast.List(elts=field_consts, ctx=ast.Load())
+                targets=[target],
+                value=ast.List(elts=field_consts, ctx=ast.Load()),
             )
 
             self.node.body.insert(1, assignment)
@@ -276,7 +283,7 @@ class PrefabDetails:
             return
 
         slot_consts = [ast.Constant(value=name) for name in self.field_names]
-        target = ast.Name(id='__slots__', ctx=ast.Store())
+        target = ast.Name(id="__slots__", ctx=ast.Store())
         assignment = ast.Assign(
             targets=[target], value=ast.Tuple(elts=slot_consts, ctx=ast.Load())
         )
@@ -390,7 +397,11 @@ class PrefabDetails:
         )
 
         init_func = ast.FunctionDef(
-            name=funcname, args=arguments, body=body, decorator_list=[], returns=None
+            name=funcname,
+            args=arguments,
+            body=body,
+            decorator_list=[],
+            returns=None,
         )
 
         self.node.body.append(init_func)
@@ -402,7 +413,11 @@ class PrefabDetails:
 
         arguments = [ast.arg(arg="self")]
         args = ast.arguments(
-            posonlyargs=[], args=arguments, kwonlyargs=[], kw_defaults=[], defaults=[]
+            posonlyargs=[],
+            args=arguments,
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[],
         )
 
         field_strings = [ast.Constant(value=f"{self.name}(")]
@@ -422,7 +437,11 @@ class PrefabDetails:
         body = [ast.Return(value=repr_string)]
 
         repr_func = ast.FunctionDef(
-            name="__repr__", args=args, body=body, decorator_list=[], returns=None
+            name="__repr__",
+            args=args,
+            body=body,
+            decorator_list=[],
+            returns=None,
         )
 
         self.node.body.append(repr_func)
@@ -440,7 +459,10 @@ class PrefabDetails:
         other_elts = []
 
         for field in self.field_list:
-            for obj_name, elt_list in [("self", class_elts), ("other", other_elts)]:
+            for obj_name, elt_list in [
+                ("self", class_elts),
+                ("other", other_elts),
+            ]:
                 elt_list.append(field.ast_attribute(obj_name))
 
         class_tuple = ast.Tuple(elts=class_elts, ctx=ast.Load())
@@ -453,10 +475,14 @@ class PrefabDetails:
 
         # (self.x, ...) == (other.x, ...) if self.__class__ == other.__class__ else NotImplemented
         left_ifexp = ast.Attribute(
-            value=ast.Name(id="self", ctx=ast.Load()), attr="__class__", ctx=ast.Load()
+            value=ast.Name(id="self", ctx=ast.Load()),
+            attr="__class__",
+            ctx=ast.Load(),
         )
         right_ifexp = ast.Attribute(
-            value=ast.Name(id="other", ctx=ast.Load()), attr="__class__", ctx=ast.Load()
+            value=ast.Name(id="other", ctx=ast.Load()),
+            attr="__class__",
+            ctx=ast.Load(),
         )
 
         class_expr = ast.IfExp(
@@ -468,7 +494,11 @@ class PrefabDetails:
         )
 
         args = ast.arguments(
-            posonlyargs=[], args=arguments, kwonlyargs=[], kw_defaults=[], defaults=[]
+            posonlyargs=[],
+            args=arguments,
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[],
         )
 
         body = [ast.Return(value=class_expr)]
@@ -490,11 +520,19 @@ class PrefabDetails:
         ]
 
         args = ast.arguments(
-            posonlyargs=[], args=arguments, kwonlyargs=[], kw_defaults=[], defaults=[]
+            posonlyargs=[],
+            args=arguments,
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[],
         )
 
         iter_func = ast.FunctionDef(
-            name="__iter__", args=args, body=body, decorator_list=[], returns=None
+            name="__iter__",
+            args=args,
+            body=body,
+            decorator_list=[],
+            returns=None,
         )
 
         self.node.body.append(iter_func)
@@ -553,7 +591,10 @@ class GatherPrefabs(ast.NodeVisitor):
                 kw.arg: getattr(kw.value, "value") for kw in prefab_decorator.keywords
             }
             prefab_details = PrefabDetails(
-                name=node.name, node=node, decorator=prefab_decorator, **keywords
+                name=node.name,
+                node=node,
+                decorator=prefab_decorator,
+                **keywords,
             )
 
             self.prefabs[prefab_details.name] = prefab_details

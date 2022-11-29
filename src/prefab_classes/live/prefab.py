@@ -70,7 +70,7 @@ class Attribute:
         "converter",
         "init",
         "repr",
-        "kw_only"
+        "kw_only",
     )
 
     def __init__(
@@ -83,10 +83,22 @@ class Attribute:
         repr=True,
         kw_only=False,
     ):
+        """
+        Initialize an Attribute
+
+        :param default: Default value for this attribute
+        :param default_factory: No argument callable to give a default value
+                                (for otherwise mutable defaults)
+        :param converter: prefab.attr = x -> prefab.attr = converter(x)
+        :param init: Include this attribute in the __init__ parameters
+        :param repr: Include this attribute in the class __repr__
+        :param kw_only: Make this argument keyword only in init
+        """
 
         if not init and default is _NOTHING and default_factory is _NOTHING:
             raise LivePrefabError(
-                "Must provide a default value/factory if the attribute is not in init."
+                "Must provide a default value/factory "
+                "if the attribute is not in init."
             )
 
         if kw_only and not init:
@@ -129,10 +141,12 @@ def attribute(
     kw_only=False,
 ):
     """
-    Get an Attribute instance - indirect to allow for potential changes in the future
+    Get an Attribute instance
+    indirect to allow for potential changes in the future
 
     :param default: Default value for this attribute
-    :param default_factory: No argument callable to give a default value (for otherwise mutable defaults)
+    :param default_factory: No argument callable to give a default value
+                            (for otherwise mutable defaults)
     :param converter: prefab.attr = x -> prefab.attr = converter(x)
     :param init: Include this attribute in the __init__ parameters
     :param repr: Include this attribute in the class __repr__
@@ -168,10 +182,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     # annotations will be ignored as it becomes complex to fix the
     # ordering.
     annotation_names = getattr(cls, "__annotations__", {}).keys()
-    cls_attributes = {
-        k: v for k, v in vars(cls).items()
-        if isinstance(v, Attribute)
-    }
+    cls_attributes = {k: v for k, v in vars(cls).items() if isinstance(v, Attribute)}
 
     attribute_names = cls_attributes.keys()
 
@@ -263,8 +274,10 @@ def prefab(
     :param iter: generate __iter__
 
     :param compile_prefab: Direct the prefab compiler to compile this class
-    :param compile_fallback: Fail with a prefab error if the class has not been compiled
-    :param compile_plain: Do not include the COMPILED and PREFAB_FIELDS attributes after compilation
+    :param compile_fallback: Fail with a prefab error
+                             if the class has not been compiled
+    :param compile_plain: Do not include the COMPILED and PREFAB_FIELDS
+                          attributes after compilation
     :param compile_slots: Make the resulting compiled class use slots
     :return: class with __ methods defined
     """
