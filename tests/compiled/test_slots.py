@@ -26,3 +26,18 @@ def test_slots_work():
         c.z = 3.0
 
     assert not hasattr(c, "__dict__")
+
+
+@pytest.mark.usefixtures("compile_folder_modules")
+def test_slots_inheritance():
+    # Child classes should only define *NEW* slots, not all slots.
+    # https://docs.python.org/3/reference/datamodel.html#notes-on-using-slots
+    with prefab_compiler():
+        from example_slots import Coordinate, Coordinate3D
+
+    assert Coordinate.__slots__ == ("x", "y")
+    assert Coordinate3D.__slots__ == ('z', )
+
+    xyz = Coordinate3D(1.0, 2.0, 3.0)
+    assert (xyz.x, xyz.y, xyz.z) == (1.0, 2.0, 3.0)
+
