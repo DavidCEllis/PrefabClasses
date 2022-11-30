@@ -111,6 +111,7 @@ class PrefabDetails:
     repr: bool = True
     eq: bool = True
     iter: bool = False
+    match_args: bool = True
     compile_prefab: bool = False
     compile_plain: bool = False
     compile_fallback: bool = False
@@ -120,6 +121,7 @@ class PrefabDetails:
     def __prefab_post_init__(self):
         self._resolved_parents = False
         self._generated_fields = False
+        self._generated_match_args = False
         self._generated_slots = False
         self._generated_init = False
         self._generated_repr = False
@@ -304,6 +306,18 @@ class PrefabDetails:
             self.node.body.insert(1, assignment)
 
         self._generated_fields = True
+
+    def generate_match_args(self):
+        if self._generated_match_args or not self.match_args:
+            return
+
+        field_consts = [ast.Constant(value=name) for name in self.field_names]
+        target = ast.Name(id="__match_args__", ctx=ast.Store())
+        assignment = ast.Assign(
+            targets=[target],
+            value=ast.Tuple(elts=field_consts, ctx=ast.Load()),
+        )
+        self.node.body.insert(0, assignment)
 
     def generate_init(self):
         if self._generated_init:
@@ -565,6 +579,7 @@ class PrefabDetails:
 
         # Rewrite AST
         self.generate_fields()
+        self.generate_match_args()
         self.generate_init()
         self.generate_repr()
         self.generate_eq()

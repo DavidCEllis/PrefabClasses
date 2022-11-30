@@ -166,7 +166,7 @@ def attribute(
 
 
 # @dataclass_transform(field_specifiers=(attribute, Attribute))
-def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
+def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False, match_args=True):
     """
     Generate boilerplate code for dunder methods in a class.
 
@@ -175,6 +175,7 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
     :param repr: generate __repr__
     :param eq: generate __eq__
     :param iter: generate __iter__
+    :param match_args: generate __match_args__
     :return: class with __ methods defined
     """
     # Here first we need to look at type hints for the type hint
@@ -267,7 +268,8 @@ def _make_prefab(cls: type, *, init=True, repr=True, eq=True, iter=False):
 
     setattr(cls, FIELDS_ATTRIBUTE, [name for name in attributes])
     cls._attributes = attributes
-    # cls.__match_args__ = tuple(name for name in attributes)
+    if match_args:
+        cls.__match_args__ = tuple(name for name in attributes)
 
     if init:
         setattr(cls, "__init__", init_maker)
@@ -292,6 +294,7 @@ def prefab(
     repr=True,
     eq=True,
     iter=False,
+    match_args=True,
     compile_prefab=False,
     compile_fallback=False,
     compile_plain=False,
@@ -305,6 +308,7 @@ def prefab(
     :param repr: generate __repr__
     :param eq: generate __eq__
     :param iter: generate __iter__
+    :param match_args: generate __match_args__
 
     :param compile_prefab: Direct the prefab compiler to compile this class
     :param compile_fallback: Fail with a prefab error
@@ -322,6 +326,7 @@ def prefab(
             repr=repr,
             eq=eq,
             iter=iter,
+            match_args=match_args,
             compile_prefab=compile_prefab,
             compile_fallback=compile_fallback,
         )
@@ -342,4 +347,4 @@ def prefab(
         else:
             # Create Live Version
             setattr(cls, COMPILED_FLAG, False)
-            return _make_prefab(cls, init=init, repr=repr, eq=eq, iter=iter)
+            return _make_prefab(cls, init=init, repr=repr, eq=eq, iter=iter, match_args=match_args)
