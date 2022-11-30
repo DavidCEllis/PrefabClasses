@@ -8,22 +8,38 @@ eagerly when the class is compiled into a .pyc.
 
 ## Why are you remaking this again? ##
 
-Initially wanting to remove a dependency on attrs I had seen 
+Initially I was just trying to remove a dependency on `attrs`
+from a project and used 
 [David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
-and wanted to see if something like that could work for the 
-project. With some modification I ended up with the first
-version of this.
+as a starting point. 
 
-There are now 2 different methods of handling the boilerplate
-generation in this project.
+Working and modifying that to fit my needs made me think about
+coming at the performance problem from the opposite angle. 
+Instead of rewriting methods at the last possible point when the 
+data is first accessed, rewriting them when they are compiled 
+to a .pyc file by modifying the AST.
+
+The benefit of this method is that once the source has been compiled
+to a .pyc file there is no longer any overhead from generating the
+class methods. The result is a normal python class as if it had been
+written by hand. Working solely on the AST does lead to some design
+differences from other popular modules like attrs or dataclasses.
+
+There is no benefit from using the compiled version over interpreted
+implementations unless the .pyc files are generated and used.
 
 ### Live/Interpreted ###
 
-The 'live' method works as *cluegen* worked, generating the 
+The 'live' method works roughly as *cluegen* worked, generating the 
 required methods only when they are first accessed. Compared to
 attrs this trades speed of first access for speed of import. 
 This also means that if a class method is never accessed then 
 it is not generated.
+
+Unlike cluegen this reverts to using a decorator for each class
+rather than using inheritance. This is largely due to it being
+much easier to identify a specific decorator in the AST to identify
+classes to be modified for the compiled version.
 
 ### Compiled ###
 
@@ -104,10 +120,11 @@ class Settings:
 
 The prefab will then be compiled to a .pyc file when imported in another file
 with the import hook included. The resulting code can be previewed using the 
-`preview` function.
+`preview` function. If `black` is installed, the code will be run through 
+to make the result more readable, to avoid this use `use_black=false`.
 
 `from prefab_classes.compiled import preview`
-`preview(Path('example_compiled.py'))`
+`preview('example_compiled.py')`
 ```python
 from prefab_classes import prefab
 
