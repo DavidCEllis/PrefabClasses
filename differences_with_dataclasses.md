@@ -19,14 +19,14 @@ or will be added to this list.
       dataclasses.todict seems to be written for) is handled by the to_json
       function provided.
 2. dataclasses provides a `fields` function to access the underlying fields
-    * Once a prefab class has been generated the underlying descriptor attributes
-      are considered an implementation detail of the 'live' implementation.
-    * The 'compiled' form has no descriptors as they are replaced on compilation.
+    * Once a prefab class has been generated the underlying 'recipe' code is 
+      removed as much as possible.
+    * The 'compiled' form has no hidden attributes as they are replaced on compilation.
     * Prefab classes provide a `PREFAB_FIELDS` attribute with the field names
       in order.
-    * The live classes have an `_attributes` attribute if it's absolutely
-      necessary. However this does not exist for compiled prefabs and could
-      be changed at any point so it is recommended **not** to use it.
+    * The live/interpreted classes generate their code lazily so they need
+      to keep the 'recipe' details around. `_attributes` and `_CLASSNAME_attributes`
+      contain this information. The plain `_attributes` includes inherited values.
 3. Allow the use of plain `attribute(...)` declarations without the use of
    type hints.
     * Typing is supposed to be optional so let it be optional.
