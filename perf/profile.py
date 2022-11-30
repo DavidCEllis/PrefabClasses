@@ -5,6 +5,7 @@
 # cluegen, dataklasses,
 # prefab and compiled_prefab
 
+import os
 import sys
 import time
 import platform
@@ -178,16 +179,18 @@ C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 
-def run_test(name, n, exclude_compile=False):
-    if exclude_compile:
+def run_test(name, n, exclude_compile=False, clear_cache=False):
+    if exclude_compile and not clear_cache:
         if 'compiled' in name:
             from prefab_classes import prefab_compiler
             with prefab_compiler():
                 import perftemp
         else:
             import perftemp
+
         del sys.modules['perftemp']
 
+    deltime = 0
     start = time.time()
     while n > 0:
         if 'compiled' in name:
@@ -197,6 +200,17 @@ def run_test(name, n, exclude_compile=False):
         else:
             import perftemp
         del sys.modules['perftemp']
+        # Delete the cached .pyc file
+        if clear_cache:
+            perftemp_pyc = getattr(perftemp, "__cached__")
+            if perftemp_pyc:
+                try:
+                    os.remove(perftemp_pyc)
+                except FileNotFoundError:
+                    raise FileNotFoundError(
+                        f"Could not delete performance {perftemp_pyc=} "
+                        f"as it was not generated"
+                    )
         n -= 1
     end = time.time()
     print(f"| {name} | {end - start:.2f} |")
@@ -277,6 +291,10 @@ def main(reps, test_everything=False, exclude_compile=False):
 
     write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
     run_test('compiled_prefab', reps, exclude_compile=exclude_compile)
+
+    write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
+    run_test('compiled_prefab_nocache', reps, exclude_compile=False,
+             clear_cache=True)
 
 
 if __name__ == '__main__':
