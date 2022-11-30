@@ -57,40 +57,40 @@ def test_no_attributes_error(importer):
 def test_removed_annotations(importer):
     from creation import OnlyHints
 
-    removed_attributes = ['x', 'y', 'z']
+    removed_attributes = ["x", "y", "z"]
     for attrib in removed_attributes:
-        assert attrib not in getattr(OnlyHints, '__dict__')
-        assert attrib not in getattr(OnlyHints, '__annotations__', {})
+        assert attrib not in getattr(OnlyHints, "__dict__")
+        assert attrib not in getattr(OnlyHints, "__annotations__", {})
 
 
 def test_removed_only_used_annotations(importer):
     from creation import MixedHints
 
-    assert 'x' in getattr(MixedHints, '__annotations__')
+    assert "x" in getattr(MixedHints, "__annotations__")
 
-    removed_attributes = ['y', 'z']
+    removed_attributes = ["y", "z"]
     for attrib in removed_attributes:
-        assert attrib not in getattr(MixedHints, '__dict__')
-        assert attrib not in getattr(MixedHints, '__annotations__', {})
+        assert attrib not in getattr(MixedHints, "__dict__")
+        assert attrib not in getattr(MixedHints, "__annotations__", {})
 
 
 def test_removed_attributes(importer):
     from creation import AllPlainAssignment
 
-    removed_attributes = ['x', 'y', 'z']
+    removed_attributes = ["x", "y", "z"]
     for attrib in removed_attributes:
-        assert attrib not in getattr(AllPlainAssignment, '__dict__')
+        assert attrib not in getattr(AllPlainAssignment, "__dict__")
 
 
 def test_skipped_classvars(importer):
     from creation import IgnoreClassVars
 
     fields = getattr(IgnoreClassVars, FIELDS_ATTRIBUTE)
-    assert 'x' not in fields
-    assert 'y' not in fields
-    assert 'z' not in fields
-    assert 'actual' in fields
+    assert "x" not in fields
+    assert "y" not in fields
+    assert "z" not in fields
+    assert "actual" in fields
 
-    assert 'x' in getattr(IgnoreClassVars, '__dict__')
-    assert 'y' in getattr(IgnoreClassVars, '__dict__')
-    assert 'z' in getattr(IgnoreClassVars, '__dict__')
+    assert "x" in getattr(IgnoreClassVars, "__dict__")
+    assert "y" in getattr(IgnoreClassVars, "__dict__")
+    assert "z" in getattr(IgnoreClassVars, "__dict__")

@@ -45,10 +45,11 @@ def test_neq(importer):
     assert (x.x, x.y, x.z, x.t) != (y.x, y.y, y.z, y.t)
     assert x != y
 
+
 def test_match_args(importer):
     from dunders import Coordinate4D
 
-    assert Coordinate4D.__match_args__ == ('x', 'y', 'z', 't')
+    assert Coordinate4D.__match_args__ == ("x", "y", "z", "t")
 
 
 def test_match_args_disabled(importer):
