@@ -48,6 +48,11 @@ module is first *compiled* into a .pyc file by modifying the AST.
 
 There are some trade-offs and differences between the two.
 
+* The compiled method uses the **literal names** `prefab` and `attribute`
+  to identify classes to be imported and to identify features. 
+  If these are changed things will not work.
+  * The functions to not technically need to be imported however, unless
+    the code should fallback to the interpreted method.
 * After the .pyc files have been compiled, compiled classes import
   much more quickly than live ones as they are plain python classes.
     * They are not *quite* as fast as modules with native classes,
