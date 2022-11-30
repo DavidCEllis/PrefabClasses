@@ -8,3 +8,6 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 line-length = 88
 target-version = ['py311']
+extend-exclude = '''
+/(\_attribute\_class\.py)
+'''
