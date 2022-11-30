@@ -33,3 +33,9 @@ class CoordinateNoXRepr:
 class CoordinateIter:
     x: float
     y: float
+
+
+@prefab(compile_prefab=True, compile_fallback=True, match_args=False)
+class NoMatchArgs:
+    x: float
+    y: float
