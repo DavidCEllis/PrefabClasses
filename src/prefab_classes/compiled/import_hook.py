@@ -62,7 +62,7 @@ class PrefabHacker(SourceFileLoader):
     # noinspection PyUnresolvedReferences,PyProtectedMember
     def get_code(self, fullname):
         """
-        Modified from importlib._bootstrap_external method in _bootstrap_external
+        Modified from SourceLoader.get_code method in _bootstrap_external
         Need the whole function in order to modify the invalidation method.
 
         For compilation to work correctly this Loader must invalidate .pyc files

@@ -19,31 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # ==============================================================================
-#
-# Elements of this are taken from David Beazley's Cluegen
-#
-# David Beazley's Copyright from Cluegen
-# ----------------------------------------------------------------------
-# Classes generated from type clues.
-#
-#     https://github.com/dabeaz/cluegen
-#
-# Author: David Beazley (@dabeaz).
-#         http://www.dabeaz.com
-#
-# Copyright (C) 2018-2021.
-#
-# Permission is granted to use, copy, and modify this code in any
-# manner as long as this copyright message and disclaimer remain in
-# the source code.  There is no warranty.  Try to use the code for the
-# greater good.
-# ----------------------------------------------------------------------
+
 """
 Handle boilerplate generation for classes.
-
-Replaces attrs.
-
-Based on ideas (and some code) from Cluegen by David Beazley https://github.com/dabeaz/cluegen
 """
 import sys
 from functools import partial
