@@ -36,8 +36,7 @@ def test_slots_inheritance():
         from example_slots import Coordinate, Coordinate3D
 
     assert Coordinate.__slots__ == ("x", "y")
-    assert Coordinate3D.__slots__ == ('z', )
+    assert Coordinate3D.__slots__ == ("z",)
 
     xyz = Coordinate3D(1.0, 2.0, 3.0)
     assert (xyz.x, xyz.y, xyz.z) == (1.0, 2.0, 3.0)
-

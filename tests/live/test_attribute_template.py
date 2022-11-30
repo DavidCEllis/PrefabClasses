@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import prefab_classes.live._attribute_class as attribute_module
-from prefab_classes.live._attribute_class_maker.regenerate_attribute import generate_attribute_source
+from prefab_classes.live._attribute_class_maker.regenerate_attribute import (
+    generate_attribute_source,
+)
 
 
 def test_template_matches_attribute():

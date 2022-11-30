@@ -32,6 +32,6 @@ class AllPlainAssignment:
 class IgnoreClassVars:
     # Ignore X, Y and Z - Include actual.
     x: typing.ClassVar[int] = 42
-    y: ClassVar[str] = 'Apple'
-    z: 'ClassVar[float]' = 3.14
-    actual: str = 'Test'
+    y: ClassVar[str] = "Apple"
+    z: "ClassVar[float]" = 3.14
+    actual: str = "Test"
