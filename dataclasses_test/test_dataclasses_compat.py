@@ -30,16 +30,16 @@ import typing       # Needed for the string "typing.ClassVar[int]" to work as an
 import dataclasses  # Needed for the string "dataclasses.InitVar[int]" to work as an annotation.
 
 
-dataclass_internals = pytest.mark.xfail(reason="Test verifies dataclass internals")
-not_implemented = pytest.mark.xfail(reason="Not implemented in prefab_classes")
+dataclass_internals = pytest.mark.skip(reason="Test verifies dataclass internals")
+not_implemented = pytest.mark.skip(reason="Not implemented in prefab_classes")
 planned = pytest.mark.xfail(reason="Planned for prefab_classes")
 
 
 def api_difference(reason=None):
     if reason:
-        return pytest.mark.xfail(reason=f"prefab_classes API difference: {reason}")
+        return pytest.mark.skip(reason=f"prefab_classes API difference: {reason}")
     else:
-        return pytest.mark.xfail(reason="prefab_classes API difference")
+        return pytest.mark.skip(reason="prefab_classes API difference")
 
 
 # Aliases
@@ -51,7 +51,7 @@ def fields(o):
 class CustomError(Exception): pass
 
 class TestCase(unittest.TestCase):
-    @api_difference()
+    @planned
     def test_no_fields(self):
         @dataclass
         class C:
@@ -60,7 +60,7 @@ class TestCase(unittest.TestCase):
         o = C()
         self.assertEqual(len(fields(C)), 0)
 
-    @api_difference()
+    @planned
     def test_no_fields_but_member_variable(self):
         @dataclass
         class C:
@@ -152,7 +152,7 @@ class TestCase(unittest.TestCase):
             class C(B):
                 x: int = 0
 
-    @not_implemented
+    @planned
     def test_overwrite_hash(self):
         # Test that declaring this class isn't an error.  It should
         #  use the user-provided __hash__.
@@ -258,7 +258,7 @@ class TestCase(unittest.TestCase):
         c = C('foo')
         self.assertEqual(c.object, 'foo')
 
-    @not_implemented
+    @planned
     def test_field_named_object_frozen(self):
         @dataclass(frozen=True)
         class C:
@@ -284,7 +284,7 @@ class TestCase(unittest.TestCase):
         for name in builtins_names:
             self.assertEqual(getattr(c, name), name)
 
-    @not_implemented
+    @api_difference("prefab_classes does not provide a make_prefab method - would not work when compiled.")
     def test_field_named_like_builtin_frozen(self):
         # Attribute names can shadow built-in names
         # since code generation is used.
@@ -533,7 +533,7 @@ class TestCase(unittest.TestCase):
         c = C(10, 20)
         self.assertEqual(repr(c), 'TestCase.test_not_in_repr.<locals>.C(y=20)')
 
-    @not_implemented
+    @planned
     def test_not_in_compare(self):
         @dataclass
         class C:
@@ -572,7 +572,7 @@ class TestCase(unittest.TestCase):
             class A:
                 a: Any = unhashable
 
-    @not_implemented
+    @planned
     def test_hash_field_rules(self):
         # Test all 6 cases of:
         #  hash=True/False/None
@@ -960,7 +960,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(C(10).bar, 5)
         self.assertEqual(C(10).i, 10)
 
-    @api_difference("post_init function is __prefab_post_init__ for prefabs")
+    @api_difference("Different post_init name")
     def test_post_init(self):
         # Just make sure it gets called
         @dataclass
@@ -1008,6 +1008,7 @@ class TestCase(unittest.TestCase):
         with self.assertRaises(FrozenInstanceError):
             C()
 
+    @api_difference("Different post_init name")
     def test_post_init_super(self):
         # Make sure super() post-init isn't called by default.
         class B:
@@ -1039,7 +1040,7 @@ class TestCase(unittest.TestCase):
         with self.assertRaises(CustomError):
             C()
 
-    @api_difference("Different name and static post_init not supported")
+    @api_difference("Different post_init name")
     def test_post_init_staticmethod(self):
         flag = False
         @dataclass
@@ -1056,6 +1057,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual((c.x, c.y), (3, 4))
         self.assertTrue(flag)
 
+    @api_difference("Different post_init name")
     def test_post_init_classmethod(self):
         @dataclass
         class C:
@@ -1160,6 +1162,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(c.t, 3000)
         self.assertEqual(c.s, 4000)
 
+    @planned
     def test_class_var_no_default(self):
         # If a ClassVar has no default value, it should not be set on the class.
         @dataclass
@@ -1194,7 +1197,7 @@ class TestCase(unittest.TestCase):
             x: ClassVar[int] = field(default=10)
         self.assertEqual(C.x, 10)
 
-    @not_implemented
+    @api_difference("While frozen support is planned, annotation count will still be different.")
     def test_class_var_frozen(self):
         # Make sure ClassVars work even if we're frozen.
         @dataclass(frozen=True)
@@ -1310,7 +1313,7 @@ class TestCase(unittest.TestCase):
         c = C(10, 11, 50, 51)
         self.assertEqual(vars(c), {'x': 21, 'y': 101})
 
-    @not_implemented
+    @planned
     def test_default_factory(self):
         # Test a factory that returns a new list.
         @dataclass
@@ -1572,7 +1575,7 @@ class TestCase(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, 'dataclass instance'):
             asdict(int)
 
-
+    @api_difference("prefab_classes as_dict does not make copies of the objects.")
     def test_helper_asdict_copy_values(self):
         @dataclass
         class C:
@@ -1606,6 +1609,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(asdict(u), {'name': 'Joe',
                                      'id': {'token': 123, 'group': 2}})
 
+    @api_difference("prefab_classes as_dict does not attempt to handle builtin containers")
     def test_helper_asdict_builtin_containers(self):
         @dataclass
         class User:
@@ -1635,6 +1639,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(asdict(gd), {'id': 0, 'users': {'first': {'name': 'Alice', 'id': 1},
                                                          'second': {'name': 'Bob', 'id': 2}}})
 
+    @api_difference("prefab_classes as_dict does not attempt to handle builtin containers")
     def test_helper_asdict_builtin_object_containers(self):
         @dataclass
         class Child:
@@ -1647,6 +1652,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(asdict(Parent(Child([1]))), {'child': {'d': [1]}})
         self.assertEqual(asdict(Parent(Child({1: 2}))), {'child': {'d': {1: 2}}})
 
+    @api_difference("No support for dict_factory in prefab_classes")
     def test_helper_asdict_factory(self):
         @dataclass
         class C:
@@ -1661,6 +1667,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(d, OrderedDict([('x', 42), ('y', 2)]))
         self.assertIs(type(d), OrderedDict)
 
+    @api_difference("prefab_classes as_dict does not attempt to handle builtin containers")
     def test_helper_asdict_namedtuple(self):
         T = namedtuple('T', 'a b c')
         @dataclass
@@ -1694,6 +1701,7 @@ class TestCase(unittest.TestCase):
         self.assertIs(type(d), OrderedDict)
         self.assertIs(type(d['y'][1]), OrderedDict)
 
+    @api_difference("prefab_classes as_dict does not attempt to handle builtin containers")
     def test_helper_asdict_namedtuple_key(self):
         # Ensure that a field that contains a dict which has a
         # namedtuple as a key works with asdict().
@@ -1707,6 +1715,7 @@ class TestCase(unittest.TestCase):
 
         self.assertEqual(asdict(c), {'f': {T(a='an a'): 0}})
 
+    @api_difference("prefab_classes as_dict does not attempt to handle builtin containers")
     def test_helper_asdict_namedtuple_derived(self):
         class T(namedtuple('Tbase', 'a')):
             def my_a(self):
@@ -1725,6 +1734,7 @@ class TestCase(unittest.TestCase):
         self.assertIsNot(d['f'], t)
         self.assertEqual(d['f'].my_a(), 6)
 
+    @planned
     def test_helper_astuple(self):
         # Basic tests for astuple(), it should return a new tuple.
         @dataclass
@@ -1740,6 +1750,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(astuple(c), (1, 42))
         self.assertIs(type(astuple(c)), tuple)
 
+    @not_implemented
     def test_helper_astuple_raises_on_classes(self):
         # astuple() should raise on a class object.
         @dataclass
@@ -1751,6 +1762,7 @@ class TestCase(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, 'dataclass instance'):
             astuple(int)
 
+    @not_implemented
     def test_helper_astuple_copy_values(self):
         @dataclass
         class C:
@@ -1766,6 +1778,7 @@ class TestCase(unittest.TestCase):
         t[1].append(1)
         self.assertEqual(c.y, [])
 
+    @not_implemented
     def test_helper_astuple_nested(self):
         @dataclass
         class UserId:
@@ -1782,6 +1795,7 @@ class TestCase(unittest.TestCase):
         u.id.group = 2
         self.assertEqual(astuple(u), ('Joe', (123, 2)))
 
+    @not_implemented
     def test_helper_astuple_builtin_containers(self):
         @dataclass
         class User:
@@ -1808,6 +1822,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(astuple(gt), (0, (('Alice', 1), ('Bob', 2))))
         self.assertEqual(astuple(gd), (0, {'first': ('Alice', 1), 'second': ('Bob', 2)}))
 
+    @not_implemented
     def test_helper_astuple_builtin_object_containers(self):
         @dataclass
         class Child:
@@ -1820,6 +1835,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(astuple(Parent(Child([1]))), (([1],),))
         self.assertEqual(astuple(Parent(Child({1: 2}))), (({1: 2},),))
 
+    @not_implemented
     def test_helper_astuple_factory(self):
         @dataclass
         class C:
@@ -1837,6 +1853,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(t, NT(42, 2))
         self.assertIs(type(t), NT)
 
+    @not_implemented
     def test_helper_astuple_namedtuple(self):
         T = namedtuple('T', 'a b c')
         @dataclass
@@ -1879,6 +1896,9 @@ class TestCase(unittest.TestCase):
         self.assertEqual(cls1, cls)
         self.assertEqual(asdict(cls1(1)), {'x': 1, 'y': 5})
 
+    @api_difference("init=false on a prefab_classes attribute removes the attribute "
+                    "from the function signature, "
+                    "but it will be set to the default value or factory in __init__")
     def test_init_in_order(self):
         @dataclass
         class C:
@@ -1902,6 +1922,7 @@ class TestCase(unittest.TestCase):
         self.assertNotIn(('e', 4), calls)
         self.assertEqual(('f', 4), calls[4])
 
+    @api_difference("prefabs remove all keys from annotations when used")
     def test_items_in_dicts(self):
         @dataclass
         class C:
@@ -1947,6 +1968,7 @@ class TestCase(unittest.TestCase):
 
         self.assertEqual(C.from_file('filename').x, 20)
 
+    @not_implemented
     def test_field_metadata_default(self):
         # Make sure the default metadata is read-only and of
         #  zero length.
@@ -1960,6 +1982,7 @@ class TestCase(unittest.TestCase):
                                     'does not support item assignment'):
             fields(C)[0].metadata['test'] = 3
 
+    @not_implemented
     def test_field_metadata_mapping(self):
         # Make sure only a mapping can be passed as metadata
         #  zero length.
@@ -2003,6 +2026,7 @@ class TestCase(unittest.TestCase):
                                     'does not support item assignment'):
             fields(C)[0].metadata['test'] = 3
 
+    @not_implemented
     def test_field_metadata_custom_mapping(self):
         # Try a custom mapping.
         class SimpleNameSpace:
@@ -2043,6 +2067,7 @@ class TestCase(unittest.TestCase):
         # Subscripting the resulting class should work, etc.
         Alias = List[LabeledBox[int]]
 
+    @not_implemented
     def test_generic_extending(self):
         S = TypeVar('S')
         T = TypeVar('T')
@@ -2066,6 +2091,7 @@ class TestCase(unittest.TestCase):
         c = Alias(10, 1.0)
         self.assertEqual(c.new_method(), 1.0)
 
+    @api_difference("make_prefabclass function does not exist")
     def test_generic_dynamic(self):
         T = TypeVar('T')
 
@@ -2112,6 +2138,7 @@ class TestCase(unittest.TestCase):
                     self.assertEqual(new_sample.x, another_new_sample.x)
                     self.assertEqual(sample.y, another_new_sample.y)
 
+    @not_implemented
     def test_dataclasses_qualnames(self):
         @dataclass(order=True, unsafe_hash=True, frozen=True)
         class A:
@@ -2137,6 +2164,7 @@ class TestCase(unittest.TestCase):
             A()
 
 
+@api_difference("prefab_classes allows fields with no annotation.")
 class TestFieldNoAnnotation(unittest.TestCase):
     def test_field_without_annotation(self):
         with self.assertRaisesRegex(TypeError,
@@ -2172,6 +2200,7 @@ class TestFieldNoAnnotation(unittest.TestCase):
                 f = field()
 
 
+@api_difference("Prefab classes does not generate docstrings.")
 class TestDocString(unittest.TestCase):
     def assertDocStrEqual(self, a, b):
         # Because 3.6 and 3.7 differ in how inspect.signature work
@@ -2262,6 +2291,8 @@ class TestDocString(unittest.TestCase):
 
 
 class TestInit(unittest.TestCase):
+    @api_difference("prefab_classes handle init=False differently and "
+                    "removes class variables used in definition.")
     def test_base_has_init(self):
         class B:
             def __init__(self):
@@ -2288,6 +2319,7 @@ class TestInit(unittest.TestCase):
         self.assertEqual(c.x, 10)
         self.assertEqual(c.z, 100)
 
+    @api_difference("C().i will not exist as C.i does not exist after generation of prefab_classes")
     def test_no_init(self):
         @dataclass(init=False)
         class C:
@@ -2301,6 +2333,7 @@ class TestInit(unittest.TestCase):
                 self.i = 3
         self.assertEqual(C().i, 3)
 
+    @planned
     def test_overwriting_init(self):
         # If the class has __init__, use it no matter the value of
         #  init=.
@@ -2326,6 +2359,7 @@ class TestInit(unittest.TestCase):
                 self.x = 2 * x
         self.assertEqual(C(5).x, 10)
 
+    @planned
     def test_inherit_from_protocol(self):
         # Dataclasses inheriting from protocol should preserve their own `__init__`.
         # See bpo-45081.
@@ -2348,6 +2382,7 @@ class TestInit(unittest.TestCase):
 
 
 class TestRepr(unittest.TestCase):
+    @planned
     def test_repr(self):
         @dataclass
         class B:
@@ -2392,6 +2427,7 @@ class TestRepr(unittest.TestCase):
                 return 'C-class'
         self.assertEqual(repr(C(3)), 'C-class')
 
+    @planned
     def test_overwriting_repr(self):
         # If the class has __repr__, use it no matter the value of
         #  repr=.
@@ -2436,6 +2472,7 @@ class TestEq(unittest.TestCase):
                 return other == 10
         self.assertEqual(C(3), 10)
 
+    @planned
     def test_overwriting_eq(self):
         # If the class has __eq__, use it no matter the value of
         #  eq=.
@@ -2465,6 +2502,7 @@ class TestEq(unittest.TestCase):
         self.assertNotEqual(C(1), 1)
 
 
+@not_implemented
 class TestOrdering(unittest.TestCase):
     def test_functools_total_ordering(self):
         # Test that functools.total_ordering works with this class.
@@ -2541,6 +2579,7 @@ class TestOrdering(unittest.TestCase):
                 def __ge__(self):
                     pass
 
+@planned
 class TestHash(unittest.TestCase):
     def test_unsafe_hash(self):
         @dataclass(unsafe_hash=True)
@@ -2761,6 +2800,7 @@ class TestHash(unittest.TestCase):
                     assert False, f'unknown value for expected={expected!r}'
 
 
+@planned
 class TestFrozen(unittest.TestCase):
     def test_frozen(self):
         @dataclass(frozen=True)
@@ -2935,6 +2975,7 @@ class TestFrozen(unittest.TestCase):
             hash(C({}))
 
 
+@api_difference("Slots are only implemented on compiled prefabs, which can't be tested here.")
 class TestSlots(unittest.TestCase):
     def test_simple(self):
         @dataclass
@@ -3233,6 +3274,7 @@ class TestSlots(unittest.TestCase):
         weakref.ref(a)
 
 
+@planned
 class TestDescriptors(unittest.TestCase):
     def test_set_name(self):
         # See bpo-33141.
@@ -3414,6 +3456,7 @@ class TestDescriptors(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, 'missing 1 required positional argument'):
             c = C()
 
+@planned  # Some of these fail for the wrong reason
 class TestStringAnnotations(unittest.TestCase):
     def test_classvar(self):
         # Some expressions recognized as ClassVar really aren't.  But
@@ -3471,6 +3514,7 @@ class TestStringAnnotations(unittest.TestCase):
                 # x is not a ClassVar, so C() takes one arg.
                 self.assertEqual(C(10).x, 10)
 
+    @not_implemented
     def test_initvar(self):
         # These tests assume that both "import dataclasses" and "from
         #  dataclasses import *" have been run in this file.
@@ -3502,6 +3546,7 @@ class TestStringAnnotations(unittest.TestCase):
                                             "object has no attribute 'x'"):
                     C(1).x
 
+    @not_implemented
     def test_isnt_initvar(self):
         for typestr in ('IV',
                         'dc.InitVar',
@@ -3516,6 +3561,7 @@ class TestStringAnnotations(unittest.TestCase):
                 # x is not an InitVar, so there will be a member x.
                 self.assertEqual(C(10).x, 10)
 
+    @not_implemented
     def test_classvar_module_level_import(self):
         from test import dataclass_module_1
         from test import dataclass_module_1_str
@@ -3569,6 +3615,7 @@ class TestStringAnnotations(unittest.TestCase):
              'return': type(None)})
 
 
+@not_implemented
 class TestMakeDataclass(unittest.TestCase):
     def test_simple(self):
         C = make_dataclass('C',
@@ -3733,6 +3780,7 @@ class TestMakeDataclass(unittest.TestCase):
                 C = make_dataclass(classname, ['a', 'b'])
                 self.assertEqual(C.__name__, classname)
 
+@not_implemented
 class TestReplace(unittest.TestCase):
     def test(self):
         @dataclass(frozen=True)
@@ -3962,6 +4010,7 @@ class TestReplace(unittest.TestCase):
     ##     replace(c, x=5)
 
 class TestAbstract(unittest.TestCase):
+    @api_difference("prefabs do not support order comparisons")
     def test_abc_implementation(self):
         class Ordered(abc.ABC):
             @abc.abstractmethod
@@ -4005,6 +4054,7 @@ class TestMatchArgs(unittest.TestCase):
             a: int
         self.assertEqual(C(42).__match_args__, ('a',))
 
+    @planned
     def test_explicit_match_args(self):
         ma = ()
         @dataclass
@@ -4049,6 +4099,7 @@ class TestMatchArgs(unittest.TestCase):
             b: int
         self.assertEqual(B.__match_args__, ('a', 'z'))
 
+    @not_implemented
     def test_make_dataclasses(self):
         C = make_dataclass('C', [('x', int), ('y', int)])
         self.assertEqual(C.__match_args__, ('x', 'y'))
@@ -4064,6 +4115,7 @@ class TestMatchArgs(unittest.TestCase):
 
 
 class TestKeywordArgs(unittest.TestCase):
+    @api_difference("prefab_classes ignores ClassVars")
     def test_no_classvar_kwarg(self):
         msg = 'field a is a ClassVar but specifies kw_only'
         with self.assertRaisesRegex(TypeError, msg):
@@ -4081,6 +4133,7 @@ class TestKeywordArgs(unittest.TestCase):
             class A:
                 a: ClassVar[int] = field(kw_only=False)
 
+    @planned
     def test_field_marked_as_kwonly(self):
         #######################
         # Using dataclass(kw_only=True)
@@ -4133,6 +4186,7 @@ class TestKeywordArgs(unittest.TestCase):
             a: int = field(kw_only=False)
         self.assertFalse(fields(A)[0].kw_only)
 
+    @api_difference("Should kw only args show up in match_args?")
     def test_match_args(self):
         # kw fields don't show up in __match_args__.
         @dataclass(kw_only=True)
@@ -4146,6 +4200,7 @@ class TestKeywordArgs(unittest.TestCase):
             b: int = field(kw_only=True)
         self.assertEqual(C(42, b=10).__match_args__, ('a',))
 
+    @planned
     def test_KW_ONLY(self):
         @dataclass
         class A:
@@ -4194,6 +4249,7 @@ class TestKeywordArgs(unittest.TestCase):
         self.assertEqual(c.b, 3)
         self.assertEqual(c.c, 2)
 
+    @api_difference("No support for kw_only as a string in prefab_classes.")
     def test_KW_ONLY_as_string(self):
         @dataclass
         class A:
@@ -4206,6 +4262,7 @@ class TestKeywordArgs(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, msg):
             A(3, 4, 5)
 
+    @planned  # Message may be different
     def test_KW_ONLY_twice(self):
         msg = "'Y' is KW_ONLY, but KW_ONLY has already been specified"
 
@@ -4270,7 +4327,7 @@ class TestKeywordArgs(unittest.TestCase):
                 d: int
                 Y: KW_ONLY
 
-
+    @api_difference("Different post_init name, no support for InitVars")
     def test_post_init(self):
         @dataclass
         class A:
@@ -4297,6 +4354,7 @@ class TestKeywordArgs(unittest.TestCase):
         b = B(1, c=2, b=3, d=4)
         self.assertEqual(asdict(b), {'a': 3, 'c': 4})
 
+    @planned
     def test_defaults(self):
         # For kwargs, make sure we can have defaults after non-defaults.
         @dataclass
@@ -4326,6 +4384,7 @@ class TestKeywordArgs(unittest.TestCase):
                 c: int = 1
                 d: int
 
+    @not_implemented
     def test_make_dataclass(self):
         A = make_dataclass("A", ['a'], kw_only=True)
         self.assertTrue(fields(A)[0].kw_only)
