@@ -619,6 +619,7 @@ class TestCase(unittest.TestCase):
         self.assertNotIn('z', C(0).__dict__)
         self.assertEqual(vars(C(5)), {'t': 10, 'x': 5, 'y': 0})
 
+    @api_difference("prefab's _attributes is different to dataclasses' fields")
     def test_class_marker(self):
         @dataclass
         class C:
