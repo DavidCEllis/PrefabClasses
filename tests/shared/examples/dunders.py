@@ -39,3 +39,24 @@ class CoordinateIter:
 class NoMatchArgs:
     x: float
     y: float
+
+
+class DundersExist:
+    x: int
+    y: int
+
+    __match_args__ = ('x',)
+
+    def __init__(self, x, y):
+        self.x = 2 * x
+        self.y = 3 * y
+
+    def __repr__(self):
+        return "NOT_REPLACED"
+
+    def __eq__(self, other):
+        return True
+
+    def __iter__(self):
+        yield self.x
+

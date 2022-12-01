@@ -30,7 +30,7 @@ class Attribute:
         self.__prefab_post_init__()
 
     def __repr__(self):
-        return f'Attribute(default={self.default!r}, default_factory={self.default_factory!r}, converter={self.converter!r}, init={self.init!r}, repr={self.repr!r}, kw_only={self.kw_only!r})'
+        return f'{type(self).__qualname__}(default={self.default!r}, default_factory={self.default_factory!r}, converter={self.converter!r}, init={self.init!r}, repr={self.repr!r}, kw_only={self.kw_only!r})'
 
     def __eq__(self, other):
         return (self.default, self.default_factory, self.converter, self.init, self.repr, self.kw_only) == (other.default, other.default_factory, other.converter, other.init, other.repr, other.kw_only) if self.__class__ == other.__class__ else NotImplemented
