@@ -137,7 +137,7 @@ def get_repr_maker():
             for name, attrib in cls._attributes.items()
             if attrib.repr
         )
-        code = f"def __repr__(self):\n    return f'{{type(self).__name__}}({content})'"
+        code = f"def __repr__(self):\n    return f'{{type(self).__qualname__}}({content})'"
         return code
 
     return autogen(__repr__)

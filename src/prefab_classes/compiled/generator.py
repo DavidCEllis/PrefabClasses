@@ -164,6 +164,21 @@ class PrefabDetails:
     def post_init_call(self):
         return self.call_method(POST_INIT_FUNC)
 
+    @property
+    def ast_qualname_str(self):
+        call = ast.Call(
+            func=ast.Name(id='type', ctx=ast.Load()),
+            args=[ast.Name(id='self', ctx=ast.Load())],
+            keywords=[]
+        )
+        attrib = ast.Attribute(
+            value=call,
+            attr='__qualname__',
+            ctx=ast.Load()
+        )
+        value = ast.FormattedValue(value=attrib, conversion=-1)
+        return value
+
     def discover_fields(self):
         def funcid_or_none(value):
             """get .func.id or return None"""
@@ -449,7 +464,10 @@ class PrefabDetails:
             defaults=[],
         )
 
-        field_strings = [ast.Constant(value=f"{self.name}(")]
+        field_strings = [
+            self.ast_qualname_str,
+            ast.Constant(value="(")
+        ]
         for i, field in enumerate(self.field_list):
             if i > 0:
                 field_strings.append(ast.Constant(value=", "))
