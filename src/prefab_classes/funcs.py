@@ -1,4 +1,5 @@
 from .constants import FIELDS_ATTRIBUTE
+from .exceptions import PrefabTypeError
 
 
 def is_prefab(o):
@@ -18,6 +19,8 @@ def as_dict(inst, *, excludes=None):
     :param excludes: list or set of values to exclude from the resulting dict
     :return: dictionary {attribute_name: attribute_value, ...}
     """
+    if not is_prefab_instance(inst):
+        raise PrefabTypeError(f"inst hould be a prefab instance, not {type(inst)}")
     result = {}
     excludes = excludes or set()
 

@@ -31,3 +31,7 @@ class LivePrefabError(PrefabError):
 
 class CompiledPrefabError(PrefabError):
     pass
+
+
+class PrefabTypeError(PrefabError, TypeError):
+    pass
