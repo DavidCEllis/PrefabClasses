@@ -35,3 +35,12 @@ class IgnoreClassVars:
     y: ClassVar[str] = "Apple"
     z: "ClassVar[float]" = 3.14
     actual: str = "Test"
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class PositionalNotAfterKW:
+    # y defines a default, but it is not in the signature so should be ignored
+    # for the purpose of argument order.
+    x: int
+    y: int = attribute(default=0, init=False)
+    z: int
