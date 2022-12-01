@@ -2,11 +2,12 @@ from .constants import FIELDS_ATTRIBUTE
 
 
 def is_prefab(o):
-    return hasattr(o, FIELDS_ATTRIBUTE)
+    cls = o if isinstance(o, type) else type(o)
+    return hasattr(cls, FIELDS_ATTRIBUTE)
 
 
 def is_prefab_instance(o):
-    return is_prefab(o) and not isinstance(o, type)
+    return hasattr(type(o), FIELDS_ATTRIBUTE)
 
 
 def as_dict(inst, *, excludes=None):
