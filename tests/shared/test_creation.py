@@ -94,3 +94,12 @@ def test_skipped_classvars(importer):
     assert "x" in getattr(IgnoreClassVars, "__dict__")
     assert "y" in getattr(IgnoreClassVars, "__dict__")
     assert "z" in getattr(IgnoreClassVars, "__dict__")
+
+
+def test_non_init_doesnt_break_syntax():
+    # No syntax error if an attribute with a default is defined
+    # before one without - if init=False for that attribute
+    from creation import PositionalNotAfterKW
+
+    x = PositionalNotAfterKW(1, 2)
+    assert repr(x) == "PositionalNotAfterKW(x=1, y=0, z=2)"

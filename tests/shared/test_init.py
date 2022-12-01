@@ -117,3 +117,23 @@ def test_replace_factory_default(importer):
 
     mut1 = FactoryDefault(x=[1, 2, 3])
     assert mut1.x == [1, 2, 3]
+
+
+def test_empty_containers_factory_default(importer):
+    # Empty containers should be copied and not replaced
+    from init_ex import EmptyContainers
+
+    ec = EmptyContainers()
+    assert ec.x == []
+    assert ec.y == set()
+    assert ec.z == {}
+
+    empty_list = []
+    empty_set = set()
+    empty_dict = {}
+
+    ec = EmptyContainers(empty_list, empty_set, empty_dict)
+
+    assert ec.x is empty_list
+    assert ec.y is empty_set
+    assert ec.z is empty_dict

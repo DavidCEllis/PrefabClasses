@@ -170,16 +170,17 @@ def _make_prefab(
 
     default_defined = []
     for name, attrib in attributes.items():
-        if attrib.default is not _NOTHING or attrib.default_factory is not _NOTHING:
-            default_defined.append(name)
-        else:
-            if default_defined and not attrib.kw_only:
-                names = ", ".join(default_defined)
-                raise SyntaxError(
-                    "non-default argument follows default argument",
-                    f"defaults: {names}",
-                    f"non_default after default: {name}",
-                )
+        if attrib.init:
+            if attrib.default is not _NOTHING or attrib.default_factory is not _NOTHING:
+                default_defined.append(name)
+            else:
+                if default_defined and not attrib.kw_only:
+                    names = ", ".join(default_defined)
+                    raise SyntaxError(
+                        "non-default argument follows default argument",
+                        f"defaults: {names}",
+                        f"non_default after default: {name}",
+                    )
 
     setattr(cls, FIELDS_ATTRIBUTE, [name for name in attributes])
     cls._attributes = attributes

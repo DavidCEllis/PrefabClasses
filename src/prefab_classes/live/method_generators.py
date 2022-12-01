@@ -95,7 +95,7 @@ def get_init_maker(*, init_name="__init__"):
         for name, attrib in cls._attributes.items():
             if attrib.init:
                 if attrib.default_factory is not _NOTHING:
-                    value = f"{name} if {name} else _{name}_factory()"
+                    value = f"{name} if {name} is not None else _{name}_factory()"
                 else:
                     value = name
             else:
