@@ -60,3 +60,10 @@ class PostInitExample:
 
     def __prefab_post_init__(self):
         self.post_init_ran = True
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class EmptyContainers:
+    x: list = attribute(default_factory=list)
+    y: set = attribute(default_factory=set)
+    z: dict = attribute(default_factory=dict)
