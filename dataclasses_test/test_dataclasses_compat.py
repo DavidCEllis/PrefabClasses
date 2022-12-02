@@ -51,7 +51,6 @@ def fields(o):
 class CustomError(Exception): pass
 
 class TestCase(unittest.TestCase):
-    @planned
     def test_no_fields(self):
         @dataclass
         class C:
@@ -60,7 +59,6 @@ class TestCase(unittest.TestCase):
         o = C()
         self.assertEqual(len(fields(C)), 0)
 
-    @planned
     def test_no_fields_but_member_variable(self):
         @dataclass
         class C:
@@ -1163,7 +1161,6 @@ class TestCase(unittest.TestCase):
         self.assertEqual(c.t, 3000)
         self.assertEqual(c.s, 4000)
 
-    @planned
     def test_class_var_no_default(self):
         # If a ClassVar has no default value, it should not be set on the class.
         @dataclass
@@ -2383,7 +2380,6 @@ class TestInit(unittest.TestCase):
 
 
 class TestRepr(unittest.TestCase):
-    @planned
     def test_repr(self):
         @dataclass
         class B:
@@ -3457,7 +3453,6 @@ class TestDescriptors(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, 'missing 1 required positional argument'):
             c = C()
 
-@planned  # Some of these fail for the wrong reason
 class TestStringAnnotations(unittest.TestCase):
     def test_classvar(self):
         # Some expressions recognized as ClassVar really aren't.  But
@@ -3495,6 +3490,7 @@ class TestStringAnnotations(unittest.TestCase):
                 # have a default.
                 self.assertNotIn('x', C.__dict__)
 
+    @api_difference("Anything with ClassVar will be interpreted as one in prefab_classes")
     def test_isnt_classvar(self):
         for typestr in ('CV',
                         't.ClassVar',
