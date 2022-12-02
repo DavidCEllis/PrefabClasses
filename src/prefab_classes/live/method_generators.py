@@ -113,7 +113,10 @@ def get_init_maker(*, init_name="__init__"):
         else:
             pre_init_call = ""
 
-        body = "\n".join(f"    self.{name} = {value}" for name, value in assignments)
+        if assignments:
+            body = "\n".join(f"    self.{name} = {value}" for name, value in assignments)
+        else:
+            body = "    pass"
 
         if hasattr(cls, POST_INIT_FUNC):
             post_init_call = f"    self.{POST_INIT_FUNC}()\n"
@@ -145,14 +148,19 @@ def get_repr_maker():
 
 def get_eq_maker():
     def __eq__(cls):
-        selfvals = ",".join(f"self.{name}" for name in cls._attributes.keys())
-        othervals = ",".join(f"other.{name}" for name in cls._attributes.keys())
         class_comparison = "self.__class__ is other.__class__"
-        instance_comparison = f"({selfvals},) == ({othervals},)"
+        if cls._attributes:
+            selfvals = ",".join(f"self.{name}" for name in cls._attributes.keys())
+            othervals = ",".join(f"other.{name}" for name in cls._attributes.keys())
+            instance_comparison = f"({selfvals},) == ({othervals},)"
+        else:
+            instance_comparison = "True"
+
         code = (
             f"def __eq__(self, other):\n"
             f"    return {instance_comparison} if {class_comparison} else NotImplemented\n"
         )
+        print(code)
         return code
 
     return autogen(__eq__)
@@ -160,7 +168,10 @@ def get_eq_maker():
 
 def get_iter_maker():
     def __iter__(cls):
-        values = "\n".join(f"    yield self.{name} " for name in cls._attributes.keys())
+        if cls._attributes:
+            values = "\n".join(f"    yield self.{name} " for name in cls._attributes.keys())
+        else:
+            values = "    yield from ()"
         code = f"def __iter__(self):\n{values}"
         return code
 

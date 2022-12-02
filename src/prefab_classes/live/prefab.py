@@ -163,10 +163,6 @@ def _make_prefab(
         for c in reversed(cls.__mro__)
         for name, attrib in getattr(c, f"_{c.__name__}_attributes", {}).items()
     }
-    if not attributes:
-        # It's easier to throw an error than to rewrite
-        # The code for the useless case of a class with no attributes.
-        raise LivePrefabError("Class must contain at least 1 attribute.")
 
     default_defined = []
     for name, attrib in attributes.items():

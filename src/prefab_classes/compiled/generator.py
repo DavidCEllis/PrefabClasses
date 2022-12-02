@@ -193,11 +193,16 @@ class PrefabDetails:
 
         for item in self.node.body:
             if isinstance(item, ast.AnnAssign):
-                # Code to check for ClassVar and ignore
-                if isinstance(item.annotation, ast.Constant):
+                if isinstance(item.annotation, ast.Name):
+                    # Class ClassVar with no subscript
+                    if CLASSVAR_NAME in item.annotation.id:
+                        continue
+                elif isinstance(item.annotation, ast.Constant):
+                    # String 'ClassVar
                     if CLASSVAR_NAME in item.annotation.value:
                         continue
                 elif isinstance(item.annotation, ast.Subscript):
+                    # Subscripted classvar
                     v = item.annotation.value
                     if isinstance(v, ast.Name):
                         if CLASSVAR_NAME in v.id:
@@ -291,14 +296,12 @@ class PrefabDetails:
 
         new_fields.update(self.fields)
         self.fields = new_fields
-        if not self.fields:
-            raise CompiledPrefabError("Class must contain at least 1 attribute.")
 
         self._resolved_parents = True
 
         return self.fields
 
-    def generate_fields(self):
+    def generate_fields_attribute(self):
         if self._generated_fields:
             return  # Only generate once
 
@@ -429,6 +432,9 @@ class PrefabDetails:
                 )
             )
 
+        if not self.field_list:
+            body.append(ast.Pass())
+
         if POST_INIT_FUNC in self.method_names:
             body.append(self.post_init_call)
 
@@ -500,25 +506,29 @@ class PrefabDetails:
 
         arguments = [ast.arg(arg="self"), ast.arg(arg="other")]
 
-        # elt = element I guess - but this is the terminology used in the
-        # tuple AST function so elt it is.
-        class_elts = []
-        other_elts = []
+        if self.field_list:
+            # elt = element I guess - but this is the terminology used in the
+            # tuple AST function so elt it is.
+            class_elts = []
+            other_elts = []
 
-        for field in self.field_list:
-            for obj_name, elt_list in [
-                ("self", class_elts),
-                ("other", other_elts),
-            ]:
-                elt_list.append(field.ast_attribute(obj_name))
+            for field in self.field_list:
+                for obj_name, elt_list in [
+                    ("self", class_elts),
+                    ("other", other_elts),
+                ]:
+                    elt_list.append(field.ast_attribute(obj_name))
 
-        class_tuple = ast.Tuple(elts=class_elts, ctx=ast.Load())
-        other_tuple = ast.Tuple(elts=other_elts, ctx=ast.Load())
+            class_tuple = ast.Tuple(elts=class_elts, ctx=ast.Load())
+            other_tuple = ast.Tuple(elts=other_elts, ctx=ast.Load())
 
-        # (self.x, self.y, ...) == (other.x, other.y, ...)
-        eq_comparison = ast.Compare(
-            left=class_tuple, ops=[ast.Eq()], comparators=[other_tuple]
-        )
+            # (self.x, self.y, ...) == (other.x, other.y, ...)
+            eq_comparison = ast.Compare(
+                left=class_tuple, ops=[ast.Eq()], comparators=[other_tuple]
+            )
+
+        else:
+            eq_comparison = ast.Constant(value="True")
 
         # (self.x, ...) == (other.x, ...) if self.__class__ == other.__class__ else NotImplemented
         left_ifexp = ast.Attribute(
@@ -561,10 +571,15 @@ class PrefabDetails:
             return
 
         arguments = [ast.arg(arg="self")]
-        body = [
-            ast.Expr(value=ast.Yield(value=field.ast_attribute()))
-            for field in self.field_list
-        ]
+        if self.field_list:
+            body = [
+                ast.Expr(value=ast.Yield(value=field.ast_attribute()))
+                for field in self.field_list
+            ]
+        else:
+            body = [
+                ast.Expr(value=ast.YieldFrom(value=ast.Tuple(elts=[], ctx=ast.Load())))
+            ]
 
         args = ast.arguments(
             posonlyargs=[],
@@ -596,7 +611,7 @@ class PrefabDetails:
         self.resolve_field_inheritance(prefabs)
 
         # Rewrite AST
-        self.generate_fields()
+        self.generate_fields_attribute()
         self.generate_match_args()
         self.generate_init()
         self.generate_repr()
