@@ -4,7 +4,7 @@ from prefab_classes.constants import FIELDS_ATTRIBUTE
 from pytest import raises
 
 
-class TestEmptyClasss:
+class TestEmptyClass:
     def test_empty(self, importer):
         from creation_empty import Empty
 
@@ -26,6 +26,14 @@ class TestEmptyClasss:
         x = Empty()
         y = Empty()
         assert x == y
+
+    def test_empty_iter(self, importer):
+        from creation_empty import EmptyIter
+
+        x = EmptyIter()
+        lx = list(x)
+
+        assert lx == []
 
 
 def test_removed_annotations(importer):
@@ -60,11 +68,15 @@ def test_skipped_classvars(importer):
     from creation import IgnoreClassVars
 
     fields = getattr(IgnoreClassVars, FIELDS_ATTRIBUTE)
+    assert "v" not in fields
+    assert "w" not in fields
     assert "x" not in fields
     assert "y" not in fields
     assert "z" not in fields
     assert "actual" in fields
 
+    assert "v" in getattr(IgnoreClassVars, "__dict__")
+    assert "w" in getattr(IgnoreClassVars, "__dict__")
     assert "x" in getattr(IgnoreClassVars, "__dict__")
     assert "y" in getattr(IgnoreClassVars, "__dict__")
     assert "z" in getattr(IgnoreClassVars, "__dict__")

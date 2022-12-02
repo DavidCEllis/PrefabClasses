@@ -30,7 +30,9 @@ class AllPlainAssignment:
 
 @prefab(compile_prefab=True, compile_fallback=True)
 class IgnoreClassVars:
-    # Ignore X, Y and Z - Include actual.
+    # Ignore v, w, x, y and z - Include actual.
+    v: ClassVar = 12
+    w: "ClassVar" = 24
     x: typing.ClassVar[int] = 42
     y: ClassVar[str] = "Apple"
     z: "ClassVar[float]" = 3.14
