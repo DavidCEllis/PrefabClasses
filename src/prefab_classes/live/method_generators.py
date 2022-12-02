@@ -160,7 +160,6 @@ def get_eq_maker():
             f"def __eq__(self, other):\n"
             f"    return {instance_comparison} if {class_comparison} else NotImplemented\n"
         )
-        print(code)
         return code
 
     return autogen(__eq__)
