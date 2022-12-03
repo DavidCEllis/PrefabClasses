@@ -28,6 +28,27 @@ class AllPlainAssignment:
     z = attribute(default="Apple")
 
 
+@prefab(compile_prefab=True, compile_fallback=True, iter=True, match_args=True)
+class KeepDefinedMethods:
+    x: int = -1
+    y: int = -1
+
+    __match_args__ = ('x', )
+
+    def __init__(self, x, y):
+        self.x = 0
+        self.y = 0
+
+    def __repr__(self):
+        return "ORIGINAL REPR"
+
+    def __eq__(self, other):
+        return False
+
+    def __iter__(self):
+        yield from ['ORIGINAL ITER']
+
+
 @prefab(compile_prefab=True, compile_fallback=True)
 class IgnoreClassVars:
     # Ignore v, w, x, y and z - Include actual.

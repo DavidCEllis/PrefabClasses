@@ -1,7 +1,8 @@
 """Tests for errors raised on class creation"""
 from prefab_classes import PrefabError
 from prefab_classes.constants import FIELDS_ATTRIBUTE
-from pytest import raises
+
+import pytest
 
 
 class TestEmptyClass:
@@ -36,32 +37,66 @@ class TestEmptyClass:
         assert lx == []
 
 
-def test_removed_annotations(importer):
-    from creation import OnlyHints
+class TestRemoveRecipe:
+    def test_removed_annotations(self, importer):
+        from creation import OnlyHints
 
-    removed_attributes = ["x", "y", "z"]
-    for attrib in removed_attributes:
-        assert attrib not in getattr(OnlyHints, "__dict__")
-        assert attrib not in getattr(OnlyHints, "__annotations__", {})
+        removed_attributes = ["x", "y", "z"]
+        for attrib in removed_attributes:
+            assert attrib not in getattr(OnlyHints, "__dict__")
+            assert attrib not in getattr(OnlyHints, "__annotations__", {})
+
+    def test_removed_only_used_annotations(self, importer):
+        from creation import MixedHints
+
+        assert "x" in getattr(MixedHints, "__annotations__")
+
+        removed_attributes = ["y", "z"]
+        for attrib in removed_attributes:
+            assert attrib not in getattr(MixedHints, "__dict__")
+            assert attrib not in getattr(MixedHints, "__annotations__", {})
+
+    def test_removed_attributes(self, importer):
+        from creation import AllPlainAssignment
+
+        removed_attributes = ["x", "y", "z"]
+        for attrib in removed_attributes:
+            assert attrib not in getattr(AllPlainAssignment, "__dict__")
 
 
-def test_removed_only_used_annotations(importer):
-    from creation import MixedHints
+@pytest.mark.usefixtures('importer')
+class TestKeepDefined:
+    def test_keep_init(self):
+        from creation import KeepDefinedMethods
+        x = KeepDefinedMethods(42)
 
-    assert "x" in getattr(MixedHints, "__annotations__")
+        assert x.x == 0
 
-    removed_attributes = ["y", "z"]
-    for attrib in removed_attributes:
-        assert attrib not in getattr(MixedHints, "__dict__")
-        assert attrib not in getattr(MixedHints, "__annotations__", {})
+    def test_keep_repr(self):
+        from creation import KeepDefinedMethods
 
+        x = KeepDefinedMethods()
+        assert repr(x) == "ORIGINAL REPR"
 
-def test_removed_attributes(importer):
-    from creation import AllPlainAssignment
+    def test_keep_eq(self):
+        from creation import KeepDefinedMethods
 
-    removed_attributes = ["x", "y", "z"]
-    for attrib in removed_attributes:
-        assert attrib not in getattr(AllPlainAssignment, "__dict__")
+        x = KeepDefinedMethods()
+
+        assert x != x
+
+    def test_keep_iter(self):
+        from creation import KeepDefinedMethods
+
+        x = KeepDefinedMethods()
+
+        y = list(x)
+        assert y[0] == "ORIGINAL ITER"
+
+    def test_keep_match_args(self):
+        from creation import KeepDefinedMethods
+
+        assert KeepDefinedMethods.__match_args__ == ('x', )
 
 
 def test_skipped_classvars(importer):
@@ -94,7 +129,7 @@ def test_non_init_doesnt_break_syntax():
 class TestExceptions:
 
     def test_kw_not_in_init(self, importer):
-        with raises(PrefabError) as e_info:
+        with pytest.raises(PrefabError) as e_info:
             from fails.creation_1 import Construct
 
         assert (
@@ -103,19 +138,19 @@ class TestExceptions:
 
 
     def test_positional_after_kw_error(self, importer):
-        with raises(SyntaxError) as e_info:
+        with pytest.raises(SyntaxError) as e_info:
             from fails.creation_2 import FailSyntax
 
         assert e_info.value.args[0] == "non-default argument follows default argument"
 
-        with raises(SyntaxError) as e_info:
+        with pytest.raises(SyntaxError) as e_info:
             from fails.creation_3 import FailSyntax
 
         assert e_info.value.args[0] == "non-default argument follows default argument"
 
 
     def test_no_default_no_init_error(self, importer):
-        with raises(PrefabError) as e_info:
+        with pytest.raises(PrefabError) as e_info:
             from fails.creation_4 import Construct
 
         assert (
@@ -126,7 +161,7 @@ class TestExceptions:
 
     def test_default_value_and_factory_error(self, importer):
         """Error if defining both a value and a factory"""
-        with raises(PrefabError) as e_info:
+        with pytest.raises(PrefabError) as e_info:
             from fails.creation_5 import Construct
 
         assert (
