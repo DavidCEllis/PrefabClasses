@@ -180,18 +180,18 @@ def _make_prefab(
 
     setattr(cls, FIELDS_ATTRIBUTE, [name for name in attributes])
     cls._attributes = attributes
-    if match_args:
+    if match_args and '__match_args__' not in cls.__dict__:
         cls.__match_args__ = tuple(name for name in attributes)
 
-    if init:
+    if init and '__init__' not in cls.__dict__:
         setattr(cls, "__init__", init_maker)
     else:
         setattr(cls, "__prefab_init__", prefab_init_maker)
-    if repr:
+    if repr and '__repr__' not in cls.__dict__:
         setattr(cls, "__repr__", repr_maker)
-    if eq:
+    if eq and '__eq__' not in cls.__dict__:
         setattr(cls, "__eq__", eq_maker)
-    if iter:
+    if iter and '__iter__' not in cls.__dict__:
         setattr(cls, "__iter__", iter_maker)
 
     return cls
