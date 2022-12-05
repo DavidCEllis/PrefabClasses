@@ -140,10 +140,13 @@ class PrefabDetails:
         return list(self._resolved_fields.values())
 
     @cached_property
-    def method_names(self):
-        method_visitor = GatherFuncNames()
+    def defined_attr_names(self):
+        """
+        Get existing assigned names
+        """
+        method_visitor = GatherClassAttrs()
         method_visitor.visit(self.node)
-        return method_visitor.methodnames
+        return method_visitor.attrnames
 
     @staticmethod
     def call_method(method_name, args=None, keywords=None):
@@ -316,7 +319,7 @@ class PrefabDetails:
         )
         return assignment
 
-    @cached_property
+    @property
     def slots_assignment(self):
         """Generate slots"""
         # Don't use resolved fields as we only want fields new to this class
@@ -351,7 +354,7 @@ class PrefabDetails:
 
         body = []
 
-        if PRE_INIT_FUNC in self.method_names:
+        if PRE_INIT_FUNC in self.defined_attr_names:
             body.append(self.pre_init_call)
 
         has_default = False
@@ -435,7 +438,7 @@ class PrefabDetails:
         if not self.resolved_field_list:
             body.append(ast.Pass())
 
-        if POST_INIT_FUNC in self.method_names:
+        if POST_INIT_FUNC in self.defined_attr_names:
             body.append(self.post_init_call)
 
         arguments = ast.arguments(
@@ -593,6 +596,11 @@ class PrefabDetails:
         return iter_func
 
     def generate_ast(self, prefabs: dict[str, "PrefabDetails"]):
+        """
+        Generate the prefab code and insert it into the body of the class.
+
+        :param prefabs: Details on all prefabs in this module - for handling inheritance
+        """
 
         # Handle inheritance
         self.resolve_field_inheritance(prefabs)
@@ -601,17 +609,17 @@ class PrefabDetails:
         if not self.compile_plain:
             body.append(self.compile_flag)
             body.append(self.fields_assignment)
-        if self.compile_slots:
+        if self.compile_slots and '__slots__' not in self.defined_attr_names:
             body.append(self.slots_assignment)
-        if self.match_args:
+        if self.match_args and '__match_args__' not in self.defined_attr_names:
             body.append(self.match_args_assignment)
-        if self.init:
+        if (self.init and '__init__' not in self.defined_attr_names) or not self.init:
             body.append(self.init_method)
-        if self.repr:
+        if self.repr and '__repr__' not in self.defined_attr_names:
             body.append(self.repr_method)
-        if self.eq:
+        if self.eq and '__eq__' not in self.defined_attr_names:
             body.append(self.eq_method)
-        if self.iter:
+        if self.iter and '__iter__' not in self.defined_attr_names:
             body.append(self.iter_method)
 
         # Add functions andd definitions to the body
@@ -621,13 +629,21 @@ class PrefabDetails:
         self.node.decorator_list.remove(self.decorator)
 
 
-class GatherFuncNames(ast.NodeVisitor):
+class GatherClassAttrs(ast.NodeVisitor):
     def __init__(self):
         super().__init__()
-        self.methodnames = set()
+        self.attrnames = set()
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
-        self.methodnames.add(node.name)
+        self.attrnames.add(node.name)
+
+    def visit_Assign(self, node: ast.Assign):
+        for target in node.targets:
+            self.attrnames.add(getattr(target, 'id'))
+
+    def visit_AnnAssign(self, node: ast.AnnAssign):
+        if getattr(node, 'value'):
+            self.attrnames.add(getattr(node.target, 'id'))
 
 
 class GatherPrefabs(ast.NodeVisitor):
