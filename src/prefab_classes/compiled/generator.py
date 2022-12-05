@@ -1,4 +1,5 @@
 import ast
+from functools import cached_property
 from typing import Any, Optional, Union
 
 from ..constants import (
@@ -32,7 +33,7 @@ class Field:
     annotation: Any = None
     attribute_func: bool = False
 
-    @property
+    @cached_property
     def default_factory_call(self):
         return ast.Call(func=self.default_factory, args=[], keywords=[])
 
@@ -100,13 +101,11 @@ class Field:
         )
 
 
-# noinspection PyArgumentList,PyAttributeOutsideInit
 @prefab
 class PrefabDetails:
     name: str
     node: ast.ClassDef
     decorator: Any
-    fields: dict[str, "Field"] = attribute(default_factory=dict)
     init: bool = True
     repr: bool = True
     eq: bool = True
@@ -116,18 +115,11 @@ class PrefabDetails:
     compile_plain: bool = False
     compile_fallback: bool = False
     compile_slots: bool = False
-    parents: Optional[list[str]] = None
 
+    # noinspection PyAttributeOutsideInit
     def __prefab_post_init__(self):
-        self._resolved_parents = False
-        self._generated_fields = False
-        self._generated_match_args = False
-        self._generated_slots = False
-        self._generated_init = False
-        self._generated_repr = False
-        self._generated_eq = False
-        self._generated_iter = False
-        self._method_visitor = None
+        self._resolved_fields: Optional[dict[str, "Field"]] = None
+        self._prefab_map: Optional[dict[str, "PrefabDetails"]] = None
 
     @property
     def field_names(self):
@@ -138,11 +130,20 @@ class PrefabDetails:
         return list(self.fields.values())
 
     @property
+    def resolved_field_names(self):
+        # Field names including inherited fields
+        return list(self._resolved_fields.keys())
+
+    @property
+    def resolved_field_list(self):
+        # Field values including inherited fields
+        return list(self._resolved_fields.values())
+
+    @cached_property
     def method_names(self):
-        if not self._method_visitor:
-            self._method_visitor = GatherFuncNames()
-            self._method_visitor.visit(self.node)
-        return self._method_visitor.methodnames
+        method_visitor = GatherFuncNames()
+        method_visitor.visit(self.node)
+        return method_visitor.methodnames
 
     @staticmethod
     def call_method(method_name, args=None, keywords=None):
@@ -179,7 +180,8 @@ class PrefabDetails:
         value = ast.FormattedValue(value=attrib, conversion=-1)
         return value
 
-    def discover_fields(self):
+    @cached_property
+    def fields(self):
         def funcid_or_none(value):
             """get .func.id or return None"""
             return getattr(getattr(value, "func", None), "id", None)
@@ -248,26 +250,14 @@ class PrefabDetails:
         for item in fields:
             self.node.body.remove(item.field)
 
-        self.fields = {field.name: field for field in fields}
+        return {field.name: field for field in fields}
 
-    def generate_slots(self):
-        """Generate slots before looking at inheritance"""
-        if self._generated_slots or not self.compile_slots:
-            return
-
-        slot_consts = [ast.Constant(value=name) for name in self.field_names]
-        target = ast.Name(id="__slots__", ctx=ast.Store())
-        assignment = ast.Assign(
-            targets=[target], value=ast.Tuple(elts=slot_consts, ctx=ast.Load())
-        )
-
-        self.node.body.insert(0, assignment)  # Put slots first
-
-    def discover_parents(self):
-        if self.parents is None:
-            self.parents = [getattr(item, "id") for item in self.node.bases]
-        if self.name in self.parents:
+    @cached_property
+    def parents(self):
+        parents = [getattr(item, "id") for item in self.node.bases]
+        if self.name in parents:
             raise CompiledPrefabError(f"Class {self.name} cannot inherit from itself.")
+        return parents
 
     def resolve_field_inheritance(self, prefabs: dict[str, "PrefabDetails"]):
         """
@@ -277,8 +267,10 @@ class PrefabDetails:
         :return:
         """
 
-        if self._resolved_parents:
-            return self.fields
+        if prefabs == self._prefab_map:
+            return
+
+        self._prefab_map = prefabs
 
         # Because this uses a python dict and dicts preserve
         # order this means if a subclass replaces a value
@@ -291,56 +283,64 @@ class PrefabDetails:
                     f"Compiled prefabs can only inherit from other compiled prefabs in the same module.",
                     f"{self.name} attempted to inherit from {parent_name}",
                 )
-            parent_fields = prefabs[parent_name].resolve_field_inheritance(prefabs)
-            new_fields.update(parent_fields)
+            prefabs[parent_name].resolve_field_inheritance(prefabs)
+            new_fields.update(prefabs[parent_name].resolved_fields)
 
         new_fields.update(self.fields)
-        self.fields = new_fields
 
-        self._resolved_parents = True
+        self._resolved_fields = new_fields
 
-        return self.fields
+    @property
+    def resolved_fields(self):
+        if self._resolved_fields is None:  # Don't just check for falseness as it can be an empty dict
+            raise CompiledPrefabError("Resolved fields have not yet been generated, "
+                                      "call resolve_field_inheritance first")
+        else:
+            return self._resolved_fields
 
-    def generate_fields_attribute(self):
-        if self._generated_fields:
-            return  # Only generate once
+    @cached_property
+    def compile_flag(self):
+        compiled_flag = ast.Assign(
+            targets=[ast.Name(id=COMPILED_FLAG, ctx=ast.Store())],
+            value=ast.Constant(value=True),
+        )
+        return compiled_flag
 
-        # Remove the decorator
-        self.node.decorator_list.remove(self.decorator)
-        if not self.compile_plain:
-            compiled_flag = ast.Assign(
-                targets=[ast.Name(id=COMPILED_FLAG, ctx=ast.Store())],
-                value=ast.Constant(value=True),
-            )
-            self.node.body.insert(0, compiled_flag)
+    @property
+    def fields_assignment(self):
+        field_consts = [ast.Constant(value=name) for name in self.resolved_field_names]
+        target = ast.Name(id=FIELDS_ATTRIBUTE, ctx=ast.Store())
+        assignment = ast.Assign(
+            targets=[target],
+            value=ast.List(elts=field_consts, ctx=ast.Load()),
+        )
+        return assignment
 
-            field_consts = [ast.Constant(value=name) for name in self.field_names]
-            target = ast.Name(id=FIELDS_ATTRIBUTE, ctx=ast.Store())
-            assignment = ast.Assign(
-                targets=[target],
-                value=ast.List(elts=field_consts, ctx=ast.Load()),
-            )
+    @cached_property
+    def slots_assignment(self):
+        """Generate slots"""
+        # Don't use resolved fields as we only want fields new to this class
+        slot_consts = [ast.Constant(value=name) for name in self.field_names]
+        target = ast.Name(id="__slots__", ctx=ast.Store())
+        assignment = ast.Assign(
+            targets=[target], value=ast.Tuple(elts=slot_consts, ctx=ast.Load())
+        )
 
-            self.node.body.insert(1, assignment)
+        return assignment
 
-        self._generated_fields = True
+    @property
+    def match_args_assignment(self):
 
-    def generate_match_args(self):
-        if self._generated_match_args or not self.match_args:
-            return
-
-        field_consts = [ast.Constant(value=name) for name in self.field_names]
+        field_consts = [ast.Constant(value=name) for name in self.resolved_field_names]
         target = ast.Name(id="__match_args__", ctx=ast.Store())
         assignment = ast.Assign(
             targets=[target],
             value=ast.Tuple(elts=field_consts, ctx=ast.Load()),
         )
-        self.node.body.insert(0, assignment)
+        return assignment
 
-    def generate_init(self):
-        if self._generated_init:
-            return
-
+    @property
+    def init_method(self):
         funcname = "__init__" if self.init else PREFAB_INIT_FUNC
 
         posonlyargs = []  # Unused
@@ -358,7 +358,7 @@ class PrefabDetails:
 
         args.append(ast.arg(arg="self"))
 
-        for field in self.field_list:
+        for field in self.resolved_field_list:
             # if init is false, just assign the default value in the body
             if field.init_ is False:
                 if field.default:
@@ -432,7 +432,7 @@ class PrefabDetails:
                 )
             )
 
-        if not self.field_list:
+        if not self.resolved_field_list:
             body.append(ast.Pass())
 
         if POST_INIT_FUNC in self.method_names:
@@ -454,13 +454,10 @@ class PrefabDetails:
             returns=None,
         )
 
-        self.node.body.append(init_func)
-        self._generated_init = True
+        return init_func
 
-    def generate_repr(self):
-        if self._generated_repr or not self.repr:
-            return
-
+    @property
+    def repr_method(self):
         arguments = [ast.arg(arg="self")]
         args = ast.arguments(
             posonlyargs=[],
@@ -474,7 +471,7 @@ class PrefabDetails:
             self.ast_qualname_str,
             ast.Constant(value="(")
         ]
-        for i, field in enumerate(self.field_list):
+        for i, field in enumerate(self.resolved_field_list):
             if i > 0:
                 field_strings.append(ast.Constant(value=", "))
             target = ast.Constant(value=f"{field.name}=")
@@ -497,22 +494,20 @@ class PrefabDetails:
             returns=None,
         )
 
-        self.node.body.append(repr_func)
-        self._generated_repr = True
+        return repr_func
 
-    def generate_eq(self):
-        if self._generated_eq or not self.eq:
-            return
+    @property
+    def eq_method(self):
 
         arguments = [ast.arg(arg="self"), ast.arg(arg="other")]
 
-        if self.field_list:
+        if self.resolved_field_list:
             # elt = element I guess - but this is the terminology used in the
             # tuple AST function so elt it is.
             class_elts = []
             other_elts = []
 
-            for field in self.field_list:
+            for field in self.resolved_field_list:
                 for obj_name, elt_list in [
                     ("self", class_elts),
                     ("other", other_elts),
@@ -563,18 +558,16 @@ class PrefabDetails:
         eq_func = ast.FunctionDef(
             name="__eq__", args=args, body=body, decorator_list=[], returns=None
         )
-        self.node.body.append(eq_func)
-        self._generated_eq = True
+        return eq_func
 
-    def generate_iter(self):
-        if self._generated_iter or not self.iter:
-            return
+    @property
+    def iter_method(self):
 
         arguments = [ast.arg(arg="self")]
-        if self.field_list:
+        if self.resolved_field_list:
             body = [
                 ast.Expr(value=ast.Yield(value=field.ast_attribute()))
-                for field in self.field_list
+                for field in self.resolved_field_list
             ]
         else:
             body = [
@@ -597,26 +590,35 @@ class PrefabDetails:
             returns=None,
         )
 
-        self.node.body.append(iter_func)
-        self._generated_iter = True
+        return iter_func
 
     def generate_ast(self, prefabs: dict[str, "PrefabDetails"]):
-        # Discover required details
-        self.discover_fields()
 
-        # Write slot AST independent of parent details
-        self.generate_slots()  # Slots should only be defined by the current class
-
-        self.discover_parents()
+        # Handle inheritance
         self.resolve_field_inheritance(prefabs)
+        # Build body
+        body = []
+        if not self.compile_plain:
+            body.append(self.compile_flag)
+            body.append(self.fields_assignment)
+        if self.compile_slots:
+            body.append(self.slots_assignment)
+        if self.match_args:
+            body.append(self.match_args_assignment)
+        if self.init:
+            body.append(self.init_method)
+        if self.repr:
+            body.append(self.repr_method)
+        if self.eq:
+            body.append(self.eq_method)
+        if self.iter:
+            body.append(self.iter_method)
 
-        # Rewrite AST
-        self.generate_fields_attribute()
-        self.generate_match_args()
-        self.generate_init()
-        self.generate_repr()
-        self.generate_eq()
-        self.generate_iter()
+        # Add functions andd definitions to the body
+        # Remove the @prefab decorator
+        # noinspection PyTypeChecker
+        self.node.body = body + self.node.body
+        self.node.decorator_list.remove(self.decorator)
 
 
 class GatherFuncNames(ast.NodeVisitor):
