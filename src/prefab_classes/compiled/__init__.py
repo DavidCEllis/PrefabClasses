@@ -1,2 +1,2 @@
 from .import_hook import prefab_compiler
-from .preview_source import preview_source, preview
+from .preview_source import rewrite_source, preview, compile_to_py
