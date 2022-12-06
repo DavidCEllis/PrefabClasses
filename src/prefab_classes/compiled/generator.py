@@ -171,15 +171,11 @@ class PrefabDetails:
     @property
     def ast_qualname_str(self):
         call = ast.Call(
-            func=ast.Name(id='type', ctx=ast.Load()),
-            args=[ast.Name(id='self', ctx=ast.Load())],
-            keywords=[]
+            func=ast.Name(id="type", ctx=ast.Load()),
+            args=[ast.Name(id="self", ctx=ast.Load())],
+            keywords=[],
         )
-        attrib = ast.Attribute(
-            value=call,
-            attr='__qualname__',
-            ctx=ast.Load()
-        )
+        attrib = ast.Attribute(value=call, attr="__qualname__", ctx=ast.Load())
         value = ast.FormattedValue(value=attrib, conversion=-1)
         return value
 
@@ -249,10 +245,6 @@ class PrefabDetails:
         if require_attribute_func:
             fields = [field for field in fields if field.attribute_func]
 
-        # Clear the fields from he self.node body
-        for item in fields:
-            self.node.body.remove(item.field)
-
         return {field.name: field for field in fields}
 
     @cached_property
@@ -295,9 +287,13 @@ class PrefabDetails:
 
     @property
     def resolved_fields(self):
-        if self._resolved_fields is None:  # Don't just check for falseness as it can be an empty dict
-            raise CompiledPrefabError("Resolved fields have not yet been generated, "
-                                      "call resolve_field_inheritance first")
+        if (
+            self._resolved_fields is None
+        ):  # Don't just check for falseness as it can be an empty dict
+            raise CompiledPrefabError(
+                "Resolved fields have not yet been generated, "
+                "call resolve_field_inheritance first"
+            )
         else:
             return self._resolved_fields
 
@@ -470,10 +466,7 @@ class PrefabDetails:
             defaults=[],
         )
 
-        field_strings = [
-            self.ast_qualname_str,
-            ast.Constant(value="(")
-        ]
+        field_strings = [self.ast_qualname_str, ast.Constant(value="(")]
         for i, field in enumerate(self.resolved_field_list):
             if i > 0:
                 field_strings.append(ast.Constant(value=", "))
@@ -604,28 +597,43 @@ class PrefabDetails:
 
         # Handle inheritance
         self.resolve_field_inheritance(prefabs)
+
+        # Remove existing fields
+        # Clear the fields from he self.node body
+        for item in self.field_list:
+            self.node.body.remove(item.field)
+
         # Build body
         body = []
         if not self.compile_plain:
             body.append(self.compile_flag)
             body.append(self.fields_assignment)
-        if self.compile_slots and '__slots__' not in self.defined_attr_names:
+        if self.compile_slots and "__slots__" not in self.defined_attr_names:
             body.append(self.slots_assignment)
-        if self.match_args and '__match_args__' not in self.defined_attr_names:
+        if self.match_args and "__match_args__" not in self.defined_attr_names:
             body.append(self.match_args_assignment)
-        if (self.init and '__init__' not in self.defined_attr_names) or not self.init:
+        if (self.init and "__init__" not in self.defined_attr_names) or not self.init:
             body.append(self.init_method)
-        if self.repr and '__repr__' not in self.defined_attr_names:
+        if self.repr and "__repr__" not in self.defined_attr_names:
             body.append(self.repr_method)
-        if self.eq and '__eq__' not in self.defined_attr_names:
+        if self.eq and "__eq__" not in self.defined_attr_names:
             body.append(self.eq_method)
-        if self.iter and '__iter__' not in self.defined_attr_names:
+        if self.iter and "__iter__" not in self.defined_attr_names:
             body.append(self.iter_method)
 
         # Add functions andd definitions to the body
         # Remove the @prefab decorator
-        # noinspection PyTypeChecker
-        self.node.body = body + self.node.body
+        # Check if a class starts with what we assume is a docstring.
+        if (
+            len(self.node.body) > 0
+            and isinstance(self.node.body[0], ast.Expr)
+            and isinstance(self.node.body[0].value, ast.Constant)
+            and isinstance(self.node.body[0].value.value, str)
+        ):
+            self.node.body = self.node.body[0:1] + body + self.node.body[1:]
+        else:
+            # noinspection PyTypeChecker
+            self.node.body = body + self.node.body
         self.node.decorator_list.remove(self.decorator)
 
 
@@ -639,11 +647,11 @@ class GatherClassAttrs(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign):
         for target in node.targets:
-            self.attrnames.add(getattr(target, 'id'))
+            self.attrnames.add(getattr(target, "id"))
 
     def visit_AnnAssign(self, node: ast.AnnAssign):
-        if getattr(node, 'value'):
-            self.attrnames.add(getattr(node.target, 'id'))
+        if getattr(node, "value"):
+            self.attrnames.add(getattr(node.target, "id"))
 
 
 class GatherPrefabs(ast.NodeVisitor):

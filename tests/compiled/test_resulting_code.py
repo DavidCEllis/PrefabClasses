@@ -10,6 +10,7 @@ def test_code_result_simple():
         "from prefab_classes import prefab\n"
         "\n"
         "class Coordinate:\n"
+        "    \"\"\"Coordinate Data\"\"\"\n"
         "    COMPILED = True\n"
         "    PREFAB_FIELDS = ['x', 'y']\n"
         "\n"

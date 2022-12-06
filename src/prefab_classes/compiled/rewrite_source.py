@@ -1,6 +1,4 @@
 import ast
-import os
-
 
 from ..exceptions import CompiledPrefabError
 
@@ -13,7 +11,7 @@ COMPILE_COMMENT = """
 """.strip()
 
 
-def rewrite_source(source: str, *, use_black: bool = False):
+def rewrite_code(source: str, *, use_black: bool = False):
     from .generator import compile_prefabs
 
     tree = compile_prefabs(source)
@@ -29,7 +27,7 @@ def rewrite_source(source: str, *, use_black: bool = False):
         return ast.unparse(tree)
 
 
-def preview(pth: os.PathLike, *, use_black: bool = True):
+def preview(pth, *, use_black: bool = True):
     """
     Preview the result of running the generator on a python file
     This is mainly here for debugging and testing but can also be useful
@@ -43,28 +41,28 @@ def preview(pth: os.PathLike, *, use_black: bool = True):
     with open(pth, mode="r", encoding="utf-8") as f:
         source = f.read()
 
-    return rewrite_source(source, use_black=use_black)
+    return rewrite_code(source, use_black=use_black)
 
 
 def rewrite_to_py(
-        source_path: os.PathLike,
-        dest_path: os.PathLike,
+        source_path,
+        dest_path,
         *,
-        header_comment: str = COMPILE_COMMENT,
-        use_black: bool = False,
-        delete_firstlines: int = 0
+        header_comment=COMPILE_COMMENT,
+        use_black=False,
+        delete_firstlines=0
 ):
-    from pathlib import Path
     from .. import __version__
+    from pathlib import Path
 
     source_path, dest_path = Path(source_path), Path(dest_path)
+
     if source_path == dest_path:
         raise CompiledPrefabError("Can not overwrite source file.")
 
-    with open(source_path, mode='r', encoding='utf-8') as f:
-        source = f.read()
+    source = source_path.read_text(encoding="utf-8")
 
-    compiled_source = rewrite_source(source, use_black=use_black)
+    compiled_source = rewrite_code(source, use_black=use_black)
     if delete_firstlines > 0:
         compiled_lines = compiled_source.split('\n')
         compiled_source = '\n'.join(compiled_lines[delete_firstlines:])
