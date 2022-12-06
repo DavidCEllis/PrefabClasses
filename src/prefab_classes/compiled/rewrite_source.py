@@ -46,7 +46,7 @@ def preview(pth: os.PathLike, *, use_black: bool = True):
     return rewrite_source(source, use_black=use_black)
 
 
-def compile_to_py(
+def rewrite_to_py(
         source_path: os.PathLike,
         dest_path: os.PathLike,
         *,
