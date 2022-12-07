@@ -111,6 +111,7 @@ class PrefabDetails:
     eq: bool = True
     iter: bool = False
     match_args: bool = True
+    kw_only: bool = False
     compile_prefab: bool = False
     compile_plain: bool = False
     compile_fallback: bool = False
