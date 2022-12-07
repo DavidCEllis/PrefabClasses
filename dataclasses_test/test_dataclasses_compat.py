@@ -10,7 +10,7 @@ from prefab_classes import (
     as_dict as asdict,
     is_prefab as is_dataclass
 )
-from prefab_classes.live.default_sentinels import _NOTHING as MISSING
+from prefab_classes.sentinels import NOTHING as MISSING
 
 
 import abc
@@ -26,7 +26,6 @@ from typing import get_type_hints
 from collections import deque, OrderedDict, namedtuple
 from functools import total_ordering
 
-import typing       # Needed for the string "typing.ClassVar[int]" to work as an annotation.
 import dataclasses  # Needed for the string "dataclasses.InitVar[int]" to work as an annotation.
 
 

@@ -21,18 +21,6 @@ def test_basic_kwargs(importer):
     assert (x.x, x.y) == (1, 2)
 
 
-def test_kw_only(importer):
-    from init_ex import KWCoordinate
-
-    # Check the typeerror is raised for
-    # trying to use positional arguments
-    with raises(TypeError):
-        x = KWCoordinate(1, 2)
-
-    x = KWCoordinate(x=1, y=2)
-    assert (x.x, x.y) == (1, 2)
-
-
 def test_init_exclude(importer):
     from init_ex import CoordinateFixedY
 

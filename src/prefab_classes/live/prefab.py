@@ -26,13 +26,16 @@ Handle boilerplate generation for classes.
 import sys
 from functools import partial
 
-# noinspection PyUnresolvedReferences
-# from typing import dataclass_transform
+try:
+    # noinspection PyProtectedMember
+    from typing import dataclass_transform
+except ImportError:
+    from typing_extensions import dataclass_transform
 
 from ._attribute_class import Attribute
 from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG, CLASSVAR_NAME
 from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
-from .default_sentinels import _NOTHING
+from ..sentinels import NOTHING, KW_ONLY
 from .method_generators import (
     init_maker,
     repr_maker,
@@ -44,8 +47,8 @@ from .method_generators import (
 
 def attribute(
     *,
-    default=_NOTHING,
-    default_factory=_NOTHING,
+    default=NOTHING,
+    default_factory=NOTHING,
     converter=None,
     init=True,
     repr=True,
@@ -77,7 +80,7 @@ def attribute(
 
 # @dataclass_transform(field_specifiers=(attribute, Attribute))
 def _make_prefab(
-    cls: type, *, init=True, repr=True, eq=True, iter=False, match_args=True
+    cls: type, *, init=True, repr=True, eq=True, iter=False, match_args=True, kw_only=False
 ):
     """
     Generate boilerplate code for dunder methods in a class.
@@ -88,6 +91,7 @@ def _make_prefab(
     :param eq: generate __eq__
     :param iter: generate __iter__
     :param match_args: generate __match_args__
+    :param kw_only: Make all attributes keyword only
     :return: class with __ methods defined
     """
     # Here first we need to look at type hints for the type hint
@@ -126,22 +130,39 @@ def _make_prefab(
     if set(annotation_names).issuperset(set(attribute_names)):
         # replace the classes' attributes dict with one with the correct
         # order from the annotations.
+        kw_flag = False
+        kw_flag_name = None
         new_attributes = {}
-        for name in annotation_names:
-            # Copy atributes that are already defined to the new dict
-            # generate Attribute() values for those that are not defined.
-            if hasattr(cls, name):
-                if name in attribute_names:
-                    new_attributes[name] = cls_attributes[name]
-                else:
-                    attribute_default = getattr(cls, name)
-                    attrib = attribute(default=attribute_default)
-                    new_attributes[name] = attrib
+        for name, value in annotations.items():
+            # Look for the KW_ONLY annotation
+            if value is KW_ONLY or value == 'KW_ONLY':
+                if kw_flag:
+                    raise LivePrefabError("Class can not be defined as keyword only twice")
+                kw_flag = True
+                kw_flag_name = name
             else:
-                attrib = attribute()
+                # Copy atributes that are already defined to the new dict
+                # generate Attribute() values for those that are not defined.
+                if hasattr(cls, name):
+                    if name in attribute_names:
+                        attrib = cls_attributes[name]
+                    else:
+                        attribute_default = getattr(cls, name)
+                        attrib = attribute(default=attribute_default)
+                else:
+                    attrib = attribute()
+
+                if kw_flag or kw_only:
+                    attrib.kw_only = True
                 new_attributes[name] = attrib
 
+        if kw_flag_name is not None:
+            del cls.__annotations__[kw_flag_name]
         cls_attributes = new_attributes
+    else:
+        if kw_only:
+            for attrib in cls_attributes.values():
+                attrib.kw_only = True
 
     setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
 
@@ -166,11 +187,11 @@ def _make_prefab(
 
     default_defined = []
     for name, attrib in attributes.items():
-        if attrib.init:
-            if attrib.default is not _NOTHING or attrib.default_factory is not _NOTHING:
+        if attrib.init and not attrib.kw_only:
+            if attrib.default is not NOTHING or attrib.default_factory is not NOTHING:
                 default_defined.append(name)
             else:
-                if default_defined and not attrib.kw_only:
+                if default_defined:
                     names = ", ".join(default_defined)
                     raise SyntaxError(
                         "non-default argument follows default argument",
@@ -197,8 +218,9 @@ def _make_prefab(
     return cls
 
 
-# noinspection PyUnusedLocal
-# @dataclass_transform(field_specifiers=(attribute, Attribute))
+# Pycharm has incorrect arguments for this.
+# noinspection PyArgumentList
+@dataclass_transform(field_specifiers=(attribute,))
 def prefab(
     cls: type = None,
     *,
@@ -207,6 +229,7 @@ def prefab(
     eq=True,
     iter=False,
     match_args=True,
+    kw_only=False,
     compile_prefab=False,
     compile_fallback=False,
     compile_plain=False,
@@ -221,6 +244,7 @@ def prefab(
     :param eq: generate __eq__
     :param iter: generate __iter__
     :param match_args: generate __match_args__
+    :param kw_only: make all attributes keyword only
 
     :param compile_prefab: Direct the prefab compiler to compile this class
     :param compile_fallback: Fail with a prefab error
@@ -241,6 +265,7 @@ def prefab(
             match_args=match_args,
             compile_prefab=compile_prefab,
             compile_fallback=compile_fallback,
+            kw_only=kw_only,
         )
     else:
         if getattr(cls, COMPILED_FLAG, False):
@@ -260,5 +285,5 @@ def prefab(
             # Create Live Version
             setattr(cls, COMPILED_FLAG, False)
             return _make_prefab(
-                cls, init=init, repr=repr, eq=eq, iter=iter, match_args=match_args
+                cls, init=init, repr=repr, eq=eq, iter=iter, match_args=match_args, kw_only=kw_only
             )
