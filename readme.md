@@ -1,10 +1,12 @@
 # PrefabClasses - Python Class Boilerplate Generator  #
+![example branch parameter](https://github.com/DavidCEllis/PrefabClasses/actions/workflows/auto_test.yml/badge.svg?branch=main)
 
 Writes the class boilerplate code so you don't have to. 
 Yet another variation on attrs/dataclasses.
 
 Either written lazily when you first access the methods or
-eagerly when the class is compiled into a .pyc.
+eagerly when the class is compiled into a .pyc. Can optionally
+be made to rewrite .py source code with plain classes.
 
 ## Why are you remaking this again? ##
 
