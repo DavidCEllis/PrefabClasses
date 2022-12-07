@@ -1,5 +1,5 @@
 # PrefabClasses - Python Class Boilerplate Generator  #
-![example branch parameter](https://github.com/DavidCEllis/PrefabClasses/actions/workflows/auto_test.yml/badge.svg?branch=main)
+![PrefabClasses Test Status](https://github.com/DavidCEllis/PrefabClasses/actions/workflows/auto_test.yml/badge.svg?branch=main)
 
 Writes the class boilerplate code so you don't have to. 
 Yet another variation on attrs/dataclasses.
