@@ -19,7 +19,7 @@ def test_kw_only_ordering(importer):
     with pytest.raises(TypeError):
         x = KWOrdering(1, 2)
 
-    x = KWOrdering(1, x=2)
+    x = KWOrdering(1)
     assert (x.x, x.y) == (2, 1)
     assert repr(x) == "KWOrdering(x=2, y=1)"
 
@@ -30,6 +30,48 @@ def test_kw_only_inheritance(importer):
     with pytest.raises(TypeError):
         x = KWChild(1, 2)
 
-    x = KWChild(1, x=2)
+    x = KWChild(x=2, y=1)
+    y = KWChild(1)
     assert (x.x, x.y) == (2, 1)
+    assert x == y
     assert repr(x) == "KWChild(x=2, y=1)"
+
+
+def test_kw_only_prefab_argument(importer):
+    from kw_only import KWPrefabArgument
+
+    with pytest.raises(TypeError):
+        x = KWPrefabArgument(1, 2)
+
+    x = KWPrefabArgument(x=1, y=2)
+
+    assert (x.x, x.y) == (1, 2)
+    assert repr(x) == "KWPrefabArgument(x=1, y=2)"
+
+
+def test_kw_only_prefab_argument_overrides(importer):
+    from kw_only import KWPrefabArgumentOverrides
+
+    with pytest.raises(TypeError):
+        x = KWPrefabArgumentOverrides(1, 2)
+
+    x = KWPrefabArgumentOverrides(x=1, y=2)
+
+    assert (x.x, x.y) == (1, 2)
+    assert repr(x) == "KWPrefabArgumentOverrides(x=1, y=2)"
+
+
+def test_kw_flat_no_defaults(importer):
+    from kw_only import KWFlagNoDefaults
+
+    assert not hasattr(KWFlagNoDefaults, '_')
+
+    with pytest.raises(TypeError):
+        x = KWFlagNoDefaults(1, 2)
+
+    x = KWFlagNoDefaults(x=1, y=2)
+
+    assert not hasattr(x, '_')
+
+    assert (x.x, x.y) == (1, 2)
+    assert repr(x) == "KWFlagNoDefaults(x=1, y=2)"
