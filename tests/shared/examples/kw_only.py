@@ -43,8 +43,8 @@ class KWFlagNoDefaults:
     y: int
 
 
-#@prefab(compile_prefab=True, compile_fallback=True)
-#class KWFlagXDefault:
-#    x: int = 1
-#    _: KW_ONLY
-#    y: int
+@prefab(compile_prefab=True, compile_fallback=True)
+class KWFlagXDefault:
+    x: int = 1
+    _: KW_ONLY
+    y: int

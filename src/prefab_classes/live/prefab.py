@@ -34,8 +34,8 @@ except ImportError:
 
 from ._attribute_class import Attribute
 from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG, CLASSVAR_NAME
-from ..exceptions import PrefabError, CompiledPrefabError
-from prefab_classes.sentinels import NOTHING
+from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
+from ..sentinels import NOTHING, KW_ONLY
 from .method_generators import (
     init_maker,
     repr_maker,
@@ -130,22 +130,39 @@ def _make_prefab(
     if set(annotation_names).issuperset(set(attribute_names)):
         # replace the classes' attributes dict with one with the correct
         # order from the annotations.
+        kw_flag = False
+        kw_flag_name = None
         new_attributes = {}
-        for name in annotation_names:
-            # Copy atributes that are already defined to the new dict
-            # generate Attribute() values for those that are not defined.
-            if hasattr(cls, name):
-                if name in attribute_names:
-                    new_attributes[name] = cls_attributes[name]
-                else:
-                    attribute_default = getattr(cls, name)
-                    attrib = attribute(default=attribute_default)
-                    new_attributes[name] = attrib
+        for name, value in annotations.items():
+            # Look for the KW_ONLY annotation
+            if value is KW_ONLY or value == 'KW_ONLY':
+                if kw_flag:
+                    raise LivePrefabError("Class can not be defined as keyword only twice")
+                kw_flag = True
+                kw_flag_name = name
             else:
-                attrib = attribute()
+                # Copy atributes that are already defined to the new dict
+                # generate Attribute() values for those that are not defined.
+                if hasattr(cls, name):
+                    if name in attribute_names:
+                        attrib = cls_attributes[name]
+                    else:
+                        attribute_default = getattr(cls, name)
+                        attrib = attribute(default=attribute_default)
+                else:
+                    attrib = attribute()
+
+                if kw_flag or kw_only:
+                    attrib.kw_only = True
                 new_attributes[name] = attrib
 
+        if kw_flag_name is not None:
+            del cls.__annotations__[kw_flag_name]
         cls_attributes = new_attributes
+    else:
+        if kw_only:
+            for attrib in cls_attributes.values():
+                attrib.kw_only = True
 
     setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
 
@@ -170,11 +187,11 @@ def _make_prefab(
 
     default_defined = []
     for name, attrib in attributes.items():
-        if attrib.init:
+        if attrib.init and not attrib.kw_only:
             if attrib.default is not NOTHING or attrib.default_factory is not NOTHING:
                 default_defined.append(name)
             else:
-                if default_defined and not attrib.kw_only:
+                if default_defined:
                     names = ", ".join(default_defined)
                     raise SyntaxError(
                         "non-default argument follows default argument",
@@ -248,6 +265,7 @@ def prefab(
             match_args=match_args,
             compile_prefab=compile_prefab,
             compile_fallback=compile_fallback,
+            kw_only=kw_only,
         )
     else:
         if getattr(cls, COMPILED_FLAG, False):
@@ -267,5 +285,5 @@ def prefab(
             # Create Live Version
             setattr(cls, COMPILED_FLAG, False)
             return _make_prefab(
-                cls, init=init, repr=repr, eq=eq, iter=iter, match_args=match_args
+                cls, init=init, repr=repr, eq=eq, iter=iter, match_args=match_args, kw_only=kw_only
             )

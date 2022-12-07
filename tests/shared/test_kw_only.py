@@ -61,7 +61,7 @@ def test_kw_only_prefab_argument_overrides(importer):
     assert repr(x) == "KWPrefabArgumentOverrides(x=1, y=2)"
 
 
-def test_kw_flat_no_defaults(importer):
+def test_kw_flag_no_defaults(importer):
     from kw_only import KWFlagNoDefaults
 
     assert not hasattr(KWFlagNoDefaults, '_')
@@ -75,3 +75,21 @@ def test_kw_flat_no_defaults(importer):
 
     assert (x.x, x.y) == (1, 2)
     assert repr(x) == "KWFlagNoDefaults(x=1, y=2)"
+
+
+def test_kw_flat_defaults(importer):
+    from kw_only import KWFlagXDefault
+
+    assert not hasattr(KWFlagXDefault, '_')
+
+    with pytest.raises(TypeError):
+        x = KWFlagXDefault(1, 2)
+
+    x = KWFlagXDefault(y=2)
+    y = KWFlagXDefault(1, y=2)
+
+    assert not hasattr(x, '_')
+
+    assert (x.x, x.y) == (1, 2)
+    assert x == y
+    assert repr(x) == "KWFlagXDefault(x=1, y=2)"
