@@ -1,3 +1,4 @@
+# COMPILE_PREFABS
 from prefab_classes import prefab, attribute, KW_ONLY
 
 
@@ -9,13 +10,13 @@ class KWBasic:
 
 @prefab(compile_prefab=True, compile_fallback=True)
 class KWOrdering:
-    x = attribute(kw_only=True)
+    x = attribute(default=2, kw_only=True)
     y = attribute()
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
 class KWBase:
-    x = attribute(kw_only=True)
+    x = attribute(default=2, kw_only=True)
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
