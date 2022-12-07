@@ -11,3 +11,8 @@ target-version = ['py311']
 extend-exclude = '''
 /(\_attribute\_class\.py)
 '''
+
+[tool.coverage.run]
+omit = [
+    "*/_attribute_template.py"
+]
