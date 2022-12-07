@@ -3,7 +3,7 @@
 from prefab_classes import prefab, attribute
 
 # noinspection PyUnresolvedReferences
-from .default_sentinels import _NOTHING
+from ..sentinels import NOTHING
 
 # noinspection PyUnresolvedReferences
 from ..exceptions import LivePrefabError
@@ -14,8 +14,8 @@ class Attribute:
     # Note that the interpreted form of prefab would fail here
     # as it would interpret _NOTHING as no value provided
     # compiled prefabs do not interpret this way.
-    default = attribute(default=_NOTHING)
-    default_factory = attribute(default=_NOTHING)
+    default = attribute(default=NOTHING)
+    default_factory = attribute(default=NOTHING)
     converter = attribute(default=None)
     init: bool = attribute(default=True)
     repr: bool = attribute(default=True)
@@ -24,8 +24,8 @@ class Attribute:
     def __prefab_post_init__(self):
         if (
             not self.init
-            and self.default is _NOTHING
-            and self.default_factory is _NOTHING
+            and self.default is NOTHING
+            and self.default_factory is NOTHING
         ):
             raise LivePrefabError(
                 "Must provide a default value/factory "
@@ -37,7 +37,7 @@ class Attribute:
                 "Attribute cannot be keyword only if it is not in init."
             )
 
-        if self.default is not _NOTHING and self.default_factory is not _NOTHING:
+        if self.default is not NOTHING and self.default_factory is not NOTHING:
             raise LivePrefabError(
                 "Cannot define both a default value and a default factory."
             )

@@ -40,7 +40,7 @@
 # ----------------------------------------------------------------------
 
 from ..constants import PRE_INIT_FUNC, POST_INIT_FUNC, PREFAB_INIT_FUNC
-from .default_sentinels import _NOTHING
+from prefab_classes.sentinels import NOTHING
 from .autogen import autogen
 
 
@@ -54,7 +54,7 @@ def get_init_maker(*, init_name="__init__"):
             if attrib.converter:
                 globs[f"_{name}_converter"] = attrib.converter
             if attrib.init:
-                if attrib.default is not _NOTHING:
+                if attrib.default is not NOTHING:
                     if isinstance(attrib.default, (str, int, float, bool)):
                         # Just use the literal in these cases
                         arg = f"{name}={attrib.default!r}"
@@ -64,7 +64,7 @@ def get_init_maker(*, init_name="__init__"):
                         # in the globals dict for eval
                         arg = f"{name}=_{name}_default"
                         globs[f"_{name}_default"] = attrib.default
-                elif attrib.default_factory is not _NOTHING:
+                elif attrib.default_factory is not NOTHING:
                     # Use NONE here and call the factory later
                     # This matches the behaviour of compiled
                     arg = f"{name}=None"
@@ -77,9 +77,9 @@ def get_init_maker(*, init_name="__init__"):
                     arglist.append(arg)
             # Not in init, but need to set defaults
             else:
-                if attrib.default is not _NOTHING:
+                if attrib.default is not NOTHING:
                     globs[f"_{name}_default"] = attrib.default
-                elif attrib.default_factory is not _NOTHING:
+                elif attrib.default_factory is not NOTHING:
                     globs[f"_{name}_factory"] = attrib.default_factory
 
         pos_args = ", ".join(arglist)
@@ -94,12 +94,12 @@ def get_init_maker(*, init_name="__init__"):
         assignments = []
         for name, attrib in cls._attributes.items():
             if attrib.init:
-                if attrib.default_factory is not _NOTHING:
+                if attrib.default_factory is not NOTHING:
                     value = f"{name} if {name} is not None else _{name}_factory()"
                 else:
                     value = name
             else:
-                if attrib.default_factory is not _NOTHING:
+                if attrib.default_factory is not NOTHING:
                     value = f"_{name}_factory()"
                 else:
                     value = f"_{name}_default"

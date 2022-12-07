@@ -26,13 +26,16 @@ Handle boilerplate generation for classes.
 import sys
 from functools import partial
 
-# noinspection PyUnresolvedReferences
-# from typing import dataclass_transform
+try:
+    # noinspection PyProtectedMember
+    from typing import dataclass_transform
+except ImportError:
+    from typing_extensions import dataclass_transform
 
 from ._attribute_class import Attribute
 from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG, CLASSVAR_NAME
-from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
-from .default_sentinels import _NOTHING
+from ..exceptions import PrefabError, CompiledPrefabError
+from prefab_classes.sentinels import NOTHING
 from .method_generators import (
     init_maker,
     repr_maker,
@@ -44,8 +47,8 @@ from .method_generators import (
 
 def attribute(
     *,
-    default=_NOTHING,
-    default_factory=_NOTHING,
+    default=NOTHING,
+    default_factory=NOTHING,
     converter=None,
     init=True,
     repr=True,
@@ -167,7 +170,7 @@ def _make_prefab(
     default_defined = []
     for name, attrib in attributes.items():
         if attrib.init:
-            if attrib.default is not _NOTHING or attrib.default_factory is not _NOTHING:
+            if attrib.default is not NOTHING or attrib.default_factory is not NOTHING:
                 default_defined.append(name)
             else:
                 if default_defined and not attrib.kw_only:
@@ -197,8 +200,9 @@ def _make_prefab(
     return cls
 
 
-# noinspection PyUnusedLocal
-# @dataclass_transform(field_specifiers=(attribute, Attribute))
+# Pycharm has incorrect arguments for this.
+# noinspection PyArgumentList
+@dataclass_transform(field_specifiers=(attribute,))
 def prefab(
     cls: type = None,
     *,
