@@ -10,12 +10,6 @@ class Coordinate:
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
-class KWCoordinate:
-    x = attribute(kw_only=True)
-    y = attribute(kw_only=True)
-
-
-@prefab(compile_prefab=True, compile_fallback=True)
 class CoordinateFixedY:
     x = attribute()
     y = attribute(default=2, init=False)
