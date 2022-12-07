@@ -19,6 +19,37 @@ from ..exceptions import CompiledPrefabError
 assignment_type = Union[ast.AnnAssign, ast.Assign]
 
 
+def _is_classvar(item):
+    if isinstance(item.annotation, ast.Name):
+        # Class ClassVar with no subscript
+        if CLASSVAR_NAME in item.annotation.id:
+            return True
+    elif isinstance(item.annotation, ast.Constant):
+        # String 'ClassVar'
+        if CLASSVAR_NAME in item.annotation.value:
+            return True
+    elif isinstance(item.annotation, ast.Subscript):
+        # Subscripted classvar
+        v = item.annotation.value
+        if isinstance(v, ast.Name):
+            if CLASSVAR_NAME in v.id:
+                return True
+        elif isinstance(v, ast.Attribute):
+            if CLASSVAR_NAME in v.attr:
+                return True
+
+
+def _is_kw_only_sentinel(item):
+    if isinstance(item.annotation, ast.Name):
+        # Class KW_ONLY
+        if 'KW_ONLY' in item.annotation.id:
+            return True
+    elif isinstance(item.annotation, ast.Constant):
+        # String 'KW_ONLY'
+        if 'KW_ONLY' in item.annotation.value:
+            return True
+
+
 # noinspection PyArgumentList
 @prefab
 class Field:
@@ -32,6 +63,10 @@ class Field:
     kw_only: bool = False
     annotation: Any = None
     attribute_func: bool = False
+
+    def __prefab_post_init__(self):
+        # Special variable to indicate if a field should be made KW_ONLY
+        self._kw_only_flagged = False
 
     @cached_property
     def default_factory_call(self):
@@ -121,6 +156,7 @@ class PrefabDetails:
     def __prefab_post_init__(self):
         self._resolved_fields: Optional[dict[str, "Field"]] = None
         self._prefab_map: Optional[dict[str, "PrefabDetails"]] = None
+        self._flag_kw_only: Optional[ast.AnnAssign] = None
 
     @property
     def field_names(self):
@@ -193,25 +229,16 @@ class PrefabDetails:
         # behaviour.
         require_attribute_func = False
 
+        flag_kw_only = False
         for item in self.node.body:
             if isinstance(item, ast.AnnAssign):
-                if isinstance(item.annotation, ast.Name):
-                    # Class ClassVar with no subscript
-                    if CLASSVAR_NAME in item.annotation.id:
-                        continue
-                elif isinstance(item.annotation, ast.Constant):
-                    # String 'ClassVar
-                    if CLASSVAR_NAME in item.annotation.value:
-                        continue
-                elif isinstance(item.annotation, ast.Subscript):
-                    # Subscripted classvar
-                    v = item.annotation.value
-                    if isinstance(v, ast.Name):
-                        if CLASSVAR_NAME in v.id:
-                            continue
-                    elif isinstance(v, ast.Attribute):
-                        if CLASSVAR_NAME in v.attr:
-                            continue
+                # Test if something is a classvar
+                if _is_classvar(item):
+                    continue
+                elif _is_kw_only_sentinel(item):
+                    flag_kw_only = True
+                    self._flag_kw_only = item  # Store the item itself to be removed later
+                    continue
 
                 field_name = getattr(item.target, "id")
                 # Case that the value is an attribute() call
@@ -229,6 +256,15 @@ class PrefabDetails:
                         default=item.value,
                         annotation=item.annotation,
                     )
+
+                if self.kw_only:
+                    field.kw_only = True
+                elif flag_kw_only:
+                    # As KW_ONLY is ignored if plain assignments are used
+                    # Just flag the field to be made KW_ONLY later if no
+                    # plain assignments are used
+                    field._kw_only_flagged = True
+
                 fields.append(field)
             elif (
                 isinstance(item, ast.Assign)
@@ -239,12 +275,22 @@ class PrefabDetails:
                 field = Field.from_keywords(
                     name=field_name, field=item, keywords=item.value.keywords
                 )
+                if self.kw_only:
+                    field.kw_only = True
+
                 fields.append(field)
+
+                # If an attribute function is used in a plain assignment
+                # then the function is required for all assignments.
                 require_attribute_func = True
 
         # Clear fields that are generated just by annotations
         if require_attribute_func:
             fields = [field for field in fields if field.attribute_func]
+        else:
+            for field in fields:
+                if field._kw_only_flagged:
+                    field.kw_only = True
 
         return {field.name: field for field in fields}
 
@@ -603,6 +649,9 @@ class PrefabDetails:
         # Clear the fields from he self.node body
         for item in self.field_list:
             self.node.body.remove(item.field)
+
+        if self._flag_kw_only is not None:
+            self.node.body.remove(self._flag_kw_only)
 
         # Build body
         body = []
