@@ -28,3 +28,16 @@ def test_two_fields_one_default(importer):
 
     with pytest.raises(SyntaxError):
         import fails.inheritance_2
+
+
+def test_inherited_pre_post_init(importer):
+    # Inherited pre/post init functions should be used
+    from inheritance import BasePreInitPostInit, ChildPreInitPostInit
+
+    base_ex = BasePreInitPostInit()
+    assert base_ex.pre_init
+    assert base_ex.post_init
+
+    inherit_ex = ChildPreInitPostInit()
+    assert inherit_ex.pre_init
+    assert inherit_ex.post_init
