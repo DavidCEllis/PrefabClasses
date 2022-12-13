@@ -45,7 +45,7 @@ class DundersExist:
     x: int
     y: int
 
-    __match_args__ = ('x',)
+    __match_args__ = ("x",)
 
     def __init__(self, x, y):
         self.x = 2 * x
@@ -59,4 +59,3 @@ class DundersExist:
 
     def __iter__(self):
         yield self.x
-

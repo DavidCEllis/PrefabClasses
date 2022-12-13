@@ -27,12 +27,12 @@ class methods. The result is a normal python class as if it had been
 written by hand. Working solely on the AST does lead to some design
 differences from other popular modules like attrs or dataclasses.
 
-There is no benefit from using the compiled version over interpreted
+There is no benefit from using the compiled version over dynamic
 implementations unless the .pyc files are generated and used.
 
-### Live/Interpreted ###
+### Dynamic ###
 
-The 'live' method works roughly as *cluegen* worked, generating the 
+The dynamic method works roughly as *cluegen* worked, generating the 
 required methods only when they are first accessed. Compared to
 attrs this trades speed of first access for speed of import. 
 This also means that if a class method is never accessed then 
@@ -54,9 +54,9 @@ There are some trade-offs and differences between the two.
   to identify classes to be imported and to identify features. 
   If these are changed things will not work.
   * The functions to not technically need to be imported however, unless
-    the code should fallback to the interpreted method.
+    the code should fallback to the dynamic method.
 * After the .pyc files have been compiled, compiled classes import
-  much more quickly than live ones as they are plain python classes.
+  much more quickly than dynamic ones as they are plain python classes.
     * They are not *quite* as fast as modules with native classes,
       as hash-based invalidation is used instead of timestamp
       invalidation.
@@ -71,14 +71,14 @@ There are some trade-offs and differences between the two.
   a `with prefab_compiler():` block.
     * This places an import hook that will compile prefabs in
       these files.
-* Compiled classes support slots, live classes do not.
+* Compiled classes support slots, dynamic classes do not.
     * While `attrs` supports this dynamically, it is forced to 
       make a new class and copy over features. This can have some
       side effects.
 
 ## Usage Examples ##
 
-Usage for the 'live' form is pretty much what you would expect:
+Usage for the dynamic form is pretty much what you would expect:
 
 ```python
 from prefab_classes import attribute, prefab

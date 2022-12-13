@@ -13,7 +13,7 @@ from ..constants import (
     COMPILE_ARGUMENT,
     CLASSVAR_NAME,
 )
-from ..live import prefab, attribute
+from ..dynamic import prefab
 from ..exceptions import CompiledPrefabError
 
 assignment_type = Union[ast.AnnAssign, ast.Assign]
@@ -42,11 +42,11 @@ def _is_classvar(item):
 def _is_kw_only_sentinel(item):
     if isinstance(item.annotation, ast.Name):
         # Class KW_ONLY
-        if 'KW_ONLY' in item.annotation.id:
+        if "KW_ONLY" in item.annotation.id:
             return True
     elif isinstance(item.annotation, ast.Constant):
         # String 'KW_ONLY'
-        if 'KW_ONLY' in item.annotation.value:
+        if "KW_ONLY" in item.annotation.value:
             return True
 
 
@@ -61,6 +61,7 @@ class Field:
     init_: bool = True
     repr_: bool = True
     kw_only: bool = False
+    exclude_field: bool = False
     annotation: Any = None
     attribute_func: bool = False
 
@@ -106,6 +107,10 @@ class Field:
             kw_only = keys["kw_only"].value
         except KeyError:
             kw_only = False
+        try:
+            exclude_field = keys["exclude_field"].value
+        except KeyError:
+            exclude_field = False
 
         if not init_ and default is None and default_factory is None:
             raise CompiledPrefabError(
@@ -131,6 +136,7 @@ class Field:
             init_=init_,
             repr_=repr_,
             kw_only=kw_only,
+            exclude_field=exclude_field,
             annotation=annotation,
             attribute_func=True,
         )
@@ -157,6 +163,9 @@ class PrefabDetails:
         self._resolved_fields: Optional[dict[str, "Field"]] = None
         self._prefab_map: Optional[dict[str, "PrefabDetails"]] = None
         self._flag_kw_only: Optional[ast.AnnAssign] = None
+        self._defined_attr_names: Optional[set[str]] = None
+        self._func_arguments: Optional[dict[str, list[str]]] = None
+        self._resolved_func_arguments: Optional[dict[str, list[str]]] = None
 
     @property
     def field_names(self):
@@ -176,17 +185,38 @@ class PrefabDetails:
         # Field values including inherited fields
         return list(self._resolved_fields.values())
 
-    @cached_property
+    def gather_methods_arguments(self):
+        method_visitor = GatherClassAttrs()
+        method_visitor.visit(self.node)
+        self._defined_attr_names = method_visitor.attrnames
+        self._func_arguments = method_visitor.func_arguments
+
+    @property
     def defined_attr_names(self):
         """
         Get existing assigned names
         """
-        method_visitor = GatherClassAttrs()
-        method_visitor.visit(self.node)
-        return method_visitor.attrnames
+        if self._defined_attr_names is None:
+            self.gather_methods_arguments()
+        return self._defined_attr_names
+
+    @property
+    def func_arguments(self):
+        if self._func_arguments is None:
+            self.gather_methods_arguments()
+        return self._func_arguments
+
+    @cached_property
+    def resolved_func_arguments(self):
+        if self._resolved_func_arguments is None:
+            raise CompiledPrefabError(
+                "Inheritance has not yet been resolved, "
+                "call resolve_inheritance first"
+            )
+        return self._resolved_func_arguments
 
     @staticmethod
-    def call_method(method_name, args=None, keywords=None):
+    def call_method(method_name, *, args=None, keywords=None):
         args = args if args else []
         keywords = keywords if keywords else []
         attrib = ast.Attribute(
@@ -199,11 +229,24 @@ class PrefabDetails:
 
     @property
     def pre_init_call(self):
-        return self.call_method(PRE_INIT_FUNC)
+        pre_init_args = self.resolved_func_arguments[PRE_INIT_FUNC]
+        call_args = [
+            ast.keyword(arg=attrib, value=ast.Name(id=attrib, ctx=ast.Load()))
+            for attrib in pre_init_args
+            if attrib != "self"
+        ]
+
+        return self.call_method(PRE_INIT_FUNC, keywords=call_args)
 
     @property
     def post_init_call(self):
-        return self.call_method(POST_INIT_FUNC)
+        post_init_args = self.resolved_func_arguments[POST_INIT_FUNC]
+        call_args = [
+            ast.keyword(arg=attrib, value=ast.Name(id=attrib, ctx=ast.Load()))
+            for attrib in post_init_args
+            if attrib != "self"
+        ]
+        return self.call_method(POST_INIT_FUNC, keywords=call_args)
 
     @property
     def ast_qualname_str(self):
@@ -225,7 +268,7 @@ class PrefabDetails:
         fields: list["Field"] = []
 
         # If there are any plain assignments, annotated assignments that
-        # do not use attribute() calls must be removed to match 'live'
+        # do not use attribute() calls must be removed to match 'dynamic'
         # behaviour.
         require_attribute_func = False
 
@@ -237,7 +280,9 @@ class PrefabDetails:
                     continue
                 elif _is_kw_only_sentinel(item):
                     flag_kw_only = True
-                    self._flag_kw_only = item  # Store the item itself to be removed later
+                    self._flag_kw_only = (
+                        item  # Store the item itself to be removed later
+                    )
                     continue
 
                 field_name = getattr(item.target, "id")
@@ -301,9 +346,10 @@ class PrefabDetails:
             raise CompiledPrefabError(f"Class {self.name} cannot inherit from itself.")
         return parents
 
-    def resolve_field_inheritance(self, prefabs: dict[str, "PrefabDetails"]):
+    def resolve_inheritance(self, prefabs: dict[str, "PrefabDetails"]):
         """
-        Work out the complete list of fields in the inheritance tree.
+        Work out the complete list of fields in the inheritance tree and the correct
+        arguments for any pre_init or post_init functions.
 
         :param prefabs: The full dict of prefabs
         :return:
@@ -319,30 +365,31 @@ class PrefabDetails:
         # it will remain in its original place in the init function
         # but with the new default value (or with the default removed)
         new_fields: dict[str, "Field"] = {}
+        func_arguments: dict[str, list[str]] = {}
         for parent_name in reversed(self.parents):
             if parent_name not in prefabs:
                 raise CompiledPrefabError(
                     f"Compiled prefabs can only inherit from other compiled prefabs in the same module.",
                     f"{self.name} attempted to inherit from {parent_name}",
                 )
-            prefabs[parent_name].resolve_field_inheritance(prefabs)
+            prefabs[parent_name].resolve_inheritance(prefabs)
             new_fields.update(prefabs[parent_name].resolved_fields)
+            func_arguments.update(prefabs[parent_name].resolved_func_arguments)
 
         new_fields.update(self.fields)
+        func_arguments.update(self.func_arguments)
 
         self._resolved_fields = new_fields
+        self._resolved_func_arguments = func_arguments
 
     @property
     def resolved_fields(self):
-        if (
-            self._resolved_fields is None
-        ):  # Don't just check for falseness as it can be an empty dict
+        if self._resolved_fields is None:
             raise CompiledPrefabError(
-                "Resolved fields have not yet been generated, "
-                "call resolve_field_inheritance first"
+                "Inheritance has not yet been resolved, "
+                "call resolve_inheritance first"
             )
-        else:
-            return self._resolved_fields
+        return self._resolved_fields
 
     @cached_property
     def compile_flag(self):
@@ -354,7 +401,11 @@ class PrefabDetails:
 
     @property
     def fields_assignment(self):
-        field_consts = [ast.Constant(value=name) for name in self.resolved_field_names]
+        field_consts = [
+            ast.Constant(value=field.name)
+            for field in self.resolved_field_list
+            if not field.exclude_field
+        ]
         target = ast.Name(id=FIELDS_ATTRIBUTE, ctx=ast.Store())
         assignment = ast.Assign(
             targets=[target],
@@ -377,7 +428,11 @@ class PrefabDetails:
     @property
     def match_args_assignment(self):
 
-        field_consts = [ast.Constant(value=name) for name in self.resolved_field_names]
+        field_consts = [
+            ast.Constant(value=field.name)
+            for field in self.resolved_field_list
+            if not field.exclude_field
+        ]
         target = ast.Name(id="__match_args__", ctx=ast.Store())
         assignment = ast.Assign(
             targets=[target],
@@ -397,7 +452,7 @@ class PrefabDetails:
 
         body = []
 
-        if PRE_INIT_FUNC in self.defined_attr_names:
+        if PRE_INIT_FUNC in self.resolved_func_arguments:
             body.append(self.pre_init_call)
 
         has_default = False
@@ -469,19 +524,38 @@ class PrefabDetails:
                         args.append(arg)
 
             # Define the body
-            body.append(
-                ast.Assign(
-                    targets=[field.ast_attribute(ctx=ast.Store)],
-                    value=field.converter_call(assignment_value)
-                    if field.converter
-                    else assignment_value,
+            post_init_args = self.resolved_func_arguments.get(POST_INIT_FUNC, [])
+
+            if field.name not in post_init_args and field.exclude_field:
+                raise CompiledPrefabError(
+                    f"{field.name} is an excluded attribute but is not passed to post_init"
                 )
-            )
+
+            if field.name in post_init_args:
+                # Converters or factories should still run
+                if field.default_factory or field.converter:
+                    body.append(
+                        ast.Assign(
+                            targets=[ast.Name(id=field.name, ctx=ast.Store())],
+                            value=field.converter_call(assignment_value)
+                            if field.converter
+                            else assignment_value,
+                        )
+                    )
+            else:
+                body.append(
+                    ast.Assign(
+                        targets=[field.ast_attribute(ctx=ast.Store)],
+                        value=field.converter_call(assignment_value)
+                        if field.converter
+                        else assignment_value,
+                    )
+                )
 
         if not self.resolved_field_list:
             body.append(ast.Pass())
 
-        if POST_INIT_FUNC in self.defined_attr_names:
+        if POST_INIT_FUNC in self.resolved_func_arguments:
             body.append(self.post_init_call)
 
         arguments = ast.arguments(
@@ -515,6 +589,9 @@ class PrefabDetails:
 
         field_strings = [self.ast_qualname_str, ast.Constant(value="(")]
         for i, field in enumerate(self.resolved_field_list):
+            if field.exclude_field:  # Skip excluded fields
+                continue
+
             if i > 0:
                 field_strings.append(ast.Constant(value=", "))
             target = ast.Constant(value=f"{field.name}=")
@@ -551,11 +628,12 @@ class PrefabDetails:
             other_elts = []
 
             for field in self.resolved_field_list:
-                for obj_name, elt_list in [
-                    ("self", class_elts),
-                    ("other", other_elts),
-                ]:
-                    elt_list.append(field.ast_attribute(obj_name))
+                if not field.exclude_field:
+                    for obj_name, elt_list in [
+                        ("self", class_elts),
+                        ("other", other_elts),
+                    ]:
+                        elt_list.append(field.ast_attribute(obj_name))
 
             class_tuple = ast.Tuple(elts=class_elts, ctx=ast.Load())
             other_tuple = ast.Tuple(elts=other_elts, ctx=ast.Load())
@@ -611,6 +689,7 @@ class PrefabDetails:
             body = [
                 ast.Expr(value=ast.Yield(value=field.ast_attribute()))
                 for field in self.resolved_field_list
+                if not field.exclude_field
             ]
         else:
             body = [
@@ -643,7 +722,7 @@ class PrefabDetails:
         """
 
         # Handle inheritance
-        self.resolve_field_inheritance(prefabs)
+        self.resolve_inheritance(prefabs)
 
         # Remove existing fields
         # Clear the fields from he self.node body
@@ -691,9 +770,13 @@ class GatherClassAttrs(ast.NodeVisitor):
     def __init__(self):
         super().__init__()
         self.attrnames = set()
+        self.func_arguments = dict()
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         self.attrnames.add(node.name)
+        args = node.args.args + node.args.kwonlyargs
+        arguments = [item.arg for item in args]
+        self.func_arguments[node.name] = arguments
 
     def visit_Assign(self, node: ast.Assign):
         for target in node.targets:

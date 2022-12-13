@@ -11,7 +11,7 @@ COMPILE_COMMENT = """
 
 
 def test_rewrite_to_py():
-    base = Path(__file__).parent / 'compile_targets'
+    base = Path(__file__).parent / "compile_targets"
 
     source_file = base / "example_to_compile.py"
     expected_file = base / "example_to_compile_expected.py"
@@ -19,7 +19,12 @@ def test_rewrite_to_py():
 
     expected_output = expected_file.read_text(encoding="utf-8")
 
-    rewrite_to_py(source_file, temporary_output, delete_firstlines=1, header_comment=COMPILE_COMMENT)
+    rewrite_to_py(
+        source_file,
+        temporary_output,
+        delete_firstlines=1,
+        header_comment=COMPILE_COMMENT,
+    )
 
     true_output = temporary_output.read_text(encoding="utf-8")
 

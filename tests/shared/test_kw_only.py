@@ -64,15 +64,15 @@ def test_kw_only_prefab_argument_overrides(importer):
 def test_kw_flag_no_defaults(importer):
     from kw_only import KWFlagNoDefaults
 
-    if hasattr(KWFlagNoDefaults, '__annotations__'):
-        assert '_' not in KWFlagNoDefaults.__annotations__
+    if hasattr(KWFlagNoDefaults, "__annotations__"):
+        assert "_" not in KWFlagNoDefaults.__annotations__
 
     with pytest.raises(TypeError):
         x = KWFlagNoDefaults(1, 2)
 
     x = KWFlagNoDefaults(x=1, y=2)
 
-    assert not hasattr(x, '_')
+    assert not hasattr(x, "_")
 
     assert (x.x, x.y) == (1, 2)
     assert repr(x) == "KWFlagNoDefaults(x=1, y=2)"

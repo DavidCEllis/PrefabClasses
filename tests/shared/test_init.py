@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 
-from pytest import raises
+import pytest
 
 
 def test_basic(importer):
@@ -64,7 +64,7 @@ def test_default_factory_good(importer):
 def test_no_default(importer):
     from init_ex import Coordinate
 
-    with raises(TypeError) as e_info:
+    with pytest.raises(TypeError) as e_info:
         x = Coordinate(1)
 
     # Error message was changed in 3.10 to __qualname__ from __name__
@@ -98,6 +98,32 @@ def test_post_init(importer):
 
     x = PostInitExample()
     assert hasattr(x, "post_init_ran")
+
+
+def test_pre_post_init_arguments(importer):
+    from init_ex import PrePostInitArguments
+
+    x = PrePostInitArguments()
+
+    assert x.x == 2
+    assert x.y == 6
+
+    with pytest.raises(ValueError):
+        y = PrePostInitArguments(2, 1)
+
+
+def test_exclude_field(importer):
+    from init_ex import ExcludeField
+
+    assert "x" not in ExcludeField.PREFAB_FIELDS
+    x = ExcludeField()
+    y = ExcludeField(x="still_excluded")
+
+    assert x.x == "EXCLUDED_FIELD"
+    assert y.x == "STILL_EXCLUDED"
+    assert repr(x) == "ExcludeField()"
+    assert repr(y) == "ExcludeField()"
+    assert x == y
 
 
 def test_replace_factory_default(importer):

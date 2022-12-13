@@ -24,6 +24,8 @@
 Handle boilerplate generation for classes.
 """
 import sys
+import inspect
+import warnings
 from functools import partial
 
 try:
@@ -33,7 +35,13 @@ except ImportError:
     from typing_extensions import dataclass_transform
 
 from ._attribute_class import Attribute
-from ..constants import FIELDS_ATTRIBUTE, COMPILED_FLAG, CLASSVAR_NAME
+from ..constants import (
+    FIELDS_ATTRIBUTE,
+    COMPILED_FLAG,
+    CLASSVAR_NAME,
+    PRE_INIT_FUNC,
+    POST_INIT_FUNC,
+)
 from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
 from ..sentinels import NOTHING, KW_ONLY
 from .method_generators import (
@@ -53,6 +61,7 @@ def attribute(
     init=True,
     repr=True,
     kw_only=False,
+    exclude_field=False,
 ):
     """
     Get an Attribute instance
@@ -65,9 +74,18 @@ def attribute(
     :param init: Include this attribute in the __init__ parameters
     :param repr: Include this attribute in the class __repr__
     :param kw_only: Make this argument keyword only in init
+    :param exclude_field: Exclude this field from all magic method apart from __init__
+                          and do not include it in PREFAB_FIELDS
 
     :return: Attribute generated with these parameters.
     """
+    if converter is not None:
+        warnings.warn(
+            DeprecationWarning(
+                "Converters will be removed in v1.0. "
+                "This behaviour has been replaced by __prefab_post_init__"
+            )
+        )
     return Attribute(
         default=default,
         default_factory=default_factory,
@@ -75,12 +93,20 @@ def attribute(
         init=init,
         repr=repr,
         kw_only=kw_only,
+        exclude_field=exclude_field,
     )
 
 
 # @dataclass_transform(field_specifiers=(attribute, Attribute))
 def _make_prefab(
-    cls: type, *, init=True, repr=True, eq=True, iter=False, match_args=True, kw_only=False
+    cls: type,
+    *,
+    init=True,
+    repr=True,
+    eq=True,
+    iter=False,
+    match_args=True,
+    kw_only=False,
 ):
     """
     Generate boilerplate code for dunder methods in a class.
@@ -135,9 +161,11 @@ def _make_prefab(
         new_attributes = {}
         for name, value in annotations.items():
             # Look for the KW_ONLY annotation
-            if value is KW_ONLY or value == 'KW_ONLY':
+            if value is KW_ONLY or value == "KW_ONLY":
                 if kw_flag:
-                    raise LivePrefabError("Class can not be defined as keyword only twice")
+                    raise LivePrefabError(
+                        "Class can not be defined as keyword only twice"
+                    )
                 kw_flag = True
                 kw_flag_name = name
             else:
@@ -185,8 +213,42 @@ def _make_prefab(
         for name, attrib in getattr(c, f"_{c.__name__}_attributes", {}).items()
     }
 
+    # Check pre_init and post_init functions if they exist
+    post_init_args = []
+    try:
+        func = getattr(cls, PRE_INIT_FUNC)
+    except AttributeError:
+        pass
+    else:
+        signature = inspect.signature(func)
+        for item in signature.parameters.keys():
+            if item not in attributes.keys() and item != "self":
+                raise LivePrefabError(
+                    f"{item} argument in __prefab_pre_init__ is not a valid attribute."
+                )
+
+    try:
+        func = getattr(cls, POST_INIT_FUNC)
+    except AttributeError:
+        pass
+    else:
+        signature = inspect.signature(func)
+        for item in signature.parameters.keys():
+            if item != "self":
+                if item not in attributes.keys():
+                    raise LivePrefabError(
+                        f"{item} argument in __prefab_post_init__ is not a valid attribute."
+                    )
+                post_init_args.append(item)
+
     default_defined = []
     for name, attrib in attributes.items():
+        if attrib.exclude_field:
+            if name not in post_init_args:
+                raise LivePrefabError(
+                    f"{name} is an excluded attribute but is not passed to post_init"
+                )
+
         if attrib.init and not attrib.kw_only:
             if attrib.default is not NOTHING or attrib.default_factory is not NOTHING:
                 default_defined.append(name)
@@ -199,20 +261,23 @@ def _make_prefab(
                         f"non_default after default: {name}",
                     )
 
-    setattr(cls, FIELDS_ATTRIBUTE, [name for name in attributes])
+    valid_fields = [
+        name for name, value in attributes.items() if not value.exclude_field
+    ]
+    setattr(cls, FIELDS_ATTRIBUTE, valid_fields)
     cls._attributes = attributes
-    if match_args and '__match_args__' not in cls.__dict__:
-        cls.__match_args__ = tuple(name for name in attributes)
+    if match_args and "__match_args__" not in cls.__dict__:
+        cls.__match_args__ = tuple(valid_fields)
 
-    if init and '__init__' not in cls.__dict__:
+    if init and "__init__" not in cls.__dict__:
         setattr(cls, "__init__", init_maker)
     else:
         setattr(cls, "__prefab_init__", prefab_init_maker)
-    if repr and '__repr__' not in cls.__dict__:
+    if repr and "__repr__" not in cls.__dict__:
         setattr(cls, "__repr__", repr_maker)
-    if eq and '__eq__' not in cls.__dict__:
+    if eq and "__eq__" not in cls.__dict__:
         setattr(cls, "__eq__", eq_maker)
-    if iter and '__iter__' not in cls.__dict__:
+    if iter and "__iter__" not in cls.__dict__:
         setattr(cls, "__iter__", iter_maker)
 
     return cls
@@ -280,10 +345,16 @@ def prefab(
                 f"and the module is imported in a 'with prefab_compiler():' block",
             )
         elif compile_slots:
-            raise PrefabError("Slots are not supported on 'live' Prefabs.")
+            raise PrefabError("Slots are not supported on 'dynamic' Prefabs.")
         else:
             # Create Live Version
             setattr(cls, COMPILED_FLAG, False)
             return _make_prefab(
-                cls, init=init, repr=repr, eq=eq, iter=iter, match_args=match_args, kw_only=kw_only
+                cls,
+                init=init,
+                repr=repr,
+                eq=eq,
+                iter=iter,
+                match_args=match_args,
+                kw_only=kw_only,
             )

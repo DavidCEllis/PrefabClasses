@@ -57,6 +57,28 @@ class PostInitExample:
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
+class PrePostInitArguments:
+    x: int = 1
+    y: int = 2
+
+    def __prefab_pre_init__(self, x, y):
+        if x > y:
+            raise ValueError("X must be less than Y")
+
+    def __prefab_post_init__(self, x, y):
+        self.x = 2 * x
+        self.y = 3 * y
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class ExcludeField:
+    x = attribute(default="excluded_field", exclude_field=True)
+
+    def __prefab_post_init__(self, x):
+        self.x = x.upper()
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
 class EmptyContainers:
     x: list = attribute(default_factory=list)
     y: set = attribute(default_factory=set)

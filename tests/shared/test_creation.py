@@ -19,7 +19,7 @@ class TestEmptyClass:
 
         x = EmptyClassVars()
         assert x.x == 12
-        assert 'x' not in x.__dict__
+        assert "x" not in x.__dict__
 
     def test_empty_equal(self, importer):
         from creation_empty import Empty
@@ -64,10 +64,11 @@ class TestRemoveRecipe:
             assert attrib not in getattr(AllPlainAssignment, "__dict__")
 
 
-@pytest.mark.usefixtures('importer')
+@pytest.mark.usefixtures("importer")
 class TestKeepDefined:
     def test_keep_init(self):
         from creation import KeepDefinedMethods
+
         x = KeepDefinedMethods(42)
 
         assert x.x == 0
@@ -96,7 +97,7 @@ class TestKeepDefined:
     def test_keep_match_args(self):
         from creation import KeepDefinedMethods
 
-        assert KeepDefinedMethods.__match_args__ == ('x', )
+        assert KeepDefinedMethods.__match_args__ == ("x",)
 
 
 def test_skipped_classvars(importer):
@@ -127,15 +128,14 @@ def test_non_init_doesnt_break_syntax():
 
 
 class TestExceptions:
-
     def test_kw_not_in_init(self, importer):
         with pytest.raises(PrefabError) as e_info:
             from fails.creation_1 import Construct
 
         assert (
-            e_info.value.args[0] == "Attribute cannot be keyword only if it is not in init."
+            e_info.value.args[0]
+            == "Attribute cannot be keyword only if it is not in init."
         )
-
 
     def test_positional_after_kw_error(self, importer):
         with pytest.raises(SyntaxError) as e_info:
@@ -148,7 +148,6 @@ class TestExceptions:
 
         assert e_info.value.args[0] == "non-default argument follows default argument"
 
-
     def test_no_default_no_init_error(self, importer):
         with pytest.raises(PrefabError) as e_info:
             from fails.creation_4 import Construct
@@ -157,7 +156,6 @@ class TestExceptions:
             e_info.value.args[0]
             == "Must provide a default value/factory if the attribute is not in init."
         )
-
 
     def test_default_value_and_factory_error(self, importer):
         """Error if defining both a value and a factory"""

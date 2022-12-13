@@ -1,4 +1,4 @@
-# Constants that need to be the same for both live and compiled prefabs
+# Constants that need to be the same for both dynamic and compiled prefabs
 
 # DO NOT CHANGE - EXTERNALLY USABLE NAMES
 PRE_INIT_FUNC = "__prefab_pre_init__"
