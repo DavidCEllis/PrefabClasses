@@ -107,6 +107,10 @@ class Field:
             kw_only = keys["kw_only"].value
         except KeyError:
             kw_only = False
+        try:
+            exclude_field = keys["exclude_field"].value
+        except KeyError:
+            exclude_field = False
 
         if not init_ and default is None and default_factory is None:
             raise CompiledPrefabError(
@@ -132,6 +136,7 @@ class Field:
             init_=init_,
             repr_=repr_,
             kw_only=kw_only,
+            exclude_field=exclude_field,
             annotation=annotation,
             attribute_func=True,
         )
@@ -396,7 +401,11 @@ class PrefabDetails:
 
     @property
     def fields_assignment(self):
-        field_consts = [ast.Constant(value=name) for name in self.resolved_field_names]
+        field_consts = [
+            ast.Constant(value=field.name)
+            for field in self.resolved_field_list
+            if not field.exclude_field
+        ]
         target = ast.Name(id=FIELDS_ATTRIBUTE, ctx=ast.Store())
         assignment = ast.Assign(
             targets=[target],
@@ -419,7 +428,11 @@ class PrefabDetails:
     @property
     def match_args_assignment(self):
 
-        field_consts = [ast.Constant(value=name) for name in self.resolved_field_names]
+        field_consts = [
+            ast.Constant(value=field.name)
+            for field in self.resolved_field_list
+            if not field.exclude_field
+        ]
         target = ast.Name(id="__match_args__", ctx=ast.Store())
         assignment = ast.Assign(
             targets=[target],
@@ -513,6 +526,11 @@ class PrefabDetails:
             # Define the body
             post_init_args = self.resolved_func_arguments.get(POST_INIT_FUNC, [])
 
+            if field.name not in post_init_args and field.exclude_field:
+                raise CompiledPrefabError(
+                    f"{field.name} is an excluded attribute but is not passed to post_init"
+                )
+
             if field.name in post_init_args:
                 # Converters or factories should still run
                 if field.default_factory or field.converter:
@@ -571,6 +589,9 @@ class PrefabDetails:
 
         field_strings = [self.ast_qualname_str, ast.Constant(value="(")]
         for i, field in enumerate(self.resolved_field_list):
+            if field.exclude_field:  # Skip excluded fields
+                continue
+
             if i > 0:
                 field_strings.append(ast.Constant(value=", "))
             target = ast.Constant(value=f"{field.name}=")
@@ -607,11 +628,12 @@ class PrefabDetails:
             other_elts = []
 
             for field in self.resolved_field_list:
-                for obj_name, elt_list in [
-                    ("self", class_elts),
-                    ("other", other_elts),
-                ]:
-                    elt_list.append(field.ast_attribute(obj_name))
+                if not field.exclude_field:
+                    for obj_name, elt_list in [
+                        ("self", class_elts),
+                        ("other", other_elts),
+                    ]:
+                        elt_list.append(field.ast_attribute(obj_name))
 
             class_tuple = ast.Tuple(elts=class_elts, ctx=ast.Load())
             other_tuple = ast.Tuple(elts=other_elts, ctx=ast.Load())
@@ -667,6 +689,7 @@ class PrefabDetails:
             body = [
                 ast.Expr(value=ast.Yield(value=field.ast_attribute()))
                 for field in self.resolved_field_list
+                if not field.exclude_field
             ]
         else:
             body = [
