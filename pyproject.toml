@@ -14,5 +14,6 @@ extend-exclude = '''
 
 [tool.coverage.run]
 omit = [
-    "*/_attribute_template.py"
+    "*/_attribute_template.py",
+    "*/example_to_compile_expected.py"
 ]
