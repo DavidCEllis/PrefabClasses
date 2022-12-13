@@ -61,6 +61,7 @@ class Field:
     init_: bool = True
     repr_: bool = True
     kw_only: bool = False
+    exclude_field: bool = False
     annotation: Any = None
     attribute_func: bool = False
 
