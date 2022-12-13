@@ -188,7 +188,7 @@ def get_eq_maker():
     def __eq__(cls):
         class_comparison = "self.__class__ is other.__class__"
         field_names = getattr(cls, FIELDS_ATTRIBUTE)
-        if cls._attributes:
+        if field_names:
             selfvals = ",".join(f"self.{name}" for name in field_names)
             othervals = ",".join(f"other.{name}" for name in field_names)
             instance_comparison = f"({selfvals},) == ({othervals},)"

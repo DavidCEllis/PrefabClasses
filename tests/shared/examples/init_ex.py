@@ -71,6 +71,14 @@ class PrePostInitArguments:
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
+class ExcludeField:
+    x = attribute(default="excluded_field", exclude_field=True)
+
+    def __prefab_post_init__(self, x):
+        self.x = x.upper()
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
 class EmptyContainers:
     x: list = attribute(default_factory=list)
     y: set = attribute(default_factory=set)

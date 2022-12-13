@@ -112,6 +112,20 @@ def test_pre_post_init_arguments(importer):
         y = PrePostInitArguments(2, 1)
 
 
+def test_exclude_field(importer):
+    from init_ex import ExcludeField
+
+    assert 'x' not in ExcludeField.PREFAB_FIELDS
+    x = ExcludeField()
+    y = ExcludeField(x="still_excluded")
+
+    assert x.x == "EXCLUDED_FIELD"
+    assert y.x == "STILL_EXCLUDED"
+    assert repr(x) == "ExcludeField()"
+    assert repr(y) == "ExcludeField()"
+    assert x == y
+
+
 def test_replace_factory_default(importer):
     from init_ex import FactoryDefault
 
