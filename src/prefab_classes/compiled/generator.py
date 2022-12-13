@@ -158,6 +158,9 @@ class PrefabDetails:
         self._resolved_fields: Optional[dict[str, "Field"]] = None
         self._prefab_map: Optional[dict[str, "PrefabDetails"]] = None
         self._flag_kw_only: Optional[ast.AnnAssign] = None
+        self._defined_attr_names: Optional[set[str]] = None
+        self._func_arguments: Optional[dict[str, list[str]]] = None
+        self._resolved_func_arguments: Optional[dict[str, list[str]]] = None
 
     @property
     def field_names(self):
@@ -177,17 +180,38 @@ class PrefabDetails:
         # Field values including inherited fields
         return list(self._resolved_fields.values())
 
-    @cached_property
+    def gather_methods_arguments(self):
+        method_visitor = GatherClassAttrs()
+        method_visitor.visit(self.node)
+        self._defined_attr_names = method_visitor.attrnames
+        self._func_arguments = method_visitor.func_arguments
+
+    @property
     def defined_attr_names(self):
         """
         Get existing assigned names
         """
-        method_visitor = GatherClassAttrs()
-        method_visitor.visit(self.node)
-        return method_visitor.attrnames
+        if self._defined_attr_names is None:
+            self.gather_methods_arguments()
+        return self._defined_attr_names
+
+    @property
+    def func_arguments(self):
+        if self._func_arguments is None:
+            self.gather_methods_arguments()
+        return self._func_arguments
+
+    @cached_property
+    def resolved_func_arguments(self):
+        if self._resolved_func_arguments is None:
+            raise CompiledPrefabError(
+                "Inheritance has not yet been resolved, "
+                "call resolve_inheritance first"
+            )
+        return self._resolved_func_arguments
 
     @staticmethod
-    def call_method(method_name, args=None, keywords=None):
+    def call_method(method_name, *, args=None, keywords=None):
         args = args if args else []
         keywords = keywords if keywords else []
         attrib = ast.Attribute(
@@ -200,11 +224,24 @@ class PrefabDetails:
 
     @property
     def pre_init_call(self):
-        return self.call_method(PRE_INIT_FUNC)
+        pre_init_args = self.resolved_func_arguments[PRE_INIT_FUNC]
+        call_args = [
+            ast.keyword(arg=attrib, value=ast.Name(id=attrib, ctx=ast.Load()))
+            for attrib in pre_init_args
+            if attrib != 'self'
+        ]
+
+        return self.call_method(PRE_INIT_FUNC, keywords=call_args)
 
     @property
     def post_init_call(self):
-        return self.call_method(POST_INIT_FUNC)
+        post_init_args = self.resolved_func_arguments[POST_INIT_FUNC]
+        call_args = [
+            ast.keyword(arg=attrib, value=ast.Name(id=attrib, ctx=ast.Load()))
+            for attrib in post_init_args
+            if attrib != 'self'
+        ]
+        return self.call_method(POST_INIT_FUNC, keywords=call_args)
 
     @property
     def ast_qualname_str(self):
@@ -302,9 +339,10 @@ class PrefabDetails:
             raise CompiledPrefabError(f"Class {self.name} cannot inherit from itself.")
         return parents
 
-    def resolve_field_inheritance(self, prefabs: dict[str, "PrefabDetails"]):
+    def resolve_inheritance(self, prefabs: dict[str, "PrefabDetails"]):
         """
-        Work out the complete list of fields in the inheritance tree.
+        Work out the complete list of fields in the inheritance tree and the correct
+        arguments for any pre_init or post_init functions.
 
         :param prefabs: The full dict of prefabs
         :return:
@@ -320,30 +358,31 @@ class PrefabDetails:
         # it will remain in its original place in the init function
         # but with the new default value (or with the default removed)
         new_fields: dict[str, "Field"] = {}
+        func_arguments: dict[str, list[str]] = {}
         for parent_name in reversed(self.parents):
             if parent_name not in prefabs:
                 raise CompiledPrefabError(
                     f"Compiled prefabs can only inherit from other compiled prefabs in the same module.",
                     f"{self.name} attempted to inherit from {parent_name}",
                 )
-            prefabs[parent_name].resolve_field_inheritance(prefabs)
+            prefabs[parent_name].resolve_inheritance(prefabs)
             new_fields.update(prefabs[parent_name].resolved_fields)
+            func_arguments.update(prefabs[parent_name].resolved_func_arguments)
 
         new_fields.update(self.fields)
+        func_arguments.update(self.func_arguments)
 
         self._resolved_fields = new_fields
+        self._resolved_func_arguments = func_arguments
 
     @property
     def resolved_fields(self):
-        if (
-            self._resolved_fields is None
-        ):  # Don't just check for falseness as it can be an empty dict
+        if self._resolved_fields is None:
             raise CompiledPrefabError(
-                "Resolved fields have not yet been generated, "
-                "call resolve_field_inheritance first"
+                "Inheritance has not yet been resolved, "
+                "call resolve_inheritance first"
             )
-        else:
-            return self._resolved_fields
+        return self._resolved_fields
 
     @cached_property
     def compile_flag(self):
@@ -398,7 +437,7 @@ class PrefabDetails:
 
         body = []
 
-        if PRE_INIT_FUNC in self.defined_attr_names:
+        if PRE_INIT_FUNC in self.resolved_func_arguments:
             body.append(self.pre_init_call)
 
         has_default = False
@@ -470,19 +509,33 @@ class PrefabDetails:
                         args.append(arg)
 
             # Define the body
-            body.append(
-                ast.Assign(
-                    targets=[field.ast_attribute(ctx=ast.Store)],
-                    value=field.converter_call(assignment_value)
-                    if field.converter
-                    else assignment_value,
+            post_init_args = self.resolved_func_arguments.get(POST_INIT_FUNC, [])
+
+            if field.name in post_init_args:
+                # Converters or factories should still run
+                if field.default_factory or field.converter:
+                    body.append(
+                        ast.Assign(
+                            targets=[ast.Name(id=field.name, ctx=ast.Store())],
+                            value=field.converter_call(assignment_value)
+                            if field.converter
+                            else assignment_value,
+                        )
+                    )
+            else:
+                body.append(
+                    ast.Assign(
+                        targets=[field.ast_attribute(ctx=ast.Store)],
+                        value=field.converter_call(assignment_value)
+                        if field.converter
+                        else assignment_value,
+                    )
                 )
-            )
 
         if not self.resolved_field_list:
             body.append(ast.Pass())
 
-        if POST_INIT_FUNC in self.defined_attr_names:
+        if POST_INIT_FUNC in self.resolved_func_arguments:
             body.append(self.post_init_call)
 
         arguments = ast.arguments(
@@ -644,7 +697,7 @@ class PrefabDetails:
         """
 
         # Handle inheritance
-        self.resolve_field_inheritance(prefabs)
+        self.resolve_inheritance(prefabs)
 
         # Remove existing fields
         # Clear the fields from he self.node body
@@ -692,9 +745,13 @@ class GatherClassAttrs(ast.NodeVisitor):
     def __init__(self):
         super().__init__()
         self.attrnames = set()
+        self.func_arguments = dict()
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         self.attrnames.add(node.name)
+        args = node.args.args + node.args.kwonlyargs
+        arguments = [item.arg for item in args]
+        self.func_arguments[node.name] = arguments
 
     def visit_Assign(self, node: ast.Assign):
         for target in node.targets:
