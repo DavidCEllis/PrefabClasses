@@ -24,7 +24,7 @@ or will be added to this list.
     * The 'compiled' form has no hidden attributes as they are replaced on compilation.
     * Prefab classes provide a `PREFAB_FIELDS` attribute with the field names
       in order.
-    * The live/interpreted classes generate their code lazily so they need
+    * The dynamic classes generate their code lazily so they need
       to keep the 'recipe' details around. `_attributes` and `_CLASSNAME_attributes`
       contain this information. The plain `_attributes` includes inherited values.
 3. Allow the use of plain `attribute(...)` declarations without the use of
@@ -44,7 +44,7 @@ or will be added to this list.
 6. If `init` is `False` in `@prefab(init=False)` the method is still generated
    but renamed to `__prefab_init__`.
 7. Slots are supported, but only in the compiled form.
-    * The live form has the same problems as `dataclasses` and `attrs` in that 
+    * The dynamic form has the same problems as `dataclasses` and `attrs` in that 
       in order to properly support slots it is necessary to create a new class
       and copy information over as it is impossible to add slots after the class
       is defined.
