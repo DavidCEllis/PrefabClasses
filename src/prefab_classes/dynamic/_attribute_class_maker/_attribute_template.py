@@ -24,11 +24,7 @@ class Attribute:
 
     @staticmethod
     def __prefab_pre_init__(init, default, default_factory, kw_only):
-        if (
-            not init
-            and default is NOTHING
-            and default_factory is NOTHING
-        ):
+        if not init and default is NOTHING and default_factory is NOTHING:
             raise LivePrefabError(
                 "Must provide a default value/factory "
                 "if the attribute is not in init."

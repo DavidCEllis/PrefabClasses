@@ -9,11 +9,14 @@ build-backend = "setuptools.build_meta"
 line-length = 88
 target-version = ['py311']
 extend-exclude = '''
-/(\_attribute\_class\.py)
+(
+    # Don't format generated code
+    /(\_attribute\_class\.py)
+    | /(example_to_compile_expected\.py)
+)
 '''
 
 [tool.coverage.run]
 omit = [
     "*/_attribute_template.py",
-    "*/example_to_compile_expected.py"
 ]
