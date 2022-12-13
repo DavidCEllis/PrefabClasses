@@ -13,7 +13,7 @@ from ..constants import (
     COMPILE_ARGUMENT,
     CLASSVAR_NAME,
 )
-from ..live import prefab, attribute
+from ..dynamic import prefab
 from ..exceptions import CompiledPrefabError
 
 assignment_type = Union[ast.AnnAssign, ast.Assign]
@@ -263,7 +263,7 @@ class PrefabDetails:
         fields: list["Field"] = []
 
         # If there are any plain assignments, annotated assignments that
-        # do not use attribute() calls must be removed to match 'live'
+        # do not use attribute() calls must be removed to match 'dynamic'
         # behaviour.
         require_attribute_func = False
 

@@ -33,7 +33,7 @@ def test_invalidation_from_compiled():
     with prefab_compiler():
         import example_fallback
 
-    # Check this is not a 'live' prefab
+    # Check this is not a 'dynamic' prefab
     assert example_fallback.Coordinate.COMPILED is True
 
     # remove the module
@@ -41,7 +41,7 @@ def test_invalidation_from_compiled():
 
     import example_fallback
 
-    # Show this is now a 'live' prefab
+    # Show this is now a 'dynamic' prefab
     assert example_fallback.Coordinate.COMPILED is False
 
 
@@ -50,7 +50,7 @@ def test_invalidation_to_compiled():
     # Test the prefab importer will invalidate standard python compiled pyc files
     import example_fallback
 
-    # Check this is not a 'live' prefab
+    # Check this is not a 'dynamic' prefab
     assert example_fallback.Coordinate.COMPILED is False
 
     # remove the module
@@ -59,7 +59,7 @@ def test_invalidation_to_compiled():
     with prefab_compiler():
         import example_fallback
 
-    # Show this is now a 'live' prefab
+    # Show this is now a 'dynamic' prefab
     assert example_fallback.Coordinate.COMPILED is True
 
 

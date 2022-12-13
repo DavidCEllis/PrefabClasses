@@ -320,7 +320,7 @@ def prefab(
                 f"and the module is imported in a 'with prefab_compiler():' block",
             )
         elif compile_slots:
-            raise PrefabError("Slots are not supported on 'live' Prefabs.")
+            raise PrefabError("Slots are not supported on 'dynamic' Prefabs.")
         else:
             # Create Live Version
             setattr(cls, COMPILED_FLAG, False)
