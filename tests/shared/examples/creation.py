@@ -33,7 +33,7 @@ class KeepDefinedMethods:
     x: int = -1
     y: int = -1
 
-    __match_args__ = ('x', )
+    __match_args__ = ("x",)
 
     def __init__(self, x=0, y=0):
         self.x = 0
@@ -46,7 +46,7 @@ class KeepDefinedMethods:
         return False
 
     def __iter__(self):
-        yield from ['ORIGINAL ITER']
+        yield from ["ORIGINAL ITER"]
 
 
 @prefab(compile_prefab=True, compile_fallback=True)

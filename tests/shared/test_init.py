@@ -102,6 +102,7 @@ def test_post_init(importer):
 
 def test_pre_post_init_arguments(importer):
     from init_ex import PrePostInitArguments
+
     x = PrePostInitArguments()
 
     assert x.x == 2

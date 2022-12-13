@@ -42,11 +42,11 @@ def _is_classvar(item):
 def _is_kw_only_sentinel(item):
     if isinstance(item.annotation, ast.Name):
         # Class KW_ONLY
-        if 'KW_ONLY' in item.annotation.id:
+        if "KW_ONLY" in item.annotation.id:
             return True
     elif isinstance(item.annotation, ast.Constant):
         # String 'KW_ONLY'
-        if 'KW_ONLY' in item.annotation.value:
+        if "KW_ONLY" in item.annotation.value:
             return True
 
 
@@ -228,7 +228,7 @@ class PrefabDetails:
         call_args = [
             ast.keyword(arg=attrib, value=ast.Name(id=attrib, ctx=ast.Load()))
             for attrib in pre_init_args
-            if attrib != 'self'
+            if attrib != "self"
         ]
 
         return self.call_method(PRE_INIT_FUNC, keywords=call_args)
@@ -239,7 +239,7 @@ class PrefabDetails:
         call_args = [
             ast.keyword(arg=attrib, value=ast.Name(id=attrib, ctx=ast.Load()))
             for attrib in post_init_args
-            if attrib != 'self'
+            if attrib != "self"
         ]
         return self.call_method(POST_INIT_FUNC, keywords=call_args)
 
@@ -275,7 +275,9 @@ class PrefabDetails:
                     continue
                 elif _is_kw_only_sentinel(item):
                     flag_kw_only = True
-                    self._flag_kw_only = item  # Store the item itself to be removed later
+                    self._flag_kw_only = (
+                        item  # Store the item itself to be removed later
+                    )
                     continue
 
                 field_name = getattr(item.target, "id")

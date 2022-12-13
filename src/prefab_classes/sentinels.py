@@ -1,6 +1,6 @@
 """Sentinel values that get used in multiple files"""
 
-__all__ = ['NOTHING', 'KW_ONLY']
+__all__ = ["NOTHING", "KW_ONLY"]
 
 # Special indicator to use in places where NONE could be a legitimate value
 # to indicate that no value has been set.

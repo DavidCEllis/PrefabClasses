@@ -40,7 +40,12 @@
 # ----------------------------------------------------------------------
 import inspect
 
-from ..constants import PRE_INIT_FUNC, POST_INIT_FUNC, PREFAB_INIT_FUNC, FIELDS_ATTRIBUTE
+from ..constants import (
+    PRE_INIT_FUNC,
+    POST_INIT_FUNC,
+    PREFAB_INIT_FUNC,
+    FIELDS_ATTRIBUTE,
+)
 from prefab_classes.sentinels import NOTHING
 from .autogen import autogen
 
@@ -96,7 +101,10 @@ def get_init_maker(*, init_name="__init__"):
         pre_init_args = []
         post_init_args = []
 
-        for func_name, func_arglist in [(PRE_INIT_FUNC, pre_init_args), (POST_INIT_FUNC, post_init_args)]:
+        for func_name, func_arglist in [
+            (PRE_INIT_FUNC, pre_init_args),
+            (POST_INIT_FUNC, post_init_args),
+        ]:
             try:
                 func = getattr(cls, func_name)
             except AttributeError:
@@ -107,7 +115,9 @@ def get_init_maker(*, init_name="__init__"):
                         func_arglist.append(item)
 
         assignments = []
-        processes = []  # post_init values still need default factories/converters to be called.
+        processes = (
+            []
+        )  # post_init values still need default factories/converters to be called.
         for name, attrib in cls._attributes.items():
             if attrib.init:
                 if attrib.default_factory is not NOTHING:
@@ -129,20 +139,22 @@ def get_init_maker(*, init_name="__init__"):
                 assignments.append((name, value))
 
         if hasattr(cls, PRE_INIT_FUNC):
-            pre_init_arg_call = ', '.join(f"{name}={name}" for name in pre_init_args)
+            pre_init_arg_call = ", ".join(f"{name}={name}" for name in pre_init_args)
             pre_init_call = f"    self.{PRE_INIT_FUNC}({pre_init_arg_call})\n"
         else:
             pre_init_call = ""
 
         if assignments or processes:
             body = ""
-            body += "\n".join(f"    self.{name} = {value}" for name, value in assignments)
+            body += "\n".join(
+                f"    self.{name} = {value}" for name, value in assignments
+            )
             body += "\n".join(f"    {name} = {value}" for name, value in processes)
         else:
             body = "    pass"
 
         if hasattr(cls, POST_INIT_FUNC):
-            post_init_arg_call = ', '.join(f"{name}={name}" for name in post_init_args)
+            post_init_arg_call = ", ".join(f"{name}={name}" for name in post_init_args)
             post_init_call = f"    self.{POST_INIT_FUNC}({post_init_arg_call})\n"
         else:
             post_init_call = ""
@@ -164,7 +176,9 @@ def get_repr_maker():
             for name, attrib in cls._attributes.items()
             if attrib.repr and not attrib.exclude_field
         )
-        code = f"def __repr__(self):\n    return f'{{type(self).__qualname__}}({content})'"
+        code = (
+            f"def __repr__(self):\n    return f'{{type(self).__qualname__}}({content})'"
+        )
         return code
 
     return autogen(__repr__)

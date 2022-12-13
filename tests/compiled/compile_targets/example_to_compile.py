@@ -17,6 +17,7 @@ class Settings:
     """
     Global persistent settings handler
     """
+
     # What file to use
     output_file = attribute(default=settings_file, converter=Path)
 

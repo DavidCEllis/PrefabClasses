@@ -45,12 +45,12 @@ def preview(pth, *, use_black: bool = True):
 
 
 def rewrite_to_py(
-        source_path,
-        dest_path,
-        *,
-        header_comment=COMPILE_COMMENT,
-        use_black=False,
-        delete_firstlines=0
+    source_path,
+    dest_path,
+    *,
+    header_comment=COMPILE_COMMENT,
+    use_black=False,
+    delete_firstlines=0,
 ):
     from .. import __version__
     from pathlib import Path
@@ -64,10 +64,14 @@ def rewrite_to_py(
 
     compiled_source = rewrite_code(source, use_black=use_black)
     if delete_firstlines > 0:
-        compiled_lines = compiled_source.split('\n')
-        compiled_source = '\n'.join(compiled_lines[delete_firstlines:])
+        compiled_lines = compiled_source.split("\n")
+        compiled_source = "\n".join(compiled_lines[delete_firstlines:])
 
-    with open(dest_path, mode='w', encoding='utf-8') as f:
-        f.write(header_comment.format(dest=dest_path.name, source=source_path.name, version=__version__))
-        f.write('\n\n')
+    with open(dest_path, mode="w", encoding="utf-8") as f:
+        f.write(
+            header_comment.format(
+                dest=dest_path.name, source=source_path.name, version=__version__
+            )
+        )
+        f.write("\n\n")
         f.write(compiled_source)

@@ -16,4 +16,3 @@ class EmptyClassVars:
 @prefab(compile_prefab=True, compile_fallback=True, iter=True)
 class EmptyIter:
     pass
-
