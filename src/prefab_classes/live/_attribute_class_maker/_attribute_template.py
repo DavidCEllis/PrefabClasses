@@ -20,6 +20,7 @@ class Attribute:
     init: bool = attribute(default=True)
     repr: bool = attribute(default=True)
     kw_only: bool = attribute(default=False)
+    exclude_field: bool = attribute(default=False)
 
     def __prefab_post_init__(self):
         if (
