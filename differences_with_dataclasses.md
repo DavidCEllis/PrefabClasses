@@ -50,3 +50,11 @@ or will be added to this list.
       is defined.
     * The compiled form modifies the class before it is defined so slots can
       easily be added.
+8. InitVar annotations are not supported.
+    * Passing arguments to `__prefab_post_init__` is done by adding the argument
+      to the method signature.
+    * Assignment is automatically skipped for any such values, default factories
+      will be called and passed to the post init method.
+    * To exclude such values from the fields list and other magic methods set
+      `exclude_field=True` as an argument to `attribute`. Such attributes are
+      required to be arguments to `__prefab_post_init__`.
