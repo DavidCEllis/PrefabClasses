@@ -115,7 +115,7 @@ def test_pre_post_init_arguments(importer):
 def test_exclude_field(importer):
     from init_ex import ExcludeField
 
-    assert 'x' not in ExcludeField.PREFAB_FIELDS
+    assert "x" not in ExcludeField.PREFAB_FIELDS
     x = ExcludeField()
     y = ExcludeField(x="still_excluded")
 
