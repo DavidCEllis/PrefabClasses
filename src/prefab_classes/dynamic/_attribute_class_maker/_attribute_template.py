@@ -22,23 +22,24 @@ class Attribute:
     kw_only: bool = attribute(default=False)
     exclude_field: bool = attribute(default=False)
 
-    def __prefab_post_init__(self):
+    @staticmethod
+    def __prefab_pre_init__(init, default, default_factory, kw_only):
         if (
-            not self.init
-            and self.default is NOTHING
-            and self.default_factory is NOTHING
+            not init
+            and default is NOTHING
+            and default_factory is NOTHING
         ):
             raise LivePrefabError(
                 "Must provide a default value/factory "
                 "if the attribute is not in init."
             )
 
-        if self.kw_only and not self.init:
+        if kw_only and not init:
             raise LivePrefabError(
                 "Attribute cannot be keyword only if it is not in init."
             )
 
-        if self.default is not NOTHING and self.default_factory is not NOTHING:
+        if default is not NOTHING and default_factory is not NOTHING:
             raise LivePrefabError(
                 "Cannot define both a default value and a default factory."
             )
