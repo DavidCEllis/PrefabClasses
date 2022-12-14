@@ -8,6 +8,11 @@ Either written lazily when you first access the methods or
 eagerly when the class is compiled into a .pyc. Can optionally
 be made to rewrite .py source code with plain classes.
 
+The dynamic method of evaluating lazily is more flexible, while
+the compiled method is faster (once the .pyc file has been generated).
+
+For more detail look at the [documentation](https://prefabclasses.readthedocs.io).
+
 ## Usage ##
 
 Define the class using plain assignment and `attribute` function calls:
@@ -173,3 +178,13 @@ The benefit of this method is that once the source has been compiled
 to a .pyc file there is no longer any overhead from generating the
 class methods. The result is a normal python class as if it had been
 written by hand. 
+
+
+## Credit ##
+
+`autogen` function and some magic method definitions taken from 
+[David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
+
+General design based on previous experience using
+[dataclasses](https://docs.python.org/3/library/dataclasses.html)
+and [attrs](https://www.attrs.org/en/stable/).
