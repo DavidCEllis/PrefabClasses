@@ -53,8 +53,8 @@ to a .pyc.
 
 This is done by parsing the AST of the module and creating the methods there
 instead of creating them dynamically when the code is running. This does pose
-some additional restrictions - for more detail see 
-[dynamic and compiled][dynamic_and_compiled]
+some additional restrictions - for more detail see
+{doc}`dynamic_and_compiled`.
 
 In order for this to work correctly a special `# COMPILE_PREFABS` comment is
 needed at the top of the file. This directs the importer to process the 
