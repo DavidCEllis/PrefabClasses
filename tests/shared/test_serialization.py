@@ -30,10 +30,10 @@ def test_tojson(importer):
     expected_json = json.dumps(
         {"filename": "testfile", "path": "path/to/test"}, indent=2
     )
-    assert to_json(pth, default=str) == expected_json
+    assert to_json(pth, default=str, indent=2) == expected_json
 
     expected_json = json.dumps({"path": "path/to/test"}, indent=2)
-    assert to_json(pth, excludes=["filename"], default=str) == expected_json
+    assert to_json(pth, excludes=["filename"], default=str, indent=2) == expected_json
 
 
 def test_tojson_recurse(importer):
@@ -82,7 +82,7 @@ def test_jsonencoder_layered(importer):
         "syspath": {"filename": "testfile", "path": "path/to/test"},
     }
 
-    assert json.dumps(result, indent=2) == to_json(x, default=default_for_path)
+    assert json.dumps(result, indent=2) == to_json(x, default=default_for_path, indent=2)
 
 
 def test_picklable(importer):

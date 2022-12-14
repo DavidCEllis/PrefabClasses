@@ -33,12 +33,11 @@ def as_dict(inst, *, excludes=None):
     return result
 
 
-def to_json(inst, *, excludes=None, indent=2, default=None, **kwargs):
+def to_json(inst, *, excludes=None, default=None, **kwargs):
     """
     Output the class attributes as JSON
     :param inst: Instance of prefab class
     :param excludes: list or set of attributes to exclude from json dump
-    :param indent: indent for json
     :param default: default function for JSON Encoder
     :return:
     """
@@ -59,4 +58,4 @@ def to_json(inst, *, excludes=None, indent=2, default=None, **kwargs):
 
     import json  # Only import JSON if needed
 
-    return json.dumps(out_dict, indent=indent, default=default_func, **kwargs)
+    return json.dumps(out_dict, default=default_func, **kwargs)
