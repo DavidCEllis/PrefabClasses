@@ -36,11 +36,11 @@ version = {attr = "prefab_classes.__version__"}
 testing = ["pytest", "pytest-cov"]
 performance = ["attrs", "pydantic"]
 docs = ["sphinx", "myst-parser", "sphinx_rtd_theme"]
+build = ["build", "twine"]
 
 [project.urls]
 "Homepage" = "https://github.com/davidcellis/PrefabClasses"
 "Documentation" = "https://prefabclasses.readthedocs.io/"
-
 
 [tool.black]
 line-length = 88
