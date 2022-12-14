@@ -11,13 +11,14 @@ on intentional differences. Unintentional differences may be patched
 or will be added to this list.
 
 ## Functional differences ##
-1. the `as_dict` method in `prefab_classes` does *not* recurse.
-    * I don't think this is the correct behaviour to have by default.
-    * A prefab may contain other prefabs that you might not want to serialize
-      in the same way and so this shouldn't make that decision for you.
-    * The case of JSON serialization with recursion (which some of the code in 
-      dataclasses.todict seems to be written for) is handled by the to_json
-      function provided.
+1. the `as_dict` method in `prefab_classes` does *not* behave the same as 
+   dataclasses' `asdict`
+    * `as_dict` does *not* deepcopy the included fields, modification of mutable
+      fields in the dictionary will modify them in the original object.
+    * `as_dict` does *not* recurse
+      - Recursion would require knowing how other objects should be serialized
+      - dataclasses `asdict`'s recursion appears to be for handling json serialization
+        prefab_classes provides a `to_json` function to assist with that.
 2. dataclasses provides a `fields` function to access the underlying fields
     * Once a prefab class has been generated the underlying 'recipe' code is 
       removed as much as possible.
@@ -27,14 +28,15 @@ or will be added to this list.
     * The dynamic classes generate their code lazily so they need
       to keep the 'recipe' details around. `_attributes` and `_CLASSNAME_attributes`
       contain this information. The plain `_attributes` includes inherited values.
-3. Allow the use of plain `attribute(...)` declarations without the use of
-   type hints.
-    * Typing is supposed to be optional so let it be optional.
+3. Plain `attribute(...)` declarations can be used without the use of type hints.
+    * If a plain assignment is used, all assignments **must** use `attribute`
 4. Post init processing uses `__prefab_post_init__` instead of `__post_init__`
     * This is just a case of not wanting any confusion between the two.
     * `attrs` similarly does `__attrs_post_init__`
     * `__prefab_pre_init__` can also be used to define something to run
       before the body of `__init__`
+    * If an attribute name is provided as an argument to either the pre_init
+      or post_init functions the value will be passed through.
 5. Unlike dataclasses, prefab classes will let you use unhashable default
    values.
     * This isn't to say that mutable defaults are a good idea in general but
