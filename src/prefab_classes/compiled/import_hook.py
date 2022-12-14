@@ -186,6 +186,20 @@ def remove_prefab_importhook():
 
 @contextlib.contextmanager
 def prefab_compiler():
+    """
+    Context manager to insert and clean up the prefab compilation import hook.
+
+    This function should be used before importing any modules with prefabs
+    you wish to be compiled. These modules will then be converted to .pyc files
+    with a special identifier so they will only be re-converted if a change is
+    made to the .py file, if there is a new version of prefab_classes or if
+    there is a new python magic number.
+
+    usage::
+
+        with prefab_compiler():
+            import my_prefab_module
+    """
     insert_prefab_importhook()
     try:
         yield

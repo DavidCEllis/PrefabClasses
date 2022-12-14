@@ -1,4 +1,6 @@
 import ast
+import os
+from typing import Union
 
 from ..exceptions import CompiledPrefabError
 
@@ -27,7 +29,7 @@ def rewrite_code(source: str, *, use_black: bool = False):
         return ast.unparse(tree)
 
 
-def preview(pth, *, use_black: bool = True):
+def preview(pth: Union[str, os.PathLike], *, use_black: bool = True):
     """
     Preview the result of running the generator on a python file
     This is mainly here for debugging and testing but can also be useful
@@ -45,13 +47,29 @@ def preview(pth, *, use_black: bool = True):
 
 
 def rewrite_to_py(
-    source_path,
-    dest_path,
+    source_path: Union[str, os.PathLike],
+    dest_path: Union[str, os.PathLike],
     *,
-    header_comment=COMPILE_COMMENT,
-    use_black=False,
-    delete_firstlines=0,
+    header_comment: str = COMPILE_COMMENT,
+    use_black: bool = False,
+    delete_firstlines: int = 0,
 ):
+    """
+    Parse a source python file and rewrite any @prefab(compile_prefab=True) decorated
+    classes. Unparse the output back to a new source file.
+
+    As the compiled method uses the AST to handle parsing any comments and formatting
+    will be stripped from the resulting code.
+
+    Currently an option to use Black to reformat the code to make it slightly more
+    readable is provided. Potentially this could be extended to be more generic.
+
+    :param source_path: Source file to rewrite
+    :param dest_path: Destination output for compiled prefab code
+    :param header_comment: String to insert at the top of the file
+    :param use_black: Attempt to run black on the output to make it more readable
+    :param delete_firstlines: Delete the first N non-comment lines of the source in the output.
+    """
     from .. import __version__
     from pathlib import Path
 

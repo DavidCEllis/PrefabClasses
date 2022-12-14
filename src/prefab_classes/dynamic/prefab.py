@@ -57,24 +57,26 @@ def attribute(
     *,
     default=NOTHING,
     default_factory=NOTHING,
-    converter=None,
+    converter=None,  # DEPRECATED
     init=True,
     repr=True,
     kw_only=False,
     exclude_field=False,
 ):
     """
-    Get an Attribute instance
-    indirect to allow for potential changes in the future
+    Additional definition for how to generate standard methods
+    for an instance attribute.
+
+    **NOTE**: There is currently a `converter` parameter that will be removed in a future version.
 
     :param default: Default value for this attribute
-    :param default_factory: No argument callable to give a default value
-                            (for otherwise mutable defaults)
-    :param converter: prefab.attr = x -> prefab.attr = converter(x)
+    :param default_factory: 0 argument callable to give a default value
+                            (for otherwise mutable defaults, eg: list)
     :param init: Include this attribute in the __init__ parameters
     :param repr: Include this attribute in the class __repr__
     :param kw_only: Make this argument keyword only in init
-    :param exclude_field: Exclude this field from all magic method apart from __init__
+    :param exclude_field: Exclude this field from all magic method generation
+                          apart from __init__
                           and do not include it in PREFAB_FIELDS
 
     :return: Attribute generated with these parameters.
@@ -302,6 +304,8 @@ def prefab(
 ):
     """
     Generate boilerplate code for dunder methods in a class.
+
+    Use as a decorator.
 
     :param cls: Class to convert to a prefab
     :param init: generates __init__ if true or __prefab_init__ if false
