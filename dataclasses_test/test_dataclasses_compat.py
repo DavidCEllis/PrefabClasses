@@ -2330,7 +2330,6 @@ class TestInit(unittest.TestCase):
                 self.i = 3
         self.assertEqual(C().i, 3)
 
-    @planned
     def test_overwriting_init(self):
         # If the class has __init__, use it no matter the value of
         #  init=.
@@ -2356,7 +2355,6 @@ class TestInit(unittest.TestCase):
                 self.x = 2 * x
         self.assertEqual(C(5).x, 10)
 
-    @planned
     def test_inherit_from_protocol(self):
         # Dataclasses inheriting from protocol should preserve their own `__init__`.
         # See bpo-45081.
@@ -2423,7 +2421,6 @@ class TestRepr(unittest.TestCase):
                 return 'C-class'
         self.assertEqual(repr(C(3)), 'C-class')
 
-    @planned
     def test_overwriting_repr(self):
         # If the class has __repr__, use it no matter the value of
         #  repr=.
@@ -2468,7 +2465,6 @@ class TestEq(unittest.TestCase):
                 return other == 10
         self.assertEqual(C(3), 10)
 
-    @planned
     def test_overwriting_eq(self):
         # If the class has __eq__, use it no matter the value of
         #  eq=.
@@ -4050,7 +4046,6 @@ class TestMatchArgs(unittest.TestCase):
             a: int
         self.assertEqual(C(42).__match_args__, ('a',))
 
-    @planned
     def test_explicit_match_args(self):
         ma = ()
         @dataclass
@@ -4129,7 +4124,7 @@ class TestKeywordArgs(unittest.TestCase):
             class A:
                 a: ClassVar[int] = field(kw_only=False)
 
-    @planned
+    @api_difference("This test uses fields, which does not exist for prefab_classes")
     def test_field_marked_as_kwonly(self):
         #######################
         # Using dataclass(kw_only=True)

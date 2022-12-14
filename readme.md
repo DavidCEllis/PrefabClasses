@@ -8,162 +8,168 @@ Either written lazily when you first access the methods or
 eagerly when the class is compiled into a .pyc. Can optionally
 be made to rewrite .py source code with plain classes.
 
-## Why are you remaking this again? ##
+## Usage ##
 
-Initially I was just trying to remove a dependency on `attrs`
-from a project and used 
-[David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
-as a starting point. 
-
-Working and modifying that to fit my needs made me think about
-coming at the performance problem from the opposite angle. 
-Instead of rewriting methods at the last possible point when the 
-data is first accessed, rewriting them when they are compiled 
-to a .pyc file by modifying the AST.
-
-The benefit of this method is that once the source has been compiled
-to a .pyc file there is no longer any overhead from generating the
-class methods. The result is a normal python class as if it had been
-written by hand. Working solely on the AST does lead to some design
-differences from other popular modules like attrs or dataclasses.
-
-There is no benefit from using the compiled version over dynamic
-implementations unless the .pyc files are generated and used.
-
-### Dynamic ###
-
-The dynamic method works roughly as *cluegen* worked, generating the 
-required methods only when they are first accessed. Compared to
-attrs this trades speed of first access for speed of import. 
-This also means that if a class method is never accessed then 
-it is not generated.
-
-Unlike cluegen this reverts to using a decorator for each class
-rather than using inheritance. This is largely due to it being
-much easier to identify a specific decorator in the AST to identify
-classes to be modified for the compiled version.
-
-### Compiled ###
-
-The 'compiled' method instead generates all of the code when the 
-module is first *compiled* into a .pyc file by modifying the AST. 
-
-There are some trade-offs and differences between the two.
-
-* The compiled method uses the **literal names** `prefab` and `attribute`
-  to identify classes to be imported and to identify features. 
-  If these are changed things will not work.
-  * The functions to not technically need to be imported however, unless
-    the code should fallback to the dynamic method.
-* After the .pyc files have been compiled, compiled classes import
-  much more quickly than dynamic ones as they are plain python classes.
-    * They are not *quite* as fast as modules with native classes,
-      as hash-based invalidation is used instead of timestamp
-      invalidation.
-* Due to .pyc files being created independently inheritance is
-  more restricted for compiled classes.
-    * Inheritance across modules is not supported
-    * Inheritance from non-prefab base classes is not supported
-* As the classes must be compiled into the .pyc files, compiled
-  classes can't be created interactively.
-* In order to compile classes a `# COMPILE_PREFABS` comment must
-  be at the top of a module. The module must also be imported in
-  a `with prefab_compiler():` block.
-    * This places an import hook that will compile prefabs in
-      these files.
-* Compiled classes support slots, dynamic classes do not.
-    * While `attrs` supports this dynamically, it is forced to 
-      make a new class and copy over features. This can have some
-      side effects.
-
-## Usage Examples ##
-
-Usage for the dynamic form is pretty much what you would expect:
+Define the class using plain assignment and `attribute` function calls:
 
 ```python
-from prefab_classes import attribute, prefab
-   
-
-@prefab
-class Coordinate:
-    x: float
-    y: float
-
-
-@prefab
-class Coordinate3D(Coordinate):
-    z: float = 0.0
-
->>> point = Coordinate3D(1, 2)
-Coordinate3D(x=1, y=2, z=0)
->>> point.x, point.y, point.z
-(1, 2, 0)
-
-from pathlib import PurePath
+from prefab_classes import prefab, attribute
 
 @prefab
 class Settings:
     hostname = attribute(default="localhost")
-    template_folder = attribute(default='base/path', converter=PurePath)
-
-
->>> settings = Settings(hostname='127.0.0.1')
->>> settings.template_folder
-PureWindowsPath('base/path')
+    template_folder = attribute(default='base/path')
+    template_name = attribute(default='index')
 ```
 
-Usage for the 'compiled' form is slightly more complicated.
+Or with type hinting:
 
-example_compiled.py
 ```python
-# COMPILE_PREFABS
 from prefab_classes import prefab
 
-@prefab(compile_prefab=True)
+@prefab
 class Settings:
     hostname: str = "localhost"
     template_folder: str = 'base/path'
+    template_name: str = 'index'
 ```
 
-The prefab will then be compiled to a .pyc file when imported in another file
-with the import hook included. The resulting code can be previewed using the 
-`preview` function. If `black` is installed, the code will be run through 
-to make the result more readable, to avoid this use `use_black=false`.
+In either case the result behaves the same.
 
-`from prefab_classes.compiled import preview`
-`preview('example_compiled.py')`
 ```python
-from prefab_classes import prefab
-
-class Settings:
-    COMPILED = True
-    PREFAB_FIELDS = ["hostname", "template_folder"]
-
-    def __init__(self, hostname: str = "localhost", template_folder: str = "base/path"):
-        self.hostname = hostname
-        self.template_folder = template_folder
-
-    def __repr__(self):
-        return f"Settings(hostname={self.hostname!r}, template_folder={self.template_folder!r})"
-
-    def __eq__(self, other):
-        return (
-            (self.hostname, self.template_folder)
-            == (other.hostname, other.template_folder)
-            if self.__class__ == other.__class__
-            else NotImplemented
-        )
+>>> from prefab_classes import to_json
+>>> s = Settings()
+>>> print(s)
+Settings(hostname='localhost', template_folder='base/path', template_name='index')
+>>> to_json(s)
+'{"hostname": "localhost", "template_folder": "base/path", "template_name": "index"}'
 ```
 
-In order to convert the class on the generation of the .pyc the imports must be done
-with the prefab compiler import hook in place. This is done using the prefab_compiler
-context manager before imports.
+For further details see the `usage` pages in the documentation.
 
-use_compiled.py
+## How does it work ##
+
+The `@prefab` decorator either rewrites the class dynamically, putting methods
+in place that will be generated as they are first accessed **OR** it acts
+as a marker to indicate the class should be transformed for the compiled
+classes.
+
+Compiled classes can both be imported directly or converted back to new .py
+files. Direct import will perform the conversion before creating the .pyc file.
+
+example.py
+```python
+# COMPILE_PREFABS
+from prefab_classes import prefab, attribute
+from pathlib import Path
+
+
+@prefab(compile_prefab=True)
+class SettingsPath:
+    hostname = attribute(default="localhost")
+    template_folder = attribute(default='base/path')
+    template_name = attribute(default='index')
+    file_types = attribute(default_factory=list)
+
+    def __prefab_post_init__(self, template_folder, file_types):
+        self.template_folder = Path(template_folder)
+        file_types.extend(['.md', '.html'])
+        self.file_types = file_types
+
+```
+
+Direct import using prefab_compiler
+
 ```python
 from prefab_classes import prefab_compiler
 
 with prefab_compiler():
-    from example_compiled import Settings
-...
+    from example import SettingsPath
+
+# Use normally from here
 ```
+
+Compile to a new .py file using rewrite_to_py:
+
+```python
+>>> from prefab_classes.compiled import rewrite_to_py
+>>> rewrite_to_py('example.py', 'example_compiled.py', use_black=True, delete_firstlines=1)
+```
+
+Using black to format for ease of reading and deleting the now unused prefab imports.
+
+example_compiled.py
+```python
+# DO NOT MANUALLY EDIT THIS FILE
+# MODULE: example_compiled.py
+# GENERATED FROM: example.py
+# USING prefab_classes VERSION: v0.7.2
+
+from pathlib import Path
+
+
+class SettingsPath:
+    COMPILED = True
+    PREFAB_FIELDS = ["hostname", "template_folder", "template_name", "file_types"]
+    __match_args__ = ("hostname", "template_folder", "template_name", "file_types")
+
+    def __init__(
+        self,
+        hostname="localhost",
+        template_folder="base/path",
+        template_name="index",
+        file_types=None,
+    ):
+        self.hostname = hostname
+        self.template_name = template_name
+        file_types = file_types if file_types is not None else list()
+        self.__prefab_post_init__(
+            template_folder=template_folder, file_types=file_types
+        )
+
+    def __repr__(self):
+        return f"{type(self).__qualname__}(hostname={self.hostname!r}, template_folder={self.template_folder!r}, template_name={self.template_name!r}, file_types={self.file_types!r})"
+
+    def __eq__(self, other):
+        return (
+            (self.hostname, self.template_folder, self.template_name, self.file_types)
+            == (
+                other.hostname,
+                other.template_folder,
+                other.template_name,
+                other.file_types,
+            )
+            if self.__class__ == other.__class__
+            else NotImplemented
+        )
+
+    def __prefab_post_init__(self, template_folder, file_types):
+        self.template_folder = Path(template_folder)
+        file_types.extend([".md", ".html"])
+        self.file_types = file_types
+```
+
+## Why not just use attrs/dataclasses? ##
+
+If attrs or dataclasses solves your problem then you should use them.
+They are thoroughly tested, well supported packages.
+
+This project came about because I had a project which had 1 use of 
+attrs and I was trying to reduce my dependencies. At the time I didn't
+like the requirerment for type hints in dataclasses and was looking at 
+[David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
+as a potential replacement as it seemed easy to modify. 
+I needed some additional features so I added them and it eventually 
+lead to this project.
+
+The `autogen` code and some of the method definitions for the `dynamic` 
+classes still use the code from Cluegen.
+
+Cluegen's lazy creation of the methods made me think about instead 
+taking an eager construction, but doing it only once when the .py
+source is first compiled into a .pyc file by modifying the AST.
+
+The benefit of this method is that once the source has been compiled
+to a .pyc file there is no longer any overhead from generating the
+class methods. The result is a normal python class as if it had been
+written by hand. 
