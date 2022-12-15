@@ -154,6 +154,16 @@ class C{n}:
     e: int
 '''
 
+prefab_attribute_template = '''
+@prefab
+class C{n}:
+    a = attribute()
+    b = attribute()
+    c = attribute()
+    d = attribute()
+    e = attribute()
+'''
+
 prefab_eval_template = '''
 @prefab
 class C{n}:
@@ -282,6 +292,9 @@ def main(reps, test_everything=False, exclude_compile=False):
 
     write_perftemp(100, prefab_template, prefab_import)
     run_test('prefab', reps, exclude_compile=exclude_compile)
+
+    write_perftemp(100, prefab_attribute_template, prefab_import)
+    run_test('prefab_attributes', reps, exclude_compile=exclude_compile)
 
     write_perftemp(100, prefab_eval_template, prefab_import)
     run_test('prefab_eval', reps, exclude_compile=exclude_compile)
