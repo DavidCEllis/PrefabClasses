@@ -53,6 +53,20 @@ from .method_generators import (
 )
 
 
+def _is_classvar(hint):
+    _typing = sys.modules.get("typing")
+    if _typing:
+        if (
+            hint is _typing.ClassVar
+            or getattr(hint, "__origin__", None) is _typing.ClassVar
+        ):
+            return True
+        # String used as annotation
+        elif isinstance(hint, str) and CLASSVAR_NAME in hint:
+            return True
+    return False
+
+
 def attribute(
     *,
     default=NOTHING,
@@ -99,7 +113,6 @@ def attribute(
     )
 
 
-# @dataclass_transform(field_specifiers=(attribute, Attribute))
 def _make_prefab(
     cls: type,
     *,
@@ -128,26 +141,8 @@ def _make_prefab(
     # annotations will be ignored as it becomes complex to fix the
     # ordering.
 
-    annotations = getattr(cls, "__annotations__", {})
-    # Eliminate ClassVars - don't want to import typing if
-    # it's not already imported
-    if annotations:
-        _typing = sys.modules.get("typing")
-        if _typing:
-            new_annotations = {}
-            for key, value in annotations.items():
-                # Actual class used as annotation
-                if (
-                    value is _typing.ClassVar
-                    or getattr(value, "__origin__", None) is _typing.ClassVar
-                ):
-                    continue
-                # String used as annotation
-                elif isinstance(value, str) and CLASSVAR_NAME in value:
-                    continue
-                else:
-                    new_annotations[key] = value
-            annotations = new_annotations
+    # Make a copy of the __annotations__ dictionary
+    annotations = getattr(cls, "__annotations__", {}).copy()
 
     annotation_names = annotations.keys()
 
@@ -159,9 +154,12 @@ def _make_prefab(
         # replace the classes' attributes dict with one with the correct
         # order from the annotations.
         kw_flag = False
-        kw_flag_name = None
         new_attributes = {}
         for name, value in annotations.items():
+            # Ignore ClassVar hints
+            if _is_classvar(value):
+                continue
+
             # Look for the KW_ONLY annotation
             if value is KW_ONLY or value == "KW_ONLY":
                 if kw_flag:
@@ -169,7 +167,6 @@ def _make_prefab(
                         "Class can not be defined as keyword only twice"
                     )
                 kw_flag = True
-                kw_flag_name = name
             else:
                 # Copy atributes that are already defined to the new dict
                 # generate Attribute() values for those that are not defined.
@@ -179,45 +176,49 @@ def _make_prefab(
                     else:
                         attribute_default = getattr(cls, name)
                         attrib = attribute(default=attribute_default)
+
+                    # Clear the attribute from the class after it has been used
+                    # in the definition.
+                    delattr(cls, name)
                 else:
                     attrib = attribute()
 
                 if kw_flag or kw_only:
                     attrib.kw_only = True
+
+                attrib._type = annotations[name]
                 new_attributes[name] = attrib
 
-        if kw_flag_name is not None:
-            del cls.__annotations__[kw_flag_name]
+            # Remove the original annotation
+            del cls.__annotations__[name]
         cls_attributes = new_attributes
     else:
-        if kw_only:
-            for attrib in cls_attributes.values():
+        for name, attrib in cls_attributes.items():
+            if kw_only:
                 attrib.kw_only = True
+
+            delattr(cls, name)
+            # Some items can still be annotated.
+            try:
+                attrib._type = cls.__annotations__[name]
+                del cls.__annotations__[name]
+            except (AttributeError, KeyError):
+                # AttributeError as 3.9 does not guarantee the existence of __annotations__
+                pass
 
     setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
 
-    # Remove used attributes from the class dict and annotations to match compiled behaviour
-    for name, attrib in cls_attributes.items():
-        try:
-            delattr(cls, name)
-        except AttributeError:
-            pass
-        try:
-            attrib._type = cls.__annotations__[name]
-            del cls.__annotations__[name]
-        except (AttributeError, KeyError):
-            # AttributeError as 3.9 does not guarantee the existence of __annotations__
-            pass
-
-    # Handle attributes
-    attributes = {
-        name: attrib
-        for c in reversed(cls.__mro__)
-        for name, attrib in getattr(c, f"_{c.__name__}_attributes", {}).items()
-    }
+    # Handle inheritance
+    if cls.__mro__ == (cls, object):  # special case of no inheritance.
+        attributes = cls_attributes.copy()
+    else:
+        attributes = {
+            name: attrib
+            for c in reversed(cls.__mro__)
+            for name, attrib in getattr(c, f"_{c.__name__}_attributes", {}).items()
+        }
 
     # Check pre_init and post_init functions if they exist
-    post_init_args = []
     try:
         func = getattr(cls, PRE_INIT_FUNC)
     except AttributeError:
@@ -230,6 +231,7 @@ def _make_prefab(
                     f"{item} argument in __prefab_pre_init__ is not a valid attribute."
                 )
 
+    post_init_args = []
     try:
         func = getattr(cls, POST_INIT_FUNC)
     except AttributeError:
@@ -245,12 +247,15 @@ def _make_prefab(
                 post_init_args.append(item)
 
     default_defined = []
+    valid_fields = []
     for name, attrib in attributes.items():
         if attrib.exclude_field:
             if name not in post_init_args:
                 raise LivePrefabError(
                     f"{name} is an excluded attribute but is not passed to post_init"
                 )
+        else:
+            valid_fields.append(name)
 
         if attrib.init and not attrib.kw_only:
             if attrib.default is not NOTHING or attrib.default_factory is not NOTHING:
@@ -264,9 +269,6 @@ def _make_prefab(
                         f"non_default after default: {name}",
                     )
 
-    valid_fields = [
-        name for name, value in attributes.items() if not value.exclude_field
-    ]
     setattr(cls, FIELDS_ATTRIBUTE, valid_fields)
     cls._attributes = attributes
     if match_args and "__match_args__" not in cls.__dict__:
