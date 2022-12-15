@@ -83,3 +83,15 @@ class EmptyContainers:
     x: list = attribute(default_factory=list)
     y: set = attribute(default_factory=set)
     z: dict = attribute(default_factory=dict)
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class TypeSignatureInit:
+    x: int
+    y: str = "Test"
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class PartialTypeSignatureInit:
+    x = attribute()
+    y: str = attribute(default="Test")

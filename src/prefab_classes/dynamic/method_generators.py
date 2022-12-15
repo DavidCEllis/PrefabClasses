@@ -57,26 +57,38 @@ def get_init_maker(*, init_name="__init__"):
         pos_arglist = []
         kw_only_arglist = []
         for name, attrib in cls._attributes.items():
-            if attrib.converter:
-                globs[f"_{name}_converter"] = attrib.converter
+            if attrib._type is not NOTHING:
+                globs[f"_{name}_type"] = attrib._type
             if attrib.init:
                 if attrib.default is not NOTHING:
                     if isinstance(attrib.default, (str, int, float, bool)):
                         # Just use the literal in these cases
-                        arg = f"{name}={attrib.default!r}"
+                        if attrib._type is NOTHING:
+                            arg = f"{name}={attrib.default!r}"
+                        else:
+                            arg = f"{name}: _{name}_type = {attrib.default!r}"
                     else:
                         # No guarantee repr will work for other objects
                         # so store the value in a variable and put it
                         # in the globals dict for eval
-                        arg = f"{name}=_{name}_default"
+                        if attrib._type is NOTHING:
+                            arg = f"{name}=_{name}_default"
+                        else:
+                            arg = f"{name}: _{name}_type = _{name}_default"
                         globs[f"_{name}_default"] = attrib.default
                 elif attrib.default_factory is not NOTHING:
                     # Use NONE here and call the factory later
                     # This matches the behaviour of compiled
-                    arg = f"{name}=None"
+                    if attrib._type is NOTHING:
+                        arg = f"{name}=None"
+                    else:
+                        arg = f"{name}: _{name}_type = None"
                     globs[f"_{name}_factory"] = attrib.default_factory
                 else:
-                    arg = name
+                    if attrib._type is NOTHING:
+                        arg = name
+                    else:
+                        arg = f"{name}: _{name}_type"
                 if attrib.kw_only:
                     kw_only_arglist.append(arg)
                 else:
@@ -130,6 +142,7 @@ def get_init_maker(*, init_name="__init__"):
                 else:
                     value = f"_{name}_default"
             if attrib.converter:
+                globs[f"_{name}_converter"] = attrib.converter
                 value = f"_{name}_converter({value})"
 
             if name in post_init_args:

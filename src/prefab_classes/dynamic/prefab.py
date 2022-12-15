@@ -197,12 +197,13 @@ def _make_prefab(
     setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
 
     # Remove used attributes from the class dict and annotations to match compiled behaviour
-    for name in cls_attributes.keys():
+    for name, attrib in cls_attributes.items():
         try:
             delattr(cls, name)
         except AttributeError:
             pass
         try:
+            attrib._type = cls.__annotations__[name]
             del cls.__annotations__[name]
         except (AttributeError, KeyError):
             # AttributeError as 3.9 does not guarantee the existence of __annotations__
