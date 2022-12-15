@@ -151,3 +151,19 @@ def test_empty_containers_factory_default(importer):
     assert ec.x is empty_list
     assert ec.y is empty_set
     assert ec.z is empty_dict
+
+
+def test_signature(importer):
+    from init_ex import TypeSignatureInit
+    import inspect
+
+    init_sig = inspect.signature(TypeSignatureInit.__init__)
+    assert str(init_sig) == "(self, x: int, y: str = 'Test')"
+
+
+def test_partial_signature(importer):
+    from init_ex import PartialTypeSignatureInit
+    import inspect
+
+    init_sig = inspect.signature(PartialTypeSignatureInit.__init__)
+    assert str(init_sig) == "(self, x, y: str = 'Test')"
