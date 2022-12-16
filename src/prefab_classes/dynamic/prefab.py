@@ -142,20 +142,20 @@ def _make_prefab(
     # ordering.
 
     # Make a copy of the __annotations__ dictionary
-    annotations = getattr(cls, "__annotations__", {}).copy()
+    cls_annotations = getattr(cls, "__annotations__", {}).copy()
 
-    annotation_names = annotations.keys()
+    cls_annotation_names = cls_annotations.keys()
 
     cls_attributes = {k: v for k, v in vars(cls).items() if isinstance(v, Attribute)}
 
-    attribute_names = cls_attributes.keys()
+    cls_attribute_names = cls_attributes.keys()
 
-    if set(annotation_names).issuperset(set(attribute_names)):
+    if set(cls_annotation_names).issuperset(set(cls_attribute_names)):
         # replace the classes' attributes dict with one with the correct
         # order from the annotations.
         kw_flag = False
         new_attributes = {}
-        for name, value in annotations.items():
+        for name, value in cls_annotations.items():
             # Ignore ClassVar hints
             if _is_classvar(value):
                 continue
@@ -171,7 +171,7 @@ def _make_prefab(
                 # Copy atributes that are already defined to the new dict
                 # generate Attribute() values for those that are not defined.
                 if hasattr(cls, name):
-                    if name in attribute_names:
+                    if name in cls_attribute_names:
                         attrib = cls_attributes[name]
                     else:
                         attribute_default = getattr(cls, name)
@@ -186,7 +186,7 @@ def _make_prefab(
                 if kw_flag or kw_only:
                     attrib.kw_only = True
 
-                attrib._type = annotations[name]
+                attrib._type = cls_annotations[name]
                 new_attributes[name] = attrib
 
             # Remove the original annotation
@@ -208,15 +208,18 @@ def _make_prefab(
 
     setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
 
+    mro = cls.__mro__[:-1]  # skip 'object' base class
+
     # Handle inheritance
-    if cls.__mro__ == (cls, object):  # special case of no inheritance.
+    if mro == (cls,):  # special case of no inheritance.
         attributes = cls_attributes.copy()
     else:
-        attributes = {
-            name: attrib
-            for c in reversed(cls.__mro__)
-            for name, attrib in getattr(c, f"_{c.__name__}_attributes", {}).items()
-        }
+        attributes = {}
+        for c in reversed(mro):
+            try:
+                attributes.update(getattr(c, f"_{c.__name__}_attributes"))
+            except AttributeError:
+                pass
 
     # Check pre_init and post_init functions if they exist
     try:
