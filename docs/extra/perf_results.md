@@ -14,7 +14,8 @@ test file.
 2.3 GHz Quad-Core Intel Core i5 / 8 GB 2133 MHz LPDDR3
 
 ```
-Python Version 3.11.0 (main, Oct 26 2022, 01:05:56) [Clang 13.0.0 (clang-1300.0.29.30)]
+Python Version: 3.11.0 (main, Oct 26 2022, 01:05:56) [Clang 13.0.0 (clang-1300.0.29.30)]
+Prefab Classes version: v0.7.5a4
 Platform: macOS-12.6-x86_64-i386-64bit
 Initial compilation time EXCLUDED
 Time for 100 imports of 100 classes defined with 5 basic attributes
@@ -23,42 +24,17 @@ Time for 100 imports of 100 classes defined with 5 basic attributes
 | Method | Total Time (seconds) |
 | --- | --- |
 | standard classes | 0.15 |
-| namedtuple | 0.75 |
-| NamedTuple | 1.32 |
-| dataclasses | 4.21 |
-| attrs | 6.44 |
-| pydantic | 5.71 |
-| dabeaz/cluegen | 0.19 |
-| dabeaz/cluegen_eval | 2.25 |
-| dabeaz/dataklasses | 0.22 |
-| dabeaz/dataklasses_eval | 0.21 |
-| prefab | 0.29 |
-| prefab_eval | 2.51 |
-| compiled_prefab | 0.16 |
-
-
-## Windows Desktop ##
-Intel(R) Core(TM) i7-4790K CPU @ 4.00GHz / 16GB 1867 MHz DDR3
-
-```
-Python Version 3.11.0 (main, Oct 24 2022, 18:26:48) [MSC v.1933 64 bit (AMD64)]
-Platform: Windows-10-10.0.19044-SP0
-Initial compilation time EXCLUDED
-Time for 100 imports of 100 classes defined with 5 basic attributes
-```
-
-| Method | Total Time (seconds) |
-| --- | --- |
-| standard classes | 0.16 |
-| namedtuple | 0.64 |
-| NamedTuple | 1.05 |
-| dataclasses | 3.60 |
-| attrs | 5.45 |
-| pydantic | 5.05 |
+| namedtuple | 0.71 |
+| NamedTuple | 1.22 |
+| dataclasses | 4.13 |
+| attrs 22.1.0 | 6.25 |
+| pydantic 1.10.2 | 5.50 |
 | dabeaz/cluegen | 0.18 |
-| dabeaz/cluegen_eval | 1.94 |
+| dabeaz/cluegen_eval | 2.19 |
 | dabeaz/dataklasses | 0.21 |
-| dabeaz/dataklasses_eval | 0.21 |
-| prefab | 0.27 |
-| prefab_eval | 2.12 |
-| compiled_prefab | 0.17 |
+| dabeaz/dataklasses_eval | 0.20 |
+| prefab v0.7.5a4 | 0.35 |
+| prefab_attributes v0.7.5a4 | 0.36 |
+| prefab_eval v0.7.5a4 | 2.69 |
+| compiled_prefab v0.7.5a4 | 0.16 |
+| compiled_prefab_nocache v0.7.5a4 | 8.16 |

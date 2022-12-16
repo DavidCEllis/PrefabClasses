@@ -13,8 +13,20 @@ def test_repr(importer):
 def test_repr_exclude(importer):
     from dunders import CoordinateNoXRepr
 
+    assert CoordinateNoXRepr.COMPILED == importer
+
     expected_repr = "CoordinateNoXRepr(y=2)"
-    assert repr(CoordinateNoXRepr(1, 2) == expected_repr)
+    assert repr(CoordinateNoXRepr(1, 2)) == expected_repr
+
+
+def test_repr_init_exclude(importer):
+    from dunders import NoXReprNoXInit
+
+    x = NoXReprNoXInit()
+    assert x._type == None
+
+    expected_repr = "NoXReprNoXInit()"
+    assert repr(NoXReprNoXInit()) == expected_repr
 
 
 def test_iter():

@@ -591,18 +591,19 @@ class PrefabDetails:
         )
 
         field_strings = [self.ast_qualname_str, ast.Constant(value="(")]
-        for i, field in enumerate(self.resolved_field_list):
-            if field.exclude_field:  # Skip excluded fields
-                continue
-
-            if i > 0:
-                field_strings.append(ast.Constant(value=", "))
-            target = ast.Constant(value=f"{field.name}=")
-            value = ast.FormattedValue(
-                value=field.ast_attribute(),
-                conversion=114,  # REPR formatting
-            )
-            field_strings.extend([target, value])
+        first_field = True
+        for field in self.resolved_field_list:
+            if field.repr_ and not field.exclude_field:
+                if first_field:
+                    first_field = False
+                else:
+                    field_strings.append(ast.Constant(value=", "))
+                target = ast.Constant(value=f"{field.name}=")
+                value = ast.FormattedValue(
+                    value=field.ast_attribute(),
+                    conversion=114,  # REPR formatting
+                )
+                field_strings.extend([target, value])
 
         field_strings.append(ast.Constant(value=")"))
 
