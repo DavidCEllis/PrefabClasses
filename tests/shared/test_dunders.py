@@ -69,3 +69,27 @@ def test_match_args_disabled(importer):
 
     with pytest.raises(AttributeError):
         _ = NoMatchArgs.__match_args__
+
+
+def test_dunders_not_overwritten(importer):
+    from dunders import DundersExist
+
+    x = DundersExist(0, 0)
+    y = DundersExist(1, 1)
+
+    # __match_args__
+    assert DundersExist.__match_args__ == ("x", )
+
+    # __init__
+    assert (x.x, x.y) == (0, 0)
+    assert (y.x, y.y) == (2, 3)
+
+    # __repr__
+    assert repr(x) == repr(y) == "NOT_REPLACED"
+
+    # __eq__
+    assert x == y
+
+    # __iter__
+    for item in y:
+        assert item is y.x
