@@ -9,7 +9,7 @@ from ..sentinels import NOTHING
 from ..exceptions import LivePrefabError
 
 
-@prefab(compile_prefab=True, compile_slots=False)
+@prefab(compile_prefab=True, compile_slots=True, eq=False)
 class Attribute:
     # Note that the interpreted form of prefab would fail here
     # as it would interpret _NOTHING as no value provided
@@ -21,6 +21,7 @@ class Attribute:
     repr: bool = attribute(default=True)
     kw_only: bool = attribute(default=False)
     exclude_field: bool = attribute(default=False)
+    _type = attribute(default=NOTHING, init=False, repr=False)
 
     @staticmethod
     def __prefab_pre_init__(init, default, default_factory, kw_only):
@@ -39,6 +40,3 @@ class Attribute:
             raise LivePrefabError(
                 "Cannot define both a default value and a default factory."
             )
-
-    def __prefab_post_init__(self):
-        self._type = NOTHING
