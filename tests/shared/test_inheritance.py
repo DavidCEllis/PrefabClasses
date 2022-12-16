@@ -2,6 +2,15 @@
 import pytest
 
 
+def test_inherit_object(importer):
+    from inheritance import InheritObject
+
+    x = InheritObject()
+    y = InheritObject()
+
+    assert x == y
+
+
 def test_basic_inheritance(importer):
     from inheritance import Coordinate3D
 

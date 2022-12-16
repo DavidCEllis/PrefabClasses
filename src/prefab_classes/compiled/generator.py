@@ -341,7 +341,10 @@ class PrefabDetails:
 
     @cached_property
     def parents(self):
-        parents = [getattr(item, "id") for item in self.node.bases]
+        parents = [
+            getattr(item, "id") for item in self.node.bases
+            if getattr(item, "id") != "object"  # Ignore inheritance from object
+        ]
         if self.name in parents:
             raise CompiledPrefabError(f"Class {self.name} cannot inherit from itself.")
         return parents
