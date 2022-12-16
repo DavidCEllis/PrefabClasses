@@ -46,6 +46,7 @@ class NoMatchArgs:
     y: float
 
 
+@prefab(compile_prefab=True, compile_fallback=True)
 class DundersExist:
     x: int
     y: int

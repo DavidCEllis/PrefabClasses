@@ -625,20 +625,17 @@ class PrefabDetails:
 
         arguments = [ast.arg(arg="self"), ast.arg(arg="other")]
 
-        if self.resolved_field_list:
-            # elt = element I guess - but this is the terminology used in the
-            # tuple AST function so elt it is.
-            class_elts = []
-            other_elts = []
+        # elt = element I guess - but this is the terminology used in the
+        # tuple AST function so elt it is.
+        class_elts = []
+        other_elts = []
 
-            for field in self.resolved_field_list:
-                if not field.exclude_field:
-                    for obj_name, elt_list in [
-                        ("self", class_elts),
-                        ("other", other_elts),
-                    ]:
-                        elt_list.append(field.ast_attribute(obj_name))
+        for field in self.resolved_field_list:
+            if not field.exclude_field:
+                class_elts.append(field.ast_attribute())
+                other_elts.append(field.ast_attribute("other"))
 
+        if len(class_elts) > 0:
             class_tuple = ast.Tuple(elts=class_elts, ctx=ast.Load())
             other_tuple = ast.Tuple(elts=other_elts, ctx=ast.Load())
 
@@ -646,7 +643,6 @@ class PrefabDetails:
             eq_comparison = ast.Compare(
                 left=class_tuple, ops=[ast.Eq()], comparators=[other_tuple]
             )
-
         else:
             eq_comparison = ast.Constant(value="True")
 
@@ -689,13 +685,14 @@ class PrefabDetails:
     def iter_method(self):
 
         arguments = [ast.arg(arg="self")]
-        if self.resolved_field_list:
-            body = [
-                ast.Expr(value=ast.Yield(value=field.ast_attribute()))
-                for field in self.resolved_field_list
-                if not field.exclude_field
-            ]
-        else:
+
+        body = [
+            ast.Expr(value=ast.Yield(value=field.ast_attribute()))
+            for field in self.resolved_field_list
+            if not field.exclude_field
+        ]
+
+        if len(body) == 0:
             body = [
                 ast.Expr(value=ast.YieldFrom(value=ast.Tuple(elts=[], ctx=ast.Load())))
             ]
