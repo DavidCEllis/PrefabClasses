@@ -319,8 +319,7 @@ def prefab(
     :param kw_only: make all attributes keyword only
 
     :param compile_prefab: Direct the prefab compiler to compile this class
-    :param compile_fallback: Fail with a prefab error
-                             if the class has not been compiled
+    :param compile_fallback: Fallback to a dynamic prefab if not compiled.
     :param compile_plain: Do not include the COMPILED and PREFAB_FIELDS
                           attributes after compilation
     :param compile_slots: Make the resulting compiled class use slots

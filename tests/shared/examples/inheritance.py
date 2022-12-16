@@ -3,6 +3,11 @@ from prefab_classes import prefab, attribute
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
+class InheritObject(object):
+    pass
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
 class Coordinate:
     x: float
     y: float
