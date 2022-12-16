@@ -52,6 +52,75 @@ Settings(hostname='localhost', template_folder='base/path', template_name='index
 
 For further details see the `usage` pages in the documentation.
 
+## Why not just use attrs/dataclasses? ##
+
+If attrs or dataclasses solves your problem then you should use them.
+They are thoroughly tested, well supported packages. This is a new
+project and has not had the rigorous real world testing of either
+of those.
+
+This started as a way of investigating how modules like `attrs`
+and `dataclasses` work and evolved into an alternative method
+of performing a similar task.
+
+### Import Performance ###
+
+There have been 
+[some](https://github.com/python-attrs/attrs/issues/575) 
+[discussions](https://discuss.python.org/t/improving-dataclasses-startup-performance/15442)
+and
+[comments](https://github.com/dabeaz/cluegen#wait-hasnt-this-already-been-invented)
+about the performance on import of such code generators. 
+
+The first version of the project started with only the `dynamic` form
+of construction, based on [David Beazley's Cluegen](https://github.com/dabeaz/cluegen).
+Some modifications were needed as I wanted to support more features
+such as non-builtin defaults, factories and other options. While this
+was an improvement it largely moved the slower parts to happen
+at runtime. It would be nice if the 'work' could be done once and then
+this result reused so there would be no performance hit.
+
+To this end the 'compiled' method was devised. This works by looking
+at the AST of the source, before actual compilation and rewriting
+any `@prefab` decorated classes into a regular python class with
+all of the standard methods. This is currently **much** slower
+than the dynamic method to generate but unlike dynamic classes
+this has the benefit of caching and can also output .py source
+with the generated classes.
+
+[PEP 638](https://peps.python.org/pep-0638/) appears to be a potential
+canonical way of doing such things but it is not actually necessary
+to do this as-is. This project provides a method to insert an importer
+that will look for a special `# COMPILE_PREFABS` comment and if that
+is detected it will handle the AST rewriting before .pyc compilation.
+
+### Why not make this operate on @dataclass? ###
+
+Operating on dataclasses would require matching the dataclasses API and
+there are some design choices that dataclasses takes that are either
+more difficult to implement in the AST or less flexible than I'd like.
+
+The first obvious difference is dataclasses requires the use of the
+type annotation syntax while prefab-classes does not.
+
+For another example dataclasses uses `InitVar` to indicate a value to 
+exclude from `__init__` and the field list and all other methods. Special 
+annotation instructions are less useful than arguments when working with 
+the AST.
+
+An annotation object can be renamed, for example: 
+`from dataclasses import InitVar as IV`.
+or
+`import dataclasses; IV = dataclasses.InitVar`
+
+In the AST all that is easily available is the name `IV` and there is no
+way to know if that is `InitVar` without thoroughly inspecting the module
+for all of the different ways it could be renamed. 
+[Because annotations can be strings this is already awkward even for dataclasses itself](https://github.com/python/cpython/blob/5ee7eb9debb12914f36c5ccee92460a681516fd6/Lib/dataclasses.py#L683-L721).
+An argument to `attribute` on the other hand **must** always use the same
+name and is much easier to handle. `exclude_field` is a boolean field
+that provides similar behaviour for this case.
+
 ## How does it work ##
 
 The `@prefab` decorator either rewrites the class dynamically, putting methods
@@ -154,31 +223,8 @@ class SettingsPath:
         self.file_types = file_types
 ```
 
-## Why not just use attrs/dataclasses? ##
-
-If attrs or dataclasses solves your problem then you should use them.
-They are thoroughly tested, well supported packages.
-
-This project came about because I had a project which had 1 use of 
-attrs and I was trying to reduce my dependencies. At the time I didn't
-like the requirerment for type hints in dataclasses and was looking at 
-[David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
-as a potential replacement as it seemed easy to modify. 
-I needed some additional features so I added them and it eventually 
-lead to this project.
-
-The `autogen` code and some of the method definitions for the `dynamic` 
-classes still use the code from Cluegen.
-
-Cluegen's lazy creation of the methods made me think about instead 
-taking an eager construction, but doing it only once when the .py
-source is first compiled into a .pyc file by modifying the AST.
-
-The benefit of this method is that once the source has been compiled
-to a .pyc file there is no longer any overhead from generating the
-class methods. The result is a normal python class as if it had been
-written by hand. 
-
+If `compile_plain=True` is provided as an argument to `@prefab` the `COMPILED`
+and `PREFAB_FIELD` variables will not be set on the class.
 
 ## Credit ##
 
@@ -187,4 +233,5 @@ written by hand.
 
 General design based on previous experience using
 [dataclasses](https://docs.python.org/3/library/dataclasses.html)
-and [attrs](https://www.attrs.org/en/stable/).
+and [attrs](https://www.attrs.org/en/stable/) and trying to match the 
+requirements for [PEP 681](https://peps.python.org/pep-0681/).
