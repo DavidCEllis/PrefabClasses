@@ -200,7 +200,6 @@ def run_test(name, n, exclude_compile=False, clear_cache=False):
 
         del sys.modules['perftemp']
 
-    deltime = 0
     start = time.time()
     while n > 0:
         if 'compiled' in name:
@@ -241,7 +240,8 @@ def main(reps, test_everything=False, exclude_compile=False):
     :param exclude_compile: Exclude the time for 1 cycle to generate the .pyc file.
     :return:
     """
-    print(f"Python Version {sys.version}")
+    print(f"Python Version: {sys.version}")
+    print(f"Prefab Classes version: {prefab_classes.__version__}")
     print(f"Platform: {platform.platform()}")
     if exclude_compile:
         print("Initial compilation time EXCLUDED")
@@ -266,13 +266,13 @@ def main(reps, test_everything=False, exclude_compile=False):
 
         try:
             write_perftemp(100, attr_template, 'from attrs import define\n')
-            run_test('attrs', reps, exclude_compile=exclude_compile)
+            run_test(f'attrs {attrs.__version__}', reps, exclude_compile=exclude_compile)
         except ImportError:
             print("attrs not installed")
 
         try:
             write_perftemp(100, pydantic_template, 'from pydantic import BaseModel\n')
-            run_test('pydantic', reps, exclude_compile=exclude_compile)
+            run_test(f'pydantic {pydantic.__version__}', reps, exclude_compile=exclude_compile)
         except ImportError:
             print("pydantic not installed")
 
@@ -291,22 +291,22 @@ def main(reps, test_everything=False, exclude_compile=False):
     prefab_import = "from prefab_classes import prefab, attribute\n"
 
     write_perftemp(100, prefab_template, prefab_import)
-    run_test('prefab', reps, exclude_compile=exclude_compile)
+    run_test(f'prefab {prefab_classes.__version__}', reps, exclude_compile=exclude_compile)
 
     write_perftemp(100, prefab_attribute_template, prefab_import)
-    run_test('prefab_attributes', reps, exclude_compile=exclude_compile)
+    run_test(f'prefab_attributes {prefab_classes.__version__}', reps, exclude_compile=exclude_compile)
 
     write_perftemp(100, prefab_eval_template, prefab_import)
-    run_test('prefab_eval', reps, exclude_compile=exclude_compile)
+    run_test(f'prefab_eval {prefab_classes.__version__}', reps, exclude_compile=exclude_compile)
 
     compiled_prefab_import = "# COMPILE_PREFABS\n" \
                              "from prefab_classes import prefab\n"
 
     write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
-    run_test('compiled_prefab', reps, exclude_compile=exclude_compile)
+    run_test(f'compiled_prefab {prefab_classes.__version__}', reps, exclude_compile=exclude_compile)
 
     write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
-    run_test('compiled_prefab_nocache', reps, exclude_compile=False,
+    run_test(f'compiled_prefab_nocache {prefab_classes.__version__}', reps, exclude_compile=False,
              clear_cache=True)
 
 
