@@ -29,6 +29,11 @@ class CoordinateNoXRepr:
     y: float
 
 
+@prefab(compile_prefab=True, compile_fallback=True)
+class NoXReprNoXInit:
+    _type = attribute(default=None, init=False, repr=False)
+
+
 @prefab(compile_prefab=True, compile_fallback=True, iter=True)
 class CoordinateIter:
     x: float
