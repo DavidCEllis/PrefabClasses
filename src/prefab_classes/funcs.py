@@ -1,5 +1,6 @@
 from collections.abc import Container
 from typing import Optional
+from functools import lru_cache, partial
 
 from .constants import FIELDS_ATTRIBUTE
 from .exceptions import PrefabTypeError
@@ -32,7 +33,26 @@ def is_prefab_instance(o):
     return hasattr(type(o), FIELDS_ATTRIBUTE)
 
 
-def as_dict(inst, *, excludes: Optional[Container[str]] = None):
+@lru_cache
+def _as_dict_cache(cls, excludes=None):
+    try:
+        attrib_names = getattr(cls, FIELDS_ATTRIBUTE)
+    except AttributeError:
+        raise PrefabTypeError(f"inst should be a prefab instance, not {cls}")
+
+    if excludes:
+        vals = ", ".join(f"'{item}': obj.{item}" for item in attrib_names if item not in excludes)
+    else:
+        vals = ", ".join(f"'{item}': obj.{item}" for item in attrib_names)
+    out_dict = f"{{{vals}}}"
+    funcdef = f"def asdict(obj): return {out_dict}"
+    globs, locs = {}, {}
+    exec(funcdef, globs, locs)
+    method = locs['asdict']
+    return method
+
+
+def as_dict(inst, *, excludes: Optional[tuple[str, ...]] = None):
     """
     Represent the prefab as a dictionary of attribute names and values.
     Exclude any keys listed in `excludes`
@@ -40,27 +60,40 @@ def as_dict(inst, *, excludes: Optional[Container[str]] = None):
     This **does not** recurse.
 
     :param inst: instance of prefab class
-    :param excludes: container of values to exclude from the resulting dict
+    :param excludes: tuple of field names to exclude from the resulting dict
     :return: dictionary {attribute_name: attribute_value, ...}
     """
-    if not is_prefab_instance(inst):
-        raise PrefabTypeError(f"inst hould be a prefab instance, not {type(inst)}")
-    result = {}
-    excludes = excludes or set()
+    return _as_dict_cache(inst.__class__, excludes)(inst)
 
-    attrib_names = getattr(inst, FIELDS_ATTRIBUTE)
 
-    for name in attrib_names:
-        if name not in excludes:
-            value = getattr(inst, name)
-            result[name] = value
+def as_dict_uncached(inst, *, excludes: Optional[Container[str]] = None):
+    """
+    Represent the prefab as a dictionary of attribute names and values.
+    Exclude any keys listed in `excludes`
+
+    This **does not** recurse.
+
+    :param inst: instance of prefab class
+    :param excludes: collection of values to exclude from the resulting dict
+    :return: dictionary {attribute_name: attribute_value, ...}
+    """
+    try:
+        attrib_names = getattr(inst, FIELDS_ATTRIBUTE)
+    except AttributeError:
+        raise PrefabTypeError(f"inst should be a prefab instance, not {type(inst)}")
+
+    if not excludes:
+        result = {name: getattr(inst, name) for name in attrib_names}
+    else:
+        excludes = excludes or set()
+        result = {name: getattr(inst, name) for name in attrib_names if name not in excludes}
     return result
 
 
 def to_json(
         inst,
         *,
-        excludes: Optional[Container[str]] = None,
+        excludes: Optional[tuple[str, ...]] = None,
         default=None,
         **kwargs
 ) -> str:
@@ -71,19 +104,21 @@ def to_json(
     can be provided as an argument as it can for json.dumps.
 
     :param inst: instance of prefab class
-    :param excludes: container of attributes to exclude from json dump
+    :param excludes: tuple of attribute names to exclude from json
+                     **note that these attribute names will be excluded
+                     from all prefabs encountered during serialization**
     :param default: default function for JSON Encoder
     :return: String of JSON data from the class attributes
     """
 
-    out_dict = as_dict(inst, excludes=excludes)
+    as_dict_excludes = partial(as_dict, excludes=excludes)
 
     # This function tells the JSON encoder how to serialise Prefab derived objects
     # If the user needs to serialize other classes their default will be called
     # only if the object is not an instance of Prefab
     def default_func(o):
         if is_prefab(o):
-            return as_dict(o)
+            return as_dict_excludes(o)
         elif default is not None:
             return default(o)
         raise TypeError(
@@ -92,4 +127,4 @@ def to_json(
 
     import json  # Only import JSON if needed
 
-    return json.dumps(out_dict, default=default_func, **kwargs)
+    return json.dumps(inst, default=default_func, **kwargs)

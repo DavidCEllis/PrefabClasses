@@ -33,7 +33,7 @@ def test_tojson(importer):
     assert to_json(pth, default=str, indent=2) == expected_json
 
     expected_json = json.dumps({"path": "path/to/test"}, indent=2)
-    assert to_json(pth, excludes=["filename"], default=str, indent=2) == expected_json
+    assert to_json(pth, excludes=("filename",), default=str, indent=2) == expected_json
 
 
 def test_tojson_recurse(importer):
