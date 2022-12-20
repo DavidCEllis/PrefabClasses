@@ -1,5 +1,5 @@
 from collections.abc import Container
-from typing import Optional
+from typing import Optional, Callable
 from functools import lru_cache, partial
 
 from .constants import FIELDS_ATTRIBUTE
@@ -94,30 +94,36 @@ def to_json(
         inst,
         *,
         excludes: Optional[tuple[str, ...]] = None,
-        default=None,
+        dumps_func: Callable = None,
         **kwargs
 ) -> str:
     """
     Output the class attributes as JSON
 
-    This will recurse through as json.dumps does. A default function
-    can be provided as an argument as it can for json.dumps.
+    This is essentially a wrapper around any `dumps` function provided.
+    The main advantage is it will let you pass an additional 'default'
+    function into the default argument and it makes it easier to use
+    excludes.
 
     :param inst: instance of prefab class
     :param excludes: tuple of attribute names to exclude from json
                      **note that these attribute names will be excluded
                      from all prefabs encountered during serialization**
-    :param default: default function for JSON Encoder
+    :param dumps_func: function equivalent to stdlib's json.dumps
+                       making it easier to use third party json libraries.
+    :param kwargs: keyword arguments passed directly to dumps_func
     :return: String of JSON data from the class attributes
     """
 
     as_dict_excludes = partial(as_dict, excludes=excludes)
 
+    default = kwargs.pop('default', None)
+
     # This function tells the JSON encoder how to serialise Prefab derived objects
     # If the user needs to serialize other classes their default will be called
     # only if the object is not an instance of Prefab
     def default_func(o):
-        if is_prefab(o):
+        if is_prefab_instance(o):
             return as_dict_excludes(o)
         elif default is not None:
             return default(o)
@@ -125,6 +131,8 @@ def to_json(
             f"Object of type {o.__class__.__name__} is not JSON Serializable"
         )
 
-    import json  # Only import JSON if needed
+    if dumps_func is None:
+        import json  # Only import JSON if needed
+        dumps_func = json.dumps
 
-    return json.dumps(inst, default=default_func, **kwargs)
+    return dumps_func(inst, default=default_func, **kwargs)
