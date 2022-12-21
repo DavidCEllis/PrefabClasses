@@ -48,7 +48,7 @@ from ..constants import (
     PREFAB_INIT_FUNC,
     FIELDS_ATTRIBUTE,
 )
-from prefab_classes.sentinels import NOTHING
+from ..sentinels import NOTHING
 from .autogen import autogen
 
 

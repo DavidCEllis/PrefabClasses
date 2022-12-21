@@ -1,6 +1,3 @@
-import os
-from typing import Union
-
 from ..exceptions import CompiledPrefabError
 
 
@@ -29,7 +26,7 @@ def rewrite_code(source: str, *, use_black: bool = False):
         return ast.unparse(tree)
 
 
-def preview(pth: Union[str, os.PathLike], *, use_black: bool = True):
+def preview(pth, *, use_black: bool = True):
     """
     Preview the result of running the generator on a python file
     This is mainly here for debugging and testing but can also be useful
@@ -47,8 +44,8 @@ def preview(pth: Union[str, os.PathLike], *, use_black: bool = True):
 
 
 def rewrite_to_py(
-    source_path: Union[str, os.PathLike],
-    dest_path: Union[str, os.PathLike],
+    source_path,
+    dest_path,
     *,
     header_comment: str = COMPILE_COMMENT,
     use_black: bool = False,

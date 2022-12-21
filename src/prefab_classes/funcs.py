@@ -1,9 +1,12 @@
 from collections.abc import Container
-from typing import Optional, Callable
 from functools import lru_cache, partial
 
 from .constants import FIELDS_ATTRIBUTE
 from .exceptions import PrefabTypeError
+
+# noinspection PyUnreachableCode
+if False:
+    from typing import Optional, Callable
 
 
 def is_prefab(o):
@@ -52,7 +55,7 @@ def _as_dict_cache(cls, excludes=None):
     return method
 
 
-def as_dict(inst, *, excludes: Optional[tuple[str, ...]] = None):
+def as_dict(inst, *, excludes: "Optional[tuple[str, ...]]" = None):
     """
     Represent the prefab as a dictionary of attribute names and values.
     Exclude any keys listed in `excludes`
@@ -66,7 +69,7 @@ def as_dict(inst, *, excludes: Optional[tuple[str, ...]] = None):
     return _as_dict_cache(inst.__class__, excludes)(inst)
 
 
-def as_dict_uncached(inst, *, excludes: Optional[Container[str]] = None):
+def as_dict_uncached(inst, *, excludes: "Optional[Container[str]]" = None):
     """
     Represent the prefab as a dictionary of attribute names and values.
     Exclude any keys listed in `excludes`
@@ -93,8 +96,8 @@ def as_dict_uncached(inst, *, excludes: Optional[Container[str]] = None):
 def to_json(
         inst,
         *,
-        excludes: Optional[tuple[str, ...]] = None,
-        dumps_func: Callable = None,
+        excludes: "Optional[tuple[str, ...]]" = None,
+        dumps_func: "Callable" = None,
         **kwargs
 ) -> str:
     """

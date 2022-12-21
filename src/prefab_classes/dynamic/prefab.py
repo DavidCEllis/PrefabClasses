@@ -32,11 +32,17 @@ from functools import partial
 # So now it's imported only when analyzing those functions
 # import inspect
 
-try:
-    # noinspection PyProtectedMember
-    from typing import dataclass_transform
-except ImportError:
-    from typing_extensions import dataclass_transform
+# Typing is also a slow import, so we use the dataclass_transform
+# function copied from the module instead
+TYPING_IS_SLOW = True
+if TYPING_IS_SLOW:
+    from .._typing import dataclass_transform
+else:
+    try:
+        # noinspection PyProtectedMember
+        from typing import dataclass_transform
+    except ImportError:
+        from typing_extensions import dataclass_transform
 
 from ._attribute_class import Attribute
 from ..constants import (
@@ -297,8 +303,6 @@ def _make_prefab(
     return cls
 
 
-# Pycharm has incorrect arguments for this.
-# noinspection PyArgumentList
 @dataclass_transform(field_specifiers=(attribute,))
 def prefab(
     cls: type = None,
