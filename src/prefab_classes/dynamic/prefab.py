@@ -34,8 +34,8 @@ from functools import partial
 
 # Typing is also a slow import, so we use the dataclass_transform
 # function copied from the module instead
-TYPING_IS_SLOW = True
-if TYPING_IS_SLOW:
+SLOW_TYPING = True
+if SLOW_TYPING:
     from .._typing import dataclass_transform
 else:
     try:
