@@ -24,15 +24,25 @@
 Handle boilerplate generation for classes.
 """
 import sys
-import inspect
 import warnings
 from functools import partial
 
-try:
-    # noinspection PyProtectedMember
-    from typing import dataclass_transform
-except ImportError:
-    from typing_extensions import dataclass_transform
+# Inspect is a slow import, it's only used for pre/post init
+# functions, if those aren't used there's no need for it
+# So now it's imported only when analyzing those functions
+# import inspect
+
+# Typing is also a slow import, so we use the dataclass_transform
+# function copied from the module instead
+SLOW_TYPING = True
+if SLOW_TYPING:
+    from .._typing import dataclass_transform
+else:
+    try:
+        # noinspection PyProtectedMember
+        from typing import dataclass_transform
+    except ImportError:
+        from typing_extensions import dataclass_transform
 
 from ._attribute_class import Attribute
 from ..constants import (
@@ -227,6 +237,7 @@ def _make_prefab(
     except AttributeError:
         pass
     else:
+        import inspect
         signature = inspect.signature(func)
         for item in signature.parameters.keys():
             if item not in attributes.keys() and item != "self":
@@ -240,6 +251,7 @@ def _make_prefab(
     except AttributeError:
         pass
     else:
+        import inspect
         signature = inspect.signature(func)
         for item in signature.parameters.keys():
             if item != "self":
@@ -291,8 +303,6 @@ def _make_prefab(
     return cls
 
 
-# Pycharm has incorrect arguments for this.
-# noinspection PyArgumentList
 @dataclass_transform(field_specifiers=(attribute,))
 def prefab(
     cls: type = None,
