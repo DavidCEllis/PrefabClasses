@@ -1,4 +1,3 @@
-import ast
 import os
 from typing import Union
 
@@ -14,6 +13,7 @@ COMPILE_COMMENT = """
 
 
 def rewrite_code(source: str, *, use_black: bool = False):
+    import ast
     from .generator import compile_prefabs
 
     tree = compile_prefabs(source)

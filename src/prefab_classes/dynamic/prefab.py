@@ -24,9 +24,13 @@
 Handle boilerplate generation for classes.
 """
 import sys
-import inspect
 import warnings
 from functools import partial
+
+# Inspect is a slow import, it's only used for pre/post init
+# functions, if those aren't used there's no need for it
+# So now it's imported only when analyzing those functions
+# import inspect
 
 try:
     # noinspection PyProtectedMember
@@ -227,6 +231,7 @@ def _make_prefab(
     except AttributeError:
         pass
     else:
+        import inspect
         signature = inspect.signature(func)
         for item in signature.parameters.keys():
             if item not in attributes.keys() and item != "self":
@@ -240,6 +245,7 @@ def _make_prefab(
     except AttributeError:
         pass
     else:
+        import inspect
         signature = inspect.signature(func)
         for item in signature.parameters.keys():
             if item != "self":

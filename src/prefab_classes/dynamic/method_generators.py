@@ -38,7 +38,9 @@
 # the source code.  There is no warranty.  Try to use the code for the
 # greater good.
 # ----------------------------------------------------------------------
-import inspect
+
+# inspect is now imported lazily when needed as it is a slow import.
+# import inspect
 
 from ..constants import (
     PRE_INIT_FUNC,
@@ -122,6 +124,7 @@ def get_init_maker(*, init_name="__init__"):
             except AttributeError:
                 pass
             else:
+                import inspect
                 for item in inspect.signature(func).parameters.keys():
                     if item != "self":
                         func_arglist.append(item)
