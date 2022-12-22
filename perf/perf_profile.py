@@ -192,7 +192,7 @@ C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 def run_test(name, n, exclude_compile=False, clear_cache=False):
     if exclude_compile and not clear_cache:
         if 'compiled' in name:
-            from prefab_classes import prefab_compiler
+            from prefab_classes.compiled import prefab_compiler
             with prefab_compiler():
                 import perftemp
         else:
@@ -203,7 +203,7 @@ def run_test(name, n, exclude_compile=False, clear_cache=False):
     start = time.time()
     while n > 0:
         if 'compiled' in name:
-            from prefab_classes import prefab_compiler
+            from prefab_classes.compiled import prefab_compiler
             with prefab_compiler():
                 import perftemp
         else:
