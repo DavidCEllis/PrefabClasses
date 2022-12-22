@@ -250,7 +250,7 @@ datasets = [
 ]
 
 
-def write_tests():
+def write_tests(runs=100):
     for data in datasets:
         data.write_perf_importer()
         data.write_classdef_file(count=100)
@@ -270,7 +270,7 @@ def write_tests():
     zsh_script = (
         "python -VV\n"
         f"python -c \"{versions}\"\n"
-        f"hyperfine --warmup 10 'python -c \"pass\"' {tests}"
+        f"hyperfine --runs {runs} --warmup 10 'python -c \"pass\"' {tests}"
     )
 
     shell_pth = base_dir / "hyperfine_runner.sh"
