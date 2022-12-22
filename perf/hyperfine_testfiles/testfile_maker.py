@@ -260,7 +260,7 @@ def write_tests():
         for data in datasets
     )
 
-    zsh_script = f"hyperfine --warmup 10 {tests}"
+    zsh_script = f"hyperfine --warmup 10 'python -c \"pass\"' {tests}"
 
     shell_pth = base_dir / "hyperfine_runner.sh"
     shell_pth.write_text(zsh_script)
