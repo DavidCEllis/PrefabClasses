@@ -52,11 +52,17 @@ class PrefabHacker(SourceFileLoader):
 
     @staticmethod
     def make_pyc_hash(source_bytes):
-        from importlib import util
-
         # Modify the data given to the hash with extra data
         hash_input_bytes = b"".join([PREFAB_MAGIC_BYTES, source_bytes])
-        return util.source_hash(hash_input_bytes)
+        try:
+            # The fast way
+            from _imp import source_hash
+            from importlib._bootstrap_external import _RAW_MAGIC_NUMBER
+            return source_hash(_RAW_MAGIC_NUMBER, hash_input_bytes)
+        except ImportError:
+            # The "correct" way
+            from importlib.util import source_hash
+            return source_hash(hash_input_bytes)
 
     # noinspection PyUnresolvedReferences,PyProtectedMember
     def get_code(self, fullname):
