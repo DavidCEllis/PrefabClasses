@@ -1,5 +1,4 @@
 from prefab_classes.compiled import rewrite_to_py
-import os
 from pathlib import Path
 
 # Don't include the version number for this test.

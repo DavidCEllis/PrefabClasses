@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from prefab_classes import prefab_compiler
+from prefab_classes.compiled import prefab_compiler
 from prefab_classes.compiled.import_hook import PrefabFinder, PrefabHacker
 
 

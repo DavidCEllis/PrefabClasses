@@ -85,7 +85,7 @@ class SettingsPath:
 Compiled prefabs can be used directly on import by using the prefab_compiler.
 
 ```python
-from prefab_classes import prefab_compiler
+from prefab_classes.compiled import prefab_compiler
 
 with prefab_compiler():
     from example import SettingsPath

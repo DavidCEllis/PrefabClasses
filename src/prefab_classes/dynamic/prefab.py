@@ -25,7 +25,14 @@ Handle boilerplate generation for classes.
 """
 import sys
 import warnings
-from functools import partial
+
+# Import speed optimization
+# The C implementation can import nearly 100x faster
+# and will usually be available.
+try:
+    from _functools import partial
+except ImportError:
+    from functools import partial
 
 # Inspect is a slow import, it's only used for pre/post init
 # functions, if those aren't used there's no need for it
@@ -340,6 +347,8 @@ def prefab(
     """
     if not cls:
         # Called as () method to change defaults
+        # Skip compile arguments other than prefab/fallback
+        # These are not needed
         return partial(
             prefab,
             init=init,

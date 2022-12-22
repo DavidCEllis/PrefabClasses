@@ -13,10 +13,10 @@
 ## Helper functions ##
 
 ```{eval-rst}
-.. autofunction:: prefab_classes::is_prefab
-.. autofunction:: prefab_classes::is_prefab_instance
-.. autofunction:: prefab_classes::as_dict
-.. autofunction:: prefab_classes::to_json
+.. autofunction:: prefab_classes.funcs::is_prefab
+.. autofunction:: prefab_classes.funcs::is_prefab_instance
+.. autofunction:: prefab_classes.funcs::as_dict
+.. autofunction:: prefab_classes.funcs::to_json
 ```
 
 ## Compilation functions ##
@@ -24,7 +24,7 @@
 ### Import hook handler ###
 
 ```{eval-rst}
-.. autofunction:: prefab_classes::prefab_compiler
+.. autoclass:: prefab_classes.compiled::prefab_compiler
 ```
 
 ### Previewer and .py unparser ###

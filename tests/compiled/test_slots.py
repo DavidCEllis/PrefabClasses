@@ -1,5 +1,5 @@
 import pytest
-from prefab_classes import prefab_compiler
+from prefab_classes.compiled import prefab_compiler
 
 
 @pytest.mark.usefixtures("compile_folder_modules")
