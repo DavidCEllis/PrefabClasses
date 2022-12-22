@@ -2,10 +2,8 @@
 Hook into the import mechanism and sneakily translate our modules before python gets there
 """
 import sys
-import contextlib
 
 from importlib.machinery import PathFinder, SourceFileLoader
-from importlib.util import decode_source
 
 from .. import PREFAB_MAGIC_BYTES
 
@@ -42,6 +40,7 @@ class PrefabHacker(SourceFileLoader):
     def source_to_code(self, data, path, *, _optimize=-1):
         # Only import the generator code if it is actually going to be used
         from .generator import compile_prefabs
+        from importlib.util import decode_source
 
         src = decode_source(data)
         prefab_src = compile_prefabs(src)
@@ -184,8 +183,7 @@ def remove_prefab_importhook():
         pass
 
 
-@contextlib.contextmanager
-def prefab_compiler():
+class prefab_compiler:
     """
     Context manager to insert and clean up the prefab compilation import hook.
 
@@ -200,8 +198,8 @@ def prefab_compiler():
         with prefab_compiler():
             import my_prefab_module
     """
-    insert_prefab_importhook()
-    try:
-        yield
-    finally:
+    def __enter__(self):
+        insert_prefab_importhook()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         remove_prefab_importhook()
