@@ -42,7 +42,7 @@ class Settings:
 In either case the result behaves the same.
 
 ```python
->>> from prefab_classes import to_json
+>>> from prefab_classes.funcs import to_json
 >>> s = Settings()
 >>> print(s)
 Settings(hostname='localhost', template_folder='base/path', template_name='index')
@@ -155,7 +155,7 @@ class SettingsPath:
 Direct import using prefab_compiler
 
 ```python
-from prefab_classes import prefab_compiler
+from prefab_classes.compiled import prefab_compiler
 
 with prefab_compiler():
     from example import SettingsPath
