@@ -260,7 +260,18 @@ def write_tests():
         for data in datasets
     )
 
-    zsh_script = f"hyperfine --warmup 10 'python -c \"pass\"' {tests}"
+    versions = (
+        "import attrs, pydantic, prefab_classes;"
+        "print(f'attrs {attrs.__version__}');"
+        "print(f'pydantic {pydantic.__version__}');"
+        "print(f'prefab_classes {prefab_classes.__version__}\\n')"
+    )
+
+    zsh_script = (
+        "python -VV\n"
+        f"python -c \"{versions}\"\n"
+        f"hyperfine --warmup 10 'python -c \"pass\"' {tests}"
+    )
 
     shell_pth = base_dir / "hyperfine_runner.sh"
     shell_pth.write_text(zsh_script)
