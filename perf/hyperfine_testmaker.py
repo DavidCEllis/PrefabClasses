@@ -1,7 +1,11 @@
+"""
+This script makes all of the hyperfine tests used in this project
+"""
+
 from pathlib import Path
 from prefab_classes import prefab
 
-base_dir = Path(__file__).parent
+base_dir = Path(__file__).parent / 'hyperfine_testfiles'
 importer_dir = base_dir / 'hyperfine_importers'
 classdef_dir = importer_dir / 'class_definitions'
 results_dir = base_dir / 'hyperfine_results'
@@ -241,6 +245,7 @@ datasets = [
 
 
 def write_tests(*, runs=100, includes_pass=True):
+    base_dir.mkdir(exist_ok=True)
     importer_dir.mkdir(exist_ok=True)
     classdef_dir.mkdir(exist_ok=True)
     results_dir.mkdir(exist_ok=True)
