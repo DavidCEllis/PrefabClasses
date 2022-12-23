@@ -1,6 +1,8 @@
 # Performance test results #
 
-Tests are run on 2 different machines.
+Tests are run on 2 different machines. They're not perfectly stable performance tests
+but they give some sense of the relative speeds. (I'd love to have more stability in 
+the tests but that's not something I have experience in).
 
 Rough specs:
 XPS 13 9360 Laptop: Ubuntu 20.04 / Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz / 16 GB 1867MHz LPDDR3
@@ -14,6 +16,10 @@ This just tests the overall time to launch python and import the module to be us
 for constructing classes. `python -c "pass"` used as a baseline.
 
 `collections` is imported for `namedtuple` and `typing` is imported for `NamedTuple`.
+
+The base launch time for python on the Macbook seemed to be significantly slower while
+subsequent import times were not affected as heavily. This makes the relative
+scaling significantly different between the two machines.
 
 #### XPS 13 ####
 
@@ -33,6 +39,26 @@ prefab_classes v0.7.8a1
 | `python -c "import attrs"` | 48.6 ± 0.7 | 47.3 | 52.1 | 4.31 ± 0.12 |
 | `python -c "import pydantic"` | 75.6 ± 0.7 | 74.4 | 79.6 | 6.71 ± 0.16 |
 | `python -c "import prefab_classes"` | 13.3 ± 0.2 | 12.9 | 14.1 | 1.18 ± 0.03 |
+
+
+#### Macbook ####
+
+```
+Python 3.11.1 (main, Dec  7 2022, 05:32:48) [Clang 13.0.0 (clang-1300.0.29.30)]
+attrs 22.2.0
+pydantic 1.10.2
+prefab_classes v0.7.8a1
+```
+
+| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `python -c "pass"` | 26.4 ± 1.2 | 24.2 | 29.8 | 1.00 |
+| `python -c "import collections"` | 28.8 ± 0.9 | 26.8 | 31.0 | 1.09 ± 0.06 |
+| `python -c "import typing"` | 40.4 ± 1.2 | 38.4 | 44.6 | 1.53 ± 0.08 |
+| `python -c "import dataclasses"` | 49.8 ± 1.3 | 47.1 | 53.4 | 1.89 ± 0.10 |
+| `python -c "import attrs"` | 68.6 ± 1.2 | 66.4 | 72.9 | 2.60 ± 0.13 |
+| `python -c "import pydantic"` | 97.0 ± 1.2 | 94.2 | 100.4 | 3.67 ± 0.17 |
+| `python -c "import prefab_classes"` | 27.4 ± 0.5 | 26.4 | 28.6 | 1.04 ± 0.05 |
 
 
 ### Class Contruction ###
