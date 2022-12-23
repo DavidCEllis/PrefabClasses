@@ -13,8 +13,26 @@ XPS 13 9360 Laptop: Ubuntu 20.04 / Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz / 16
 This just tests the overall time to launch python and import the module to be used 
 for constructing classes. `python -c "pass"` used as a baseline.
 
+`collections` is imported for `namedtuple` and `typing` is imported for `NamedTuple`.
+
 #### XPS 13 ####
 
+```
+Python 3.11.1 (main, Dec 22 2022, 12:04:25) [GCC 9.4.0]
+attrs 22.2.0
+pydantic 1.10.2
+prefab_classes v0.7.8a1
+```
+
+| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `python -c "pass"` | 11.3 ± 0.3 | 10.9 | 12.4 | 1.00 |
+| `python -c "import collections"` | 13.3 ± 0.3 | 12.8 | 14.2 | 1.18 ± 0.04 |
+| `python -c "import typing"` | 22.6 ± 0.4 | 22.0 | 24.8 | 2.01 ± 0.06 |
+| `python -c "import dataclasses"` | 30.1 ± 0.5 | 29.3 | 31.6 | 2.67 ± 0.07 |
+| `python -c "import attrs"` | 48.6 ± 0.7 | 47.3 | 52.1 | 4.31 ± 0.12 |
+| `python -c "import pydantic"` | 75.6 ± 0.7 | 74.4 | 79.6 | 6.71 ± 0.16 |
+| `python -c "import prefab_classes"` | 13.3 ± 0.2 | 12.9 | 14.1 | 1.18 ± 0.03 |
 
 
 ### Class Contruction ###
