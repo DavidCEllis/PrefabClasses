@@ -70,7 +70,13 @@ There have been
 [discussions](https://discuss.python.org/t/improving-dataclasses-startup-performance/15442)
 and
 [comments](https://github.com/dabeaz/cluegen#wait-hasnt-this-already-been-invented)
-about the performance on import of such code generators. 
+about the performance on import of such code generators.
+
+You can see an import comparison of this package with `dataclasses`, 
+`attrs` and `pydantic` 
+[here](https://prefabclasses.readthedocs.io/en/latest/extra/performance_tests.html).
+[Hyperfine](https://github.com/sharkdp/hyperfine) is currrently used as the
+test runner.
 
 The first version of the project started with only the `dynamic` form
 of construction, based on [David Beazley's Cluegen](https://github.com/dabeaz/cluegen).
