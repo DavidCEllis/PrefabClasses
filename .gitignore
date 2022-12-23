@@ -9,3 +9,7 @@ build/
 _build/
 dist/
 perftemp.py
+hyperfine_importers/
+hyperfine_runner.sh
+hyperfine_importtimes.sh
+hyperfine_results/
