@@ -1,14 +1,30 @@
 # Performance test results #
 
-All of these tests are run on the 2018 Macbook Pro I've been using for development
-unless otherwise mentioned.
+Tests are run on 2 different machines.
 
-Macbook: 2.3 GHz Quad-Core Intel Core i5 / 8 GB 2133 MHz LPDDR3
+Rough specs:
+XPS 13 9360 Laptop: Ubuntu 20.04 / Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz / 16 GB 1867MHz LPDDR3
+2018 Macbook: MacOS 12.6 / 2.3 GHz Quad-Core Intel Core i5 / 8 GB 2133 MHz LPDDR3
 
 ## Hyperfine tests ##
 
 This is a series of tests of the time it takes to launch python and generate 100
-classes each with 5 attributes. 
+classes each with 5 attributes.
+
+The code for each class looks roughly like this:
+
+```python
+@dataclass
+class C0:
+    a: int
+    b: int
+    c: int
+    d: int
+    e: int
+```
+
+In some cases the `__init__`, `__repr__` and `__eq__` functions are also looked up
+in order to force them to be generated (prefab_eval).
 
 For a baseline comparison, `python -c "pass"` is included just to show the overhead
 from the interpreter.
@@ -27,70 +43,29 @@ hook. This has some overhead from hashed .pyc validation and additional imports.
 `precompiled_prefab_timer` uses classes that have been rewritten out to .py and so
 should be the same speed as regular python classes, as that's what they are.
 
-Development Mac
+### XPS13 ###
+
 ```
-Python 3.11.1 (main, Dec  7 2022, 05:32:48) [Clang 13.0.0 (clang-1300.0.29.30)]
+Python 3.11.1 (main, Dec 22 2022, 12:04:25) [GCC 9.4.0]
 attrs 22.2.0
 pydantic 1.10.2
 prefab_classes v0.7.8a1
-
-Benchmark 1: python -c "pass"
-  Time (mean ± σ):      24.5 ms ±   0.6 ms    [User: 15.8 ms, System: 6.0 ms]
-  Range (min … max):    23.4 ms …  26.7 ms    100 runs
- 
-Benchmark 2: python hyperfine_importers/native_classes_timer.py
-  Time (mean ± σ):      25.7 ms ±   1.0 ms    [User: 16.6 ms, System: 6.3 ms]
-  Range (min … max):    24.1 ms …  30.3 ms    100 runs
- 
-Benchmark 3: python hyperfine_importers/namedtuples_timer.py
-  Time (mean ± σ):      33.3 ms ±   0.6 ms    [User: 23.7 ms, System: 6.5 ms]
-  Range (min … max):    32.4 ms …  35.7 ms    100 runs
- 
-Benchmark 4: python hyperfine_importers/typed_namedtuples_timer.py
-  Time (mean ± σ):      47.8 ms ±   1.5 ms    [User: 36.5 ms, System: 8.2 ms]
-  Range (min … max):    45.2 ms …  53.9 ms    100 runs
- 
-Benchmark 5: python hyperfine_importers/dataclasses_timer.py
-  Time (mean ± σ):      82.2 ms ±   1.7 ms    [User: 69.6 ms, System: 9.4 ms]
-  Range (min … max):    80.5 ms …  91.8 ms    100 runs
- 
-Benchmark 6: python hyperfine_importers/attrs_timer.py
-  Time (mean ± σ):     123.4 ms ±   1.8 ms    [User: 109.3 ms, System: 11.1 ms]
-  Range (min … max):   120.5 ms … 132.9 ms    100 runs
- 
-Benchmark 7: python hyperfine_importers/pydantic_timer.py
-  Time (mean ± σ):     140.2 ms ±   1.2 ms    [User: 120.6 ms, System: 16.2 ms]
-  Range (min … max):   137.3 ms … 146.0 ms    100 runs
- 
-Benchmark 8: python hyperfine_importers/prefab_classes_timer.py
-  Time (mean ± σ):      29.9 ms ±   1.6 ms    [User: 20.3 ms, System: 6.7 ms]
-  Range (min … max):    28.0 ms …  38.2 ms    100 runs
- 
-Benchmark 9: python hyperfine_importers/prefab_eval_timer.py
-  Time (mean ± σ):      51.6 ms ±   1.1 ms    [User: 41.9 ms, System: 6.7 ms]
-  Range (min … max):    49.6 ms …  54.6 ms    100 runs
- 
-Benchmark 10: python hyperfine_importers/compiled_prefab_timer.py
-  Time (mean ± σ):      29.3 ms ±   1.4 ms    [User: 19.4 ms, System: 7.0 ms]
-  Range (min … max):    27.5 ms …  33.3 ms    100 runs
- 
-Benchmark 11: python hyperfine_importers/precompiled_prefab_timer.py
-  Time (mean ± σ):      25.3 ms ±   0.8 ms    [User: 16.4 ms, System: 6.0 ms]
-  Range (min … max):    24.2 ms …  27.5 ms    100 runs
- 
-Summary
-  'python -c "pass"' ran
-    1.03 ± 0.04 times faster than 'python hyperfine_importers/precompiled_prefab_timer.py'
-    1.05 ± 0.05 times faster than 'python hyperfine_importers/native_classes_timer.py'
-    1.20 ± 0.07 times faster than 'python hyperfine_importers/compiled_prefab_timer.py'
-    1.22 ± 0.07 times faster than 'python hyperfine_importers/prefab_classes_timer.py'
-    1.36 ± 0.04 times faster than 'python hyperfine_importers/namedtuples_timer.py'
-    1.95 ± 0.08 times faster than 'python hyperfine_importers/typed_namedtuples_timer.py'
-    2.10 ± 0.07 times faster than 'python hyperfine_importers/prefab_eval_timer.py'
-    3.35 ± 0.11 times faster than 'python hyperfine_importers/dataclasses_timer.py'
-    5.03 ± 0.15 times faster than 'python hyperfine_importers/attrs_timer.py'
-    5.71 ± 0.16 times faster than 'python hyperfine_importers/pydantic_timer.py'
 ```
+
+| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `python -c "pass"` | 11.3 ± 0.3 | 10.9 | 12.0 | 1.00 |
+| `python hyperfine_importers/native_classes_timer.py` | 13.2 ± 0.4 | 12.7 | 14.8 | 1.17 ± 0.04 |
+| `python hyperfine_importers/namedtuples_timer.py` | 21.7 ± 0.4 | 21.0 | 23.9 | 1.92 ± 0.06 |
+| `python hyperfine_importers/typed_namedtuples_timer.py` | 35.9 ± 0.9 | 34.9 | 43.7 | 3.18 ± 0.11 |
+| `python hyperfine_importers/dataclasses_timer.py` | 74.1 ± 0.7 | 73.0 | 78.8 | 6.56 ± 0.16 |
+| `python hyperfine_importers/attrs_timer.py` | 121.4 ± 1.5 | 119.6 | 128.9 | 10.75 ± 0.28 |
+| `python hyperfine_importers/pydantic_timer.py` | 139.1 ± 1.9 | 136.3 | 151.0 | 12.32 ± 0.32 |
+| `python hyperfine_importers/prefab_classes_timer.py` | 17.5 ± 0.4 | 17.0 | 19.5 | 1.55 ± 0.05 |
+| `python hyperfine_importers/prefab_eval_timer.py` | 44.2 ± 3.7 | 42.4 | 74.1 | 3.91 ± 0.34 |
+| `python hyperfine_importers/compiled_prefab_timer.py` | 16.3 ± 0.6 | 15.7 | 20.3 | 1.45 ± 0.06 |
+| `python hyperfine_importers/precompiled_prefab_timer.py` | 13.3 ± 0.4 | 12.9 | 14.7 | 1.18 ± 0.04 |
+
 
 ## perf_profile.py ##
 

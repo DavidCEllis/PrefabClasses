@@ -11,3 +11,4 @@ dist/
 perftemp.py
 hyperfine_importers/
 hyperfine_runner.sh
+hyperfine_result.md

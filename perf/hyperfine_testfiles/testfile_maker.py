@@ -5,7 +5,7 @@ base_dir = Path(__file__).parent
 importer_dir = base_dir / 'hyperfine_importers'
 classdef_dir = importer_dir / 'class_definitions'
 
-## Template Body Files ##
+# Template Body Files #
 
 standard_template = '''
 class C{n}:
@@ -25,7 +25,6 @@ class C{n}:
         else:
             return NotImplemented
 
-C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 namedtuple_template = '''
@@ -39,8 +38,6 @@ class C{n}(NamedTuple):
     c : int
     d : int
     e : int
-
-C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 dataclass_template = '''
@@ -51,8 +48,6 @@ class C{n}:
     c: int
     d: int
     e: int
-
-C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 attr_template = '''
@@ -63,8 +58,6 @@ class C{n}:
     c: int
     d: int
     e: int
-
-C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 pydantic_template = '''
@@ -74,8 +67,6 @@ class C{n}(BaseModel):
     c: int
     d: int
     e: int
-
-C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 cluegen_template = '''
@@ -161,8 +152,6 @@ class C{n}:
     c: int
     d: int
     e: int
-
-C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
 # Import Headings #
@@ -250,7 +239,10 @@ datasets = [
 ]
 
 
-def write_tests(runs=100):
+def write_tests(*, runs=100, includes_pass=True):
+    importer_dir.mkdir(exist_ok=True)
+    classdef_dir.mkdir(exist_ok=True)
+
     for data in datasets:
         data.write_perf_importer()
         data.write_classdef_file(count=100)
@@ -267,10 +259,13 @@ def write_tests(runs=100):
         "print(f'prefab_classes {prefab_classes.__version__}\\n')"
     )
 
+    if includes_pass:
+        tests = f"'python -c \"pass\"' {tests}"
+
     zsh_script = (
         "python -VV\n"
         f"python -c \"{versions}\"\n"
-        f"hyperfine --runs {runs} --warmup 10 'python -c \"pass\"' {tests}"
+        f"hyperfine --export-markdown hyperfine_result.md --shell=none --runs {runs} --warmup 10 {tests}"
     )
 
     shell_pth = base_dir / "hyperfine_runner.sh"
@@ -278,4 +273,4 @@ def write_tests(runs=100):
 
 
 if __name__ == '__main__':
-    write_tests()
+    write_tests(includes_pass=True)
