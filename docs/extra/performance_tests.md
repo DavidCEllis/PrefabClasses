@@ -8,6 +8,17 @@ XPS 13 9360 Laptop: Ubuntu 20.04 / Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz / 16
 
 ## Hyperfine tests ##
 
+### Import Time ###
+
+This just tests the overall time to launch python and import the module to be used 
+for constructing classes. `python -c "pass"` used as a baseline.
+
+#### XPS 13 ####
+
+
+
+### Class Contruction ###
+
 This is a series of tests of the time it takes to launch python and generate 100
 classes each with 5 attributes.
 
@@ -43,7 +54,7 @@ hook. This has some overhead from hashed .pyc validation and additional imports.
 `precompiled_prefab_timer` uses classes that have been rewritten out to .py and so
 should be the same speed as regular python classes, as that's what they are.
 
-### XPS13 ###
+#### XPS13 ####
 
 ```
 Python 3.11.1 (main, Dec 22 2022, 12:04:25) [GCC 9.4.0]
@@ -65,6 +76,30 @@ prefab_classes v0.7.8a1
 | `python hyperfine_importers/prefab_eval_timer.py` | 44.2 ± 3.7 | 42.4 | 74.1 | 3.91 ± 0.34 |
 | `python hyperfine_importers/compiled_prefab_timer.py` | 16.3 ± 0.6 | 15.7 | 20.3 | 1.45 ± 0.06 |
 | `python hyperfine_importers/precompiled_prefab_timer.py` | 13.3 ± 0.4 | 12.9 | 14.7 | 1.18 ± 0.04 |
+
+
+#### Macbook ####
+
+```
+Python 3.11.1 (main, Dec  7 2022, 05:32:48) [Clang 13.0.0 (clang-1300.0.29.30)]
+attrs 22.2.0
+pydantic 1.10.2
+prefab_classes v0.7.8a1
+```
+
+| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `python -c "pass"` | 24.7 ± 1.7 | 22.9 | 32.2 | 1.00 |
+| `python hyperfine_importers/native_classes_timer.py` | 25.8 ± 0.8 | 24.7 | 28.0 | 1.04 ± 0.08 |
+| `python hyperfine_importers/namedtuples_timer.py` | 34.0 ± 1.5 | 31.9 | 37.5 | 1.37 ± 0.11 |
+| `python hyperfine_importers/typed_namedtuples_timer.py` | 48.1 ± 1.9 | 45.4 | 55.9 | 1.95 ± 0.15 |
+| `python hyperfine_importers/dataclasses_timer.py` | 81.6 ± 0.8 | 80.6 | 86.4 | 3.30 ± 0.23 |
+| `python hyperfine_importers/attrs_timer.py` | 123.2 ± 2.2 | 121.1 | 134.2 | 4.98 ± 0.35 |
+| `python hyperfine_importers/pydantic_timer.py` | 141.3 ± 2.0 | 139.1 | 153.5 | 5.71 ± 0.40 |
+| `python hyperfine_importers/prefab_classes_timer.py` | 29.8 ± 0.9 | 28.6 | 32.3 | 1.20 ± 0.09 |
+| `python hyperfine_importers/prefab_eval_timer.py` | 52.0 ± 1.2 | 50.2 | 58.1 | 2.10 ± 0.15 |
+| `python hyperfine_importers/compiled_prefab_timer.py` | 29.1 ± 0.8 | 28.0 | 30.9 | 1.18 ± 0.09 |
+| `python hyperfine_importers/precompiled_prefab_timer.py` | 25.8 ± 0.8 | 24.8 | 27.7 | 1.04 ± 0.08 |
 
 
 ## perf_profile.py ##

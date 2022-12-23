@@ -4,6 +4,7 @@ from prefab_classes import prefab
 base_dir = Path(__file__).parent
 importer_dir = base_dir / 'hyperfine_importers'
 classdef_dir = importer_dir / 'class_definitions'
+results_dir = base_dir / 'hyperfine_results'
 
 # Template Body Files #
 
@@ -242,6 +243,7 @@ datasets = [
 def write_tests(*, runs=100, includes_pass=True):
     importer_dir.mkdir(exist_ok=True)
     classdef_dir.mkdir(exist_ok=True)
+    results_dir.mkdir(exist_ok=True)
 
     for data in datasets:
         data.write_perf_importer()
@@ -262,14 +264,35 @@ def write_tests(*, runs=100, includes_pass=True):
     if includes_pass:
         tests = f"'python -c \"pass\"' {tests}"
 
+    outpath = results_dir / 'hyperfine_result.md'
+
     zsh_script = (
         "python -VV\n"
         f"python -c \"{versions}\"\n"
-        f"hyperfine --export-markdown hyperfine_result.md --shell=none --runs {runs} --warmup 10 {tests}"
+        f"hyperfine --export-markdown {outpath} --shell=none --runs {runs} --warmup 10 {tests}"
     )
 
     shell_pth = base_dir / "hyperfine_runner.sh"
     shell_pth.write_text(zsh_script)
+
+    outpath = results_dir / 'hyperfine_importtimes.md'
+
+    tests = (
+        """'python -c "pass"' """
+        """'python -c "import collections"' """
+        """'python -c "import typing"' """
+        """'python -c "import dataclasses"' """
+        """'python -c "import attrs"' """
+        """'python -c "import pydantic"' """
+        """'python -c "import prefab_classes"' """
+    )
+
+    import_script = (
+        f"hyperfine --export-markdown {outpath} --shell=none --runs {runs} --warmup 10 {tests}"
+    )
+
+    shell_pth = base_dir / 'hyperfine_importtimes.sh'
+    shell_pth.write_text(import_script)
 
 
 if __name__ == '__main__':
