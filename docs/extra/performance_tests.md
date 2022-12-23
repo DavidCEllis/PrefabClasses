@@ -5,8 +5,10 @@ but they give some sense of the relative speeds. (I'd love to have more stabilit
 the tests but that's not something I have experience in).
 
 Rough specs:
+```
 XPS 13 9360 Laptop: Ubuntu 20.04 / Intel(R) Core(TM) i7-7500U CPU @ 2.70GHz / 16 GB 1867MHz LPDDR3
 2018 Macbook: MacOS 12.6 / 2.3 GHz Quad-Core Intel Core i5 / 8 GB 2133 MHz LPDDR3
+```
 
 ## Hyperfine tests ##
 
