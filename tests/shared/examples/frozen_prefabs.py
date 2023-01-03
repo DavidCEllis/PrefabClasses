@@ -1,3 +1,5 @@
+# COMPILE_PREFABS
+
 from prefab_classes import prefab, attribute
 
 
