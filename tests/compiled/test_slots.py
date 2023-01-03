@@ -1,5 +1,6 @@
 import pytest
 from prefab_classes.compiled import prefab_compiler
+from prefab_classes.exceptions import FrozenPrefabError
 
 
 @pytest.mark.usefixtures("compile_folder_modules")
@@ -40,3 +41,26 @@ def test_slots_inheritance():
 
     xyz = Coordinate3D(1.0, 2.0, 3.0)
     assert (xyz.x, xyz.y, xyz.z) == (1.0, 2.0, 3.0)
+
+
+@pytest.mark.usefixtures("compile_folder_modules")
+def test_slots_frozen():
+    with prefab_compiler():
+        from example_slots import FrozenExample
+
+    assert hasattr(FrozenExample, '__slots__')
+
+    # Make sure basics still work
+    x = FrozenExample(x=0)
+    assert x.x == 0
+    assert x.y == "Example Data"
+    assert x.z == []
+
+    with pytest.raises(FrozenPrefabError) as e1:
+        x.x = 2
+
+    with pytest.raises(FrozenPrefabError) as e2:
+        x.y = "Fail to change data"
+
+    assert x.x == 0
+    assert x.y == "Example Data"

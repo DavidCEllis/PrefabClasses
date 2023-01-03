@@ -153,6 +153,7 @@ class PrefabDetails:
     iter: bool = False
     match_args: bool = True
     kw_only: bool = False
+    frozen: bool = False
     compile_prefab: bool = False
     compile_plain: bool = False
     compile_fallback: bool = False
@@ -715,6 +716,156 @@ class PrefabDetails:
 
         return iter_func
 
+    @property
+    def frozen_exception_import(self):
+        import_call = ast.ImportFrom(
+            module='prefab_classes.exceptions',
+            names=[ast.alias(name='FrozenPrefabError')],
+            level=0
+        )
+
+        return import_call
+
+    @property
+    def frozen_setattr_method(self):
+        arguments = [
+            ast.arg(arg="self"),
+            ast.arg(arg="name"),
+            ast.arg(arg="value")
+        ]
+        args = ast.arguments(
+            posonlyargs=[],
+            args=arguments,
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[],
+        )
+
+        fields_set = ast.Set(
+            elts=[
+                ast.Constant(value=name)
+                for name in self.resolved_field_names
+            ]
+        )
+
+        test_conditions = [
+            ast.Call(
+                func=ast.Name(id='hasattr', ctx=ast.Load()),
+                args=[ast.Name(id='self', ctx=ast.Load()), ast.Name(id='name', ctx=ast.Load())],
+                keywords=[]
+            ),
+            ast.Compare(
+                left=ast.Name(id="name", ctx=ast.Load()),
+                ops=[ast.NotIn()],
+                comparators=[fields_set]
+            )
+        ]
+
+        bool_test = ast.BoolOp(
+            op=ast.Or(),
+            values=test_conditions
+        )
+
+        if self.compile_slots:
+            else_body = [
+                ast.Expr(
+                    value=ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Name(id="object", ctx=ast.Load()),
+                            attr='__setattr__',
+                            ctx=ast.Load()
+                        ),
+                        args=[
+                            ast.Name(id='self', ctx=ast.Load()),
+                            ast.Name(id='name', ctx=ast.Load()),
+                            ast.Name(id='value', ctx=ast.Load())
+                        ],
+                        keywords=[]
+                    )
+                )
+            ]
+        else:
+            assign = ast.Assign(
+                targets=[
+                    ast.Subscript(
+                        value=ast.Attribute(
+                            value=ast.Name(id='self', ctx=ast.Load()),
+                            attr='__dict__',
+                            ctx=ast.Load()
+                        ),
+                        slice=ast.Name(id='name', ctx=ast.Load()),
+                        ctx=ast.Store())
+                ],
+                value=ast.Name(id='value', ctx=ast.Load())
+            )
+            else_body = [assign]
+
+        cond_body = [
+            self.frozen_exception_import,
+            ast.Raise(
+                exc=ast.Call(
+                    func=ast.Name(id='FrozenPrefabError', ctx=ast.Load()),
+                    args=[ast.Constant(value='Can not set or change values on frozen instances.')],
+                    keywords=[]
+                )
+            )
+        ]
+
+        body = [
+            ast.If(
+                test=bool_test,
+                body=cond_body,
+                orelse=else_body
+            )
+        ]
+
+        setattr_func = ast.FunctionDef(
+            name="__setattr__",
+            args=args,
+            body=body,
+            decorator_list=[],
+            returns=None,
+        )
+
+        return setattr_func
+
+    @property
+    def frozen_delattr_method(self):
+        arguments = [
+            ast.arg(arg="self"),
+            ast.arg(arg="name")
+        ]
+
+        args = ast.arguments(
+            posonlyargs=[],
+            args=arguments,
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[],
+        )
+
+        body = [
+            self.frozen_exception_import,
+
+            ast.Raise(
+                exc=ast.Call(
+                    func=ast.Name(id='FrozenPrefabError', ctx=ast.Load()),
+                    args=[ast.Constant(value='Can not delete attributes on frozen instances.')],
+                    keywords=[]
+                ),
+            )
+        ]
+
+        delattr_func = ast.FunctionDef(
+            name="__delattr__",
+            args=args,
+            body=body,
+            decorator_list=[],
+            returns=None,
+        )
+
+        return delattr_func
+
     def generate_ast(self, prefabs: dict[str, "PrefabDetails"]):
         """
         Generate the prefab code and insert it into the body of the class.
@@ -750,6 +901,9 @@ class PrefabDetails:
             body.append(self.eq_method)
         if self.iter and "__iter__" not in self.defined_attr_names:
             body.append(self.iter_method)
+        if self.frozen:
+            body.append(self.frozen_setattr_method)
+            body.append(self.frozen_delattr_method)
 
         # Add functions andd definitions to the body
         # Remove the @prefab decorator

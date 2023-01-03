@@ -67,6 +67,8 @@ from .method_generators import (
     eq_maker,
     iter_maker,
     prefab_init_maker,
+    frozen_setattr_maker,
+    frozen_delattr_maker,
 )
 
 
@@ -139,6 +141,7 @@ def _make_prefab(
     iter=False,
     match_args=True,
     kw_only=False,
+    frozen=False,
 ):
     """
     Generate boilerplate code for dunder methods in a class.
@@ -150,6 +153,8 @@ def _make_prefab(
     :param iter: generate __iter__
     :param match_args: generate __match_args__
     :param kw_only: Make all attributes keyword only
+    :param frozen: Prevent attribute values from being changed once defined
+                   (This does not prevent the modification of mutable attributes such as lists)
     :return: class with __ methods defined
     """
     # Here first we need to look at type hints for the type hint
@@ -306,6 +311,9 @@ def _make_prefab(
         setattr(cls, "__eq__", eq_maker)
     if iter and "__iter__" not in cls.__dict__:
         setattr(cls, "__iter__", iter_maker)
+    if frozen:
+        setattr(cls, "__setattr__", frozen_setattr_maker)
+        setattr(cls, "__delattr__", frozen_delattr_maker)
 
     return cls
 
@@ -320,6 +328,7 @@ def prefab(
     iter=False,
     match_args=True,
     kw_only=False,
+    frozen=False,
     compile_prefab=False,
     compile_fallback=False,
     compile_plain=False,
@@ -337,6 +346,8 @@ def prefab(
     :param iter: generate __iter__
     :param match_args: generate __match_args__
     :param kw_only: make all attributes keyword only
+    :param frozen: Prevent attribute values from being changed once defined
+                   (This does not prevent the modification of mutable attributes such as lists)
 
     :param compile_prefab: Direct the prefab compiler to compile this class
     :param compile_fallback: Fallback to a dynamic prefab if not compiled.
@@ -359,6 +370,7 @@ def prefab(
             compile_prefab=compile_prefab,
             compile_fallback=compile_fallback,
             kw_only=kw_only,
+            frozen=frozen,
         )
     else:
         if getattr(cls, COMPILED_FLAG, False):
@@ -385,4 +397,5 @@ def prefab(
                 iter=iter,
                 match_args=match_args,
                 kw_only=kw_only,
+                frozen=frozen,
             )
