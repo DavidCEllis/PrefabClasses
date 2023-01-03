@@ -67,6 +67,8 @@ from .method_generators import (
     eq_maker,
     iter_maker,
     prefab_init_maker,
+    frozen_setattr_maker,
+    frozen_delattr_maker,
 )
 
 
@@ -309,6 +311,9 @@ def _make_prefab(
         setattr(cls, "__eq__", eq_maker)
     if iter and "__iter__" not in cls.__dict__:
         setattr(cls, "__iter__", iter_maker)
+    if frozen:
+        setattr(cls, "__setattr__", frozen_setattr_maker)
+        setattr(cls, "__delattr__", frozen_delattr_maker)
 
     return cls
 

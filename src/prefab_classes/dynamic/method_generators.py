@@ -49,6 +49,7 @@ from ..constants import (
     FIELDS_ATTRIBUTE,
 )
 from ..sentinels import NOTHING
+from ..exceptions import FrozenPrefabError
 from .autogen import autogen
 
 
@@ -233,8 +234,43 @@ def get_iter_maker():
     return autogen(__iter__)
 
 
+def get_frozen_setattr_maker():
+    def __setattr__(cls):
+        field_names = getattr(cls, FIELDS_ATTRIBUTE)
+
+        # Make the fields set literal
+        fields_delimited = ", ".join(f"'{field}'" for field in field_names)
+        field_set = f"{{ {fields_delimited} }}"
+
+        # Dynamic prefabs are not slotted so it is possible to insert into the dict
+        body = (
+            f"    if hasattr(self, name) or name not in {field_set}:\n"
+            f"        raise FrozenPrefabError(\"Can not set or change values on frozen instances.\")\n"
+            f"    else:\n"
+            f"        self.__dict__[name] = value\n"
+        )
+        code = f"def __setattr__(self, name, value):\n{body}"
+
+        return code
+
+    # Pass the exception to exec
+    return autogen(__setattr__, {"FrozenPrefabError": FrozenPrefabError})
+
+
+def get_frozen_delattr_maker():
+    def __delattr__(cls):
+        body = "    raise FrozenPrefabError(\"Can not delete attributes on frozen instances.\")\n"
+        code = f"def __delattr__(self, name):\n{body}"
+        return code
+
+    return autogen(__delattr__, {"FrozenPrefabError": FrozenPrefabError})
+
+
+
 init_maker = get_init_maker()
 prefab_init_maker = get_init_maker(init_name=PREFAB_INIT_FUNC)
 repr_maker = get_repr_maker()
 eq_maker = get_eq_maker()
 iter_maker = get_iter_maker()
+frozen_setattr_maker = get_frozen_setattr_maker()
+frozen_delattr_maker = get_frozen_delattr_maker()
