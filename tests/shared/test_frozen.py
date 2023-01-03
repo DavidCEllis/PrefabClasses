@@ -39,3 +39,14 @@ def test_mutable_default(importer):
 
     assert x.z is not new_base_list
     assert x.z is base_list
+
+
+def test_delete_blocked(importer):
+    from frozen_prefabs import FrozenExample
+
+    x = FrozenExample(x=0)
+
+    with pytest.raises(FrozenPrefabError):
+        del x.x
+
+    assert x.x == 0
