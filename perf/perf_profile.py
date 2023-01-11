@@ -15,14 +15,6 @@ import platform
 from collections import namedtuple
 from typing import NamedTuple
 
-try:
-    import attrs
-except ImportError:
-    pass
-try:
-    import pydantic
-except ImportError:
-    pass
 
 import dataclasses
 import cluegen
@@ -265,12 +257,14 @@ def main(reps, test_everything=False, exclude_compile=False):
         run_test('dataclasses', reps, exclude_compile=exclude_compile)
 
         try:
+            import attrs
             write_perftemp(100, attr_template, 'from attrs import define\n')
             run_test(f'attrs {attrs.__version__}', reps, exclude_compile=exclude_compile)
         except ImportError:
             print("attrs not installed")
 
         try:
+            import pydantic
             write_perftemp(100, pydantic_template, 'from pydantic import BaseModel\n')
             run_test(f'pydantic {pydantic.__version__}', reps, exclude_compile=exclude_compile)
         except ImportError:
@@ -305,9 +299,9 @@ def main(reps, test_everything=False, exclude_compile=False):
     write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
     run_test(f'compiled_prefab {prefab_classes.__version__}', reps, exclude_compile=exclude_compile)
 
-    write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
-    run_test(f'compiled_prefab_nocache {prefab_classes.__version__}', reps, exclude_compile=False,
-             clear_cache=True)
+    # write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
+    # run_test(f'compiled_prefab_nocache {prefab_classes.__version__}', reps, exclude_compile=False,
+    #          clear_cache=True)
 
 
 if __name__ == '__main__':
