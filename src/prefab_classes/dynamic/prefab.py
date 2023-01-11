@@ -34,17 +34,15 @@ try:
 except ImportError:
     from functools import partial
 
-# Typing is also a slow import, so we use the dataclass_transform
-# function copied from the module instead
+# Typing is a slow import so the 'dataclass_transform' code is copied
+# into a separate file. This also provides 3.9/3.10 support without
+# needing to install typing_extensions.
+# If typing ever becomes fast to import we can use the code from the right place.
 SLOW_TYPING = True
 if SLOW_TYPING:
     from .._typing import dataclass_transform
 else:
-    try:
-        # noinspection PyProtectedMember
-        from typing import dataclass_transform
-    except ImportError:
-        from typing_extensions import dataclass_transform
+    from typing import dataclass_transform
 
 from ._attribute_class import Attribute
 from ..constants import (

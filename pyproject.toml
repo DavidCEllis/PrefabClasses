@@ -22,9 +22,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dynamic = ['version']
-dependencies = [
-    "typing_extensions; python_version < '3.11'"
-]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
