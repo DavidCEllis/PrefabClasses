@@ -28,12 +28,12 @@ def test_tojson(importer):
     assert as_dict(pth)["path"] == PurePosixPath("path/to/test")
 
     expected_json = json.dumps(
-        {"filename": "testfile", "path": "path/to/test"}, indent=2
+        {"filename": "testfile", "path": "path/to/test"}
     )
-    assert to_json(pth, default=str, indent=2) == expected_json
+    assert to_json(pth, default=str) == expected_json
 
-    expected_json = json.dumps({"path": "path/to/test"}, indent=2)
-    assert to_json(pth, excludes=("filename",), default=str, indent=2) == expected_json
+    expected_json = json.dumps({"path": "path/to/test"})
+    assert to_json(pth, excludes=("filename",), default=str) == expected_json
 
 
 def test_tojson_recurse(importer):
@@ -46,9 +46,9 @@ def test_tojson_recurse(importer):
 
     circ_dict = {"radius": 1, "origin": {"x": 0, "y": 0}}
 
-    circ_json = json.dumps(circ_dict, indent=2)
+    circ_json = json.dumps(circ_dict)
 
-    assert circ_json == to_json(circ, indent=2)
+    assert circ_json == to_json(circ)
 
 
 def test_jsonencoder_failure(importer):
