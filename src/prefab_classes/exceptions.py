@@ -33,9 +33,5 @@ class CompiledPrefabError(PrefabError):
     pass
 
 
-class PrefabTypeError(PrefabError, TypeError):
-    pass
-
-
 class FrozenPrefabError(PrefabError):
     pass
