@@ -39,9 +39,6 @@
 # greater good.
 # ----------------------------------------------------------------------
 
-# inspect is now imported lazily when needed as it is a slow import.
-# import inspect
-
 from ..constants import (
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
@@ -122,11 +119,14 @@ def get_init_maker(*, init_name="__init__"):
         ]:
             try:
                 func = getattr(cls, func_name)
+                func_code = func.__code__
             except AttributeError:
                 pass
             else:
-                import inspect
-                for item in inspect.signature(func).parameters.keys():
+                argcount = func_code.co_argcount + func_code.co_kwonlyargcount
+                arglist = func_code.co_varnames[:argcount]
+
+                for item in arglist:
                     if item != "self":
                         func_arglist.append(item)
 
