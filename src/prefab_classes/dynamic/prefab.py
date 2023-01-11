@@ -34,11 +34,6 @@ try:
 except ImportError:
     from functools import partial
 
-# Inspect is a slow import, it's only used for pre/post init
-# functions, if those aren't used there's no need for it
-# So now it's imported only when analyzing those functions
-# import inspect
-
 # Typing is also a slow import, so we use the dataclass_transform
 # function copied from the module instead
 SLOW_TYPING = True
@@ -246,12 +241,17 @@ def _make_prefab(
     # Check pre_init and post_init functions if they exist
     try:
         func = getattr(cls, PRE_INIT_FUNC)
+        func_code = func.__code__
     except AttributeError:
         pass
     else:
-        import inspect
-        signature = inspect.signature(func)
-        for item in signature.parameters.keys():
+        if func_code.co_posonlyargcount > 0:
+            raise LivePrefabError("Positional only arguments are not supported in pre or post init functions.")
+
+        argcount = func_code.co_argcount + func_code.co_kwonlyargcount
+        arglist = func_code.co_varnames[:argcount]
+
+        for item in arglist:
             if item not in attributes.keys() and item != "self":
                 raise LivePrefabError(
                     f"{item} argument in __prefab_pre_init__ is not a valid attribute."
@@ -260,12 +260,17 @@ def _make_prefab(
     post_init_args = []
     try:
         func = getattr(cls, POST_INIT_FUNC)
+        func_code = func.__code__
     except AttributeError:
         pass
     else:
-        import inspect
-        signature = inspect.signature(func)
-        for item in signature.parameters.keys():
+        if func_code.co_posonlyargcount > 0:
+            raise LivePrefabError("Positional only arguments are not supported in pre or post init functions.")
+
+        argcount = func_code.co_argcount + func_code.co_kwonlyargcount
+        arglist = func_code.co_varnames[:argcount]
+
+        for item in arglist:
             if item != "self":
                 if item not in attributes.keys():
                     raise LivePrefabError(
