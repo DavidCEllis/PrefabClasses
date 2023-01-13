@@ -9,6 +9,7 @@ hidden: true
 getting_started
 pre_post_init
 dynamic_and_compiled
+dynamic_construction
 extra/dataclasses_differences
 extra/performance_tests
 api

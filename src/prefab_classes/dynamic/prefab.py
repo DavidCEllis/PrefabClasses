@@ -150,7 +150,10 @@ def _make_prefab(
                    (This does not prevent the modification of mutable attributes such as lists)
     :return: class with __ methods defined
     """
-    # Here first we need to look at type hints for the type hint
+    # If this function is called then this is a dynamic prefab
+    setattr(cls, COMPILED_FLAG, False)
+
+    # We need to look at type hints for the type hint
     # syntax variant.
     # If a key exists and is *NOT* in __annotations__ then all
     # annotations will be ignored as it becomes complex to fix the
@@ -391,7 +394,6 @@ def prefab(
             raise PrefabError("Slots are not supported on 'dynamic' Prefabs.")
         else:
             # Create Live Version
-            setattr(cls, COMPILED_FLAG, False)
             return _make_prefab(
                 cls,
                 init=init,
@@ -402,3 +404,55 @@ def prefab(
                 kw_only=kw_only,
                 frozen=frozen,
             )
+
+
+def build_prefab(
+    class_name: str,
+    attributes: list[tuple[str, Attribute]],
+    *,
+    bases: tuple[type, ...] = (),
+    class_dict: dict[str, object] = None,
+    init=True,
+    repr=True,
+    eq=True,
+    iter=False,
+    match_args=True,
+    kw_only=False,
+    frozen=False,
+):
+    """
+    Dynamically construct a (dynamic) prefab.
+
+    :param class_name: name of the resulting prefab class
+    :param attributes: list of (name, attribute()) pairs to assign to the class
+                       for construction
+    :param bases: Base classes to inherit from
+    :param class_dict: Other values to add to the class dictionary on creation
+                       This is the 'dict' parameter from 'type'
+    :param init: generates __init__ if true or __prefab_init__ if false
+    :param repr: generate __repr__
+    :param eq: generate __eq__
+    :param iter: generate __iter__
+    :param match_args: generate __match_args__
+    :param kw_only: make all attributes keyword only
+    :param frozen: Prevent attribute values from being changed once defined
+                   (This does not prevent the modification of mutable attributes such as lists)
+    :return: class with __ methods defined
+    """
+    class_dict = {} if class_dict is None else class_dict
+    cls = type(class_name, bases, class_dict)
+    for name, attrib in attributes:
+        setattr(cls, name, attrib)
+
+    cls = _make_prefab(
+        cls,
+        init=init,
+        repr=repr,
+        eq=eq,
+        iter=iter,
+        match_args=match_args,
+        kw_only=kw_only,
+        frozen=frozen,
+    )
+
+    return cls

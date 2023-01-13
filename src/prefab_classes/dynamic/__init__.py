@@ -1,1 +1,1 @@
-from .prefab import prefab, attribute
+from .prefab import prefab, attribute, build_prefab
