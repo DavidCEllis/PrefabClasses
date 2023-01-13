@@ -409,9 +409,9 @@ def prefab(
 def build_prefab(
     class_name: str,
     attributes: list[tuple[str, Attribute]],
-    bases = (),
-    class_dict = None,
     *,
+    bases: tuple[type, ...] = (),
+    class_dict: dict[str, object] = None,
     init=True,
     repr=True,
     eq=True,

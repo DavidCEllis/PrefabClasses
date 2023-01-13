@@ -10,6 +10,10 @@
 .. autofunction:: prefab_classes::attribute
 ```
 
+```{eval-rst}
+.. autofunction:: prefab_classes::build_prefab
+```
+
 ## Helper functions ##
 
 ```{eval-rst}

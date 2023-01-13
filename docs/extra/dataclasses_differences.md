@@ -11,6 +11,10 @@ on intentional differences. Unintentional differences may be patched
 or will be added to this list.
 
 ## Functional differences ##
+1. Prefab classes delete the initial input values and annotations from the class.
+    * This largely comes from an optimisation for compiled classes to remove the 
+      `attribute` calls. (When written back out as source this allows removal of
+      the prefab/attribute imports).
 1. prefabs do not generate the comparison methods other than `__eq__`
     * This could be added fairly easily but I don't use this feature so it's not a priority.
 1. the `as_dict` method in `prefab_classes` does *not* behave the same as 
