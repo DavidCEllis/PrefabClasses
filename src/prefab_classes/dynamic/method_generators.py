@@ -150,7 +150,7 @@ def get_init_maker(*, init_name="__init__"):
                 value = f"_{name}_converter({value})"
 
             if name in post_init_args:
-                if attrib.default_factory or attrib.converter:
+                if attrib.default_factory is not NOTHING or attrib.converter:
                     processes.append((name, value))
             else:
                 assignments.append((name, value))
@@ -166,6 +166,7 @@ def get_init_maker(*, init_name="__init__"):
             body += "\n".join(
                 f"    self.{name} = {value}" for name, value in assignments
             )
+            body += "\n"
             body += "\n".join(f"    {name} = {value}" for name, value in processes)
         else:
             body = "    pass"
