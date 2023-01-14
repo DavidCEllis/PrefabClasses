@@ -79,6 +79,17 @@ class ExcludeField:
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
+class PostInitPartial:
+    x: int
+    y: int
+    z: list[int] = attribute(default_factory=list)
+
+    def __prefab_post_init__(self, z):
+        z.append(1)
+        self.z = z
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
 class EmptyContainers:
     x: list = attribute(default_factory=list)
     y: set = attribute(default_factory=set)

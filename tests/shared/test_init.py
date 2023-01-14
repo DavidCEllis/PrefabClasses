@@ -112,6 +112,13 @@ def test_pre_post_init_arguments(importer):
         y = PrePostInitArguments(2, 1)
 
 
+def test_post_init_partial(importer):
+    from init_ex import PostInitPartial
+    x = PostInitPartial(1, 2)
+
+    assert (x.x, x.y, x.z) == (1, 2, [1])
+
+
 def test_exclude_field(importer):
     from init_ex import ExcludeField
 
