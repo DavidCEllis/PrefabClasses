@@ -63,69 +63,20 @@ This started as a way of investigating how modules like `attrs`
 and `dataclasses` work and evolved into an alternative method
 of performing a similar task.
 
-### Import Performance ###
+For the short answer, here are the start and import times of various 
+modules on my development computer, with `python -c "pass"` as a baseline.
 
-There have been 
-[some](https://github.com/python-attrs/attrs/issues/575) 
-[discussions](https://discuss.python.org/t/improving-dataclasses-startup-performance/15442)
-and
-[comments](https://github.com/dabeaz/cluegen#wait-hasnt-this-already-been-invented)
-about the performance on import of such code generators.
+| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
+|:---|---:|---:|---:|---:|
+| `python -c "pass"` | 26.6 ± 1.2 | 25.0 | 30.6 | 1.00 |
+| `python -c "import prefab_classes"` | 28.4 ± 0.4 | 27.6 | 29.5 | 1.07 ± 0.05 |
+| `python -c "import dataclasses"` | 48.4 ± 1.0 | 46.5 | 51.5 | 1.82 ± 0.09 |
+| `python -c "import attrs"` | 67.3 ± 0.7 | 65.9 | 71.1 | 2.53 ± 0.11 |
+| `python -c "import pydantic"` | 105.4 ± 3.4 | 100.3 | 115.7 | 3.96 ± 0.22 |
 
-You can see an import comparison of this package with `dataclasses`, 
-`attrs` and `pydantic` 
-[here](https://prefabclasses.readthedocs.io/en/latest/extra/performance_tests.html).
-[Hyperfine](https://github.com/sharkdp/hyperfine) is currrently used as the
-test runner.
 
-The first version of the project started with only the `dynamic` form
-of construction, based on [David Beazley's Cluegen](https://github.com/dabeaz/cluegen).
-Some modifications were needed as I wanted to support more features
-such as non-builtin defaults, factories and other options. While this
-was an improvement it largely moved the slower parts to happen
-at runtime. It would be nice if the 'work' could be done once and then
-this result reused so there would be no performance hit.
-
-To this end the 'compiled' method was devised. This works by looking
-at the AST of the source, before actual compilation and rewriting
-any `@prefab` decorated classes into a regular python class with
-all of the standard methods. This is currently **much** slower
-than the dynamic method to generate but unlike dynamic classes
-this has the benefit of caching and can also output .py source
-with the generated classes.
-
-[PEP 638](https://peps.python.org/pep-0638/) appears to be a potential
-canonical way of doing such things but it is not actually necessary
-to do this as-is. This project provides a method to insert an importer
-that will look for a special `# COMPILE_PREFABS` comment and if that
-is detected it will handle the AST rewriting before .pyc compilation.
-
-### Why not make this operate on @dataclass? ###
-
-Operating on dataclasses would require matching the dataclasses API and
-there are some design choices that dataclasses takes that are either
-more difficult to implement in the AST or less flexible than I'd like.
-
-The first obvious difference is dataclasses requires the use of the
-type annotation syntax while prefab-classes does not.
-
-For another example dataclasses uses `InitVar` to indicate a value to 
-exclude from `__init__` and the field list and all other methods. Special 
-annotation instructions are less useful than arguments when working with 
-the AST.
-
-An annotation object can be renamed, for example: 
-`from dataclasses import InitVar as IV`.
-or
-`import dataclasses; IV = dataclasses.InitVar`
-
-In the AST all that is easily available is the name `IV` and there is no
-way to know if that is `InitVar` without thoroughly inspecting the module
-for all of the different ways it could be renamed. 
-[Because annotations can be strings this is already awkward even for dataclasses itself](https://github.com/python/cpython/blob/5ee7eb9debb12914f36c5ccee92460a681516fd6/Lib/dataclasses.py#L683-L721).
-An argument to `attribute` on the other hand **must** always use the same
-name and is much easier to handle. `exclude_field` is a boolean field
-that provides similar behaviour for this case.
+For more detailed tests you can look at the
+[performance section of the docs](https://prefabclasses.readthedocs.io/en/latest/extra/performance_tests.html).
 
 ## How does it work ##
 
