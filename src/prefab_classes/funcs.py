@@ -1,4 +1,4 @@
-from functools import lru_cache, partial
+from functools import lru_cache
 
 from .constants import FIELDS_ATTRIBUTE
 
@@ -67,18 +67,21 @@ def as_dict(inst, *, excludes: "Optional[tuple[str, ...]]" = None):
     return _as_dict_cache(type(inst), excludes)(inst)
 
 
-def _as_dict_json_wrapper(inst, *, excludes: "Optional[tuple[str, ...]]" = None):
-    """Wrapper that gives a more accurate TypeError message for serialization"""
-    try:
-        return _as_dict_cache(type(inst), excludes)(inst)
-    except TypeError:
-        raise TypeError(f"Object of type {type(inst).__name__} is not JSON serializable")
+@lru_cache
+def _as_dict_json_wrapper(excludes: "Optional[tuple[str, ...]]" = None):
+    def _as_dict_json_inner(inst):
+        """Wrapper that gives a more accurate TypeError message for serialization"""
+        try:
+            return _as_dict_cache(type(inst), excludes)(inst)
+        except TypeError:
+            raise TypeError(f"Object of type {type(inst).__name__} is not JSON serializable")
+    return _as_dict_json_inner
 
 
 @lru_cache
 def _get_json_encoder(excludes: "Optional[tuple[str, ...]]" = None):
     import json
-    return json.JSONEncoder(default=partial(_as_dict_json_wrapper, excludes=excludes))
+    return json.JSONEncoder(default=_as_dict_json_wrapper(excludes))
 
 
 @lru_cache
@@ -133,10 +136,10 @@ def to_json(
             import json
             dumps_func = json.dumps
 
-        as_dict_excludes = partial(as_dict, excludes=excludes)
+        dict_converter = _as_dict_json_wrapper(excludes)
 
         if default is None:
-            return dumps_func(inst, default=as_dict_excludes, **kwargs)
+            return dumps_func(inst, default=dict_converter, **kwargs)
         else:
-            default_func = _merge_defaults(as_dict_excludes, default)
+            default_func = _merge_defaults(dict_converter, default)
             return dumps_func(inst, default=default_func, **kwargs)
