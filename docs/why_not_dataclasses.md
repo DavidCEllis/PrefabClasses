@@ -166,6 +166,26 @@ import time:       575 |      41087 | attrs
 
 ~16x longer than `prefab_classes`
 
+## Are you just delaying the imports so a bunch will hit at runtime? ##
+
+Generally no, but in certain situations yes.
+
+If you're just making classes and using the dynamic form of prefab
+then no extra imports will happen at runtime.
+
+If you want to export `json` the `funcs` module will only import stdlib
+`json` when `to_json` is called and if a third party dumps function 
+(such as the one from orjson) is not provided.
+
+When making compiled prefabs the first time a module is imported and the
+.pyc file is generated, extra modules are needed to perform the compilation
+and will be imported then. Once the .pyc is made, the next import they will
+not be needed and so are not imported.
+
+The methods for rewriting to source import some modules on first use, this
+is simply so they can be available more easily without having a major hit on
+performance if they are not used.
+
 ## What about when generating classes ##
 
 For full performance tests on class generation, check {doc}`extra/performance_tests`
