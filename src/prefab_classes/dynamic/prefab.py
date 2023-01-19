@@ -26,13 +26,6 @@ Handle boilerplate generation for classes.
 import sys
 import warnings
 
-# Import speed optimization
-# The C implementation can import nearly 100x faster
-# and will usually be available.
-try:
-    from _functools import partial
-except ImportError:
-    from functools import partial
 
 # Typing is a slow import so the 'dataclass_transform' code is copied
 # into a separate file. This also provides 3.9/3.10 support without
@@ -366,8 +359,8 @@ def prefab(
         # Called as () method to change defaults
         # Skip compile arguments other than prefab/fallback
         # These are not needed
-        return partial(
-            prefab,
+        return lambda cls_: prefab(
+            cls_,
             init=init,
             repr=repr,
             eq=eq,
