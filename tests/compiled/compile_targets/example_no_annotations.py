@@ -6,9 +6,10 @@ from decimal import Decimal
 @prefab(compile_prefab=True, init=True, repr=True, eq=True, iter=False)
 class Z:
     v = attribute()
-    w = attribute(
-        default="3.14", converter=Decimal, init=True, repr=True, kw_only=False
-    )
+    w = attribute(default="3.14", init=True, repr=True, kw_only=False)
     x = attribute(default_factory=list, init=True, repr=True, kw_only=True)
     y = attribute(kw_only=True)
     z = attribute(default=(42, "trees"))
+
+    def __prefab_post_init__(self, w):
+        self.w = Decimal(w)
