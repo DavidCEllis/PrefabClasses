@@ -133,7 +133,7 @@ def get_init_maker(*, init_name="__init__"):
         assignments = []
         processes = (
             []
-        )  # post_init values still need default factories/converters to be called.
+        )  # post_init values still need default factories to be called.
         for name, attrib in cls._attributes.items():
             if attrib.init:
                 if attrib.default_factory is not NOTHING:
@@ -145,12 +145,9 @@ def get_init_maker(*, init_name="__init__"):
                     value = f"_{name}_factory()"
                 else:
                     value = f"_{name}_default"
-            if attrib.converter:
-                globs[f"_{name}_converter"] = attrib.converter
-                value = f"_{name}_converter({value})"
 
             if name in post_init_args:
-                if attrib.default_factory is not NOTHING or attrib.converter:
+                if attrib.default_factory is not NOTHING:
                     processes.append((name, value))
             else:
                 assignments.append((name, value))

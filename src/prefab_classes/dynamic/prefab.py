@@ -24,7 +24,6 @@
 Handle boilerplate generation for classes.
 """
 import sys
-import warnings
 
 
 # Typing is a slow import so the 'dataclass_transform' code is copied
@@ -76,7 +75,6 @@ def attribute(
     *,
     default=NOTHING,
     default_factory=NOTHING,
-    converter=None,  # DEPRECATED
     init=True,
     repr=True,
     kw_only=False,
@@ -85,8 +83,6 @@ def attribute(
     """
     Additional definition for how to generate standard methods
     for an instance attribute.
-
-    **NOTE**: There is currently a `converter` parameter that will be removed in a future version.
 
     :param default: Default value for this attribute
     :param default_factory: 0 argument callable to give a default value
@@ -100,17 +96,9 @@ def attribute(
 
     :return: Attribute generated with these parameters.
     """
-    if converter is not None:
-        warnings.warn(
-            DeprecationWarning(
-                "Converters will be removed in v1.0. "
-                "This behaviour has been replaced by __prefab_post_init__"
-            )
-        )
     return Attribute(
         default=default,
         default_factory=default_factory,
-        converter=converter,
         init=init,
         repr=repr,
         kw_only=kw_only,

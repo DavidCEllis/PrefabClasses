@@ -18,7 +18,10 @@ class Circle:
 @prefab(compile_prefab=True, compile_fallback=True)
 class SystemPath:
     filename = attribute()
-    path = attribute(converter=PurePosixPath)
+    path = attribute()
+
+    def __prefab_post_init__(self, path):
+        self.path = PurePosixPath(path)
 
 
 @prefab(compile_prefab=True, compile_fallback=True)

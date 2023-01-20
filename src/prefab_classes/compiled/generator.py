@@ -57,7 +57,6 @@ class Field:
     field: Any
     default: Any = None
     default_factory: ast.Name = None
-    converter: ast.Name = None
     init_: bool = True
     repr_: bool = True
     kw_only: bool = False
@@ -72,9 +71,6 @@ class Field:
     @cached_property
     def default_factory_call(self):
         return ast.Call(func=self.default_factory, args=[], keywords=[])
-
-    def converter_call(self, arg):
-        return ast.Call(func=self.converter, args=[arg], keywords=[])
 
     def ast_attribute(
         self,
@@ -94,7 +90,6 @@ class Field:
         keys = {k.arg: k.value for k in keywords}
         default = keys.get("default", None)
         default_factory = keys.get("default_factory", None)
-        converter = keys.get("converter", None)
         try:
             init_ = keys["init"].value
         except KeyError:
@@ -132,7 +127,6 @@ class Field:
             field=field,
             default=default,
             default_factory=default_factory,
-            converter=converter,
             init_=init_,
             repr_=repr_,
             kw_only=kw_only,
@@ -142,6 +136,7 @@ class Field:
         )
 
 
+# noinspection PyAttributeOutsideInit,PyProtectedMember
 @prefab
 class PrefabDetails:
     name: str
@@ -159,7 +154,6 @@ class PrefabDetails:
     compile_fallback: bool = False
     compile_slots: bool = False
 
-    # noinspection PyAttributeOutsideInit
     def __prefab_post_init__(self):
         self._resolved_fields: Optional[dict[str, "Field"]] = None
         self._prefab_map: Optional[dict[str, "PrefabDetails"]] = None
@@ -536,23 +530,19 @@ class PrefabDetails:
                 )
 
             if field.name in post_init_args:
-                # Converters or factories should still run
-                if field.default_factory or field.converter:
+                # Factories should still run
+                if field.default_factory:
                     body.append(
                         ast.Assign(
                             targets=[ast.Name(id=field.name, ctx=ast.Store())],
-                            value=field.converter_call(assignment_value)
-                            if field.converter
-                            else assignment_value,
+                            value=assignment_value,
                         )
                     )
             else:
                 body.append(
                     ast.Assign(
                         targets=[field.ast_attribute(ctx=ast.Store)],
-                        value=field.converter_call(assignment_value)
-                        if field.converter
-                        else assignment_value,
+                        value=assignment_value,
                     )
                 )
 

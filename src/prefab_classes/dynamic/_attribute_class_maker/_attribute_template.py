@@ -16,7 +16,6 @@ class Attribute:
     # compiled prefabs do not interpret this way.
     default = attribute(default=NOTHING)
     default_factory = attribute(default=NOTHING)
-    converter = attribute(default=None)
     init: bool = attribute(default=True)
     repr: bool = attribute(default=True)
     kw_only: bool = attribute(default=False)

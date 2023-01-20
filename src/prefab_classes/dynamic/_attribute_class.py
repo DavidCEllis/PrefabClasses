@@ -8,15 +8,14 @@ from ..exceptions import LivePrefabError
 
 class Attribute:
     COMPILED = True
-    PREFAB_FIELDS = ['default', 'default_factory', 'converter', 'init', 'repr', 'kw_only', 'exclude_field', '_type']
-    __slots__ = ('default', 'default_factory', 'converter', 'init', 'repr', 'kw_only', 'exclude_field', '_type')
-    __match_args__ = ('default', 'default_factory', 'converter', 'init', 'repr', 'kw_only', 'exclude_field', '_type')
+    PREFAB_FIELDS = ['default', 'default_factory', 'init', 'repr', 'kw_only', 'exclude_field', '_type']
+    __slots__ = ('default', 'default_factory', 'init', 'repr', 'kw_only', 'exclude_field', '_type')
+    __match_args__ = ('default', 'default_factory', 'init', 'repr', 'kw_only', 'exclude_field', '_type')
 
-    def __init__(self, default=NOTHING, default_factory=NOTHING, converter=None, init: bool=True, repr: bool=True, kw_only: bool=False, exclude_field: bool=False):
+    def __init__(self, default=NOTHING, default_factory=NOTHING, init: bool=True, repr: bool=True, kw_only: bool=False, exclude_field: bool=False):
         self.__prefab_pre_init__(init=init, default=default, default_factory=default_factory, kw_only=kw_only)
         self.default = default
         self.default_factory = default_factory
-        self.converter = converter
         self.init = init
         self.repr = repr
         self.kw_only = kw_only
@@ -24,7 +23,7 @@ class Attribute:
         self._type = NOTHING
 
     def __repr__(self):
-        return f'{type(self).__qualname__}(default={self.default!r}, default_factory={self.default_factory!r}, converter={self.converter!r}, init={self.init!r}, repr={self.repr!r}, kw_only={self.kw_only!r}, exclude_field={self.exclude_field!r})'
+        return f'{type(self).__qualname__}(default={self.default!r}, default_factory={self.default_factory!r}, init={self.init!r}, repr={self.repr!r}, kw_only={self.kw_only!r}, exclude_field={self.exclude_field!r})'
 
     @staticmethod
     def __prefab_pre_init__(init, default, default_factory, kw_only):
