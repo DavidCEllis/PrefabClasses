@@ -35,17 +35,16 @@ will cause `site` to import importlib and hide some of the difference.**
 
 ```
 import time: self [us] | cumulative | imported package
-import time:       392 |        392 |       warnings
-import time:       133 |        133 |       prefab_classes._typing
-import time:       147 |        147 |         prefab_classes.sentinels
+import time:       142 |        142 |       prefab_classes._typing
+import time:       166 |        166 |         prefab_classes.sentinels
 import time:       173 |        173 |         prefab_classes.exceptions
-import time:       178 |        497 |       prefab_classes.dynamic._attribute_class
-import time:       118 |        118 |       prefab_classes.constants
-import time:       116 |        116 |         prefab_classes.dynamic.autogen
-import time:       257 |        372 |       prefab_classes.dynamic.method_generators
-import time:       443 |       1953 |     prefab_classes.dynamic.prefab
-import time:       271 |       2224 |   prefab_classes.dynamic
-import time:       289 |       2512 | prefab_classes
+import time:       238 |        575 |       prefab_classes.dynamic._attribute_class
+import time:       163 |        163 |       prefab_classes.constants
+import time:       126 |        126 |         prefab_classes.dynamic.autogen
+import time:       296 |        422 |       prefab_classes.dynamic.method_generators
+import time:       394 |       1694 |     prefab_classes.dynamic.prefab
+import time:       223 |       1917 |   prefab_classes.dynamic
+import time:       287 |       2203 | prefab_classes
 ```
 
 ### dataclasses importtime ###
