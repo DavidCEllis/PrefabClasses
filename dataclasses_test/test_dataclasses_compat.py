@@ -7,6 +7,8 @@ import pytest
 from prefab_classes import (
     prefab as dataclass,
     attribute as field,
+)
+from prefab_classes.funcs import (
     as_dict as asdict,
     is_prefab as is_dataclass
 )
@@ -255,7 +257,6 @@ class TestCase(unittest.TestCase):
         c = C('foo')
         self.assertEqual(c.object, 'foo')
 
-    @planned
     def test_field_named_object_frozen(self):
         @dataclass(frozen=True)
         class C:
