@@ -608,13 +608,20 @@ class PrefabDetails:
                 ast.Constant(value=")")
             ]
         else:
-            field_strings = [
-                ast.Constant(value="<prefab "),
-                self.ast_qualname_str,
-                ast.Constant(value="; "),
-                *field_strings,
-                ast.Constant(value=">")
-            ]
+            if field_strings:
+                field_strings = [
+                    ast.Constant(value="<prefab "),
+                    self.ast_qualname_str,
+                    ast.Constant(value="; "),
+                    *field_strings,
+                    ast.Constant(value=">")
+                ]
+            else:
+                field_strings = [
+                    ast.Constant(value="<prefab "),
+                    self.ast_qualname_str,
+                    ast.Constant(value=">"),
+                ]
 
         repr_string = ast.JoinedStr(values=field_strings)
         body = [ast.Return(value=repr_string)]

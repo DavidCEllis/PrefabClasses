@@ -9,6 +9,12 @@ class RegularRepr:
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
+class NoReprAttributes:
+    x: str = attribute(default="Hello", repr=False)
+    y: str = attribute(default="World", repr=False)
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
 class OneAttributeNoRepr:
     x: str = attribute(default="Hello", repr=False)
     y: str = "World"

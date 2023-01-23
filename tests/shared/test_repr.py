@@ -1,9 +1,12 @@
-import pytest
-
 def test_basic_repr(importer):
     from repr_func import RegularRepr
     x = RegularRepr()
     assert repr(x) == "RegularRepr(x='Hello', y='World')"
+
+def test_basic_repr_no_fields(importer):
+    from repr_func import NoReprAttributes
+    x = NoReprAttributes()
+    assert repr(x) == "<prefab NoReprAttributes>"
 
 def test_one_attribute_no_repr(importer):
     from repr_func import OneAttributeNoRepr

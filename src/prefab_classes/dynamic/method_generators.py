@@ -196,9 +196,14 @@ def get_repr_maker(will_eval=True):
                 f"def __repr__(self):\n    return f'{{type(self).__qualname__}}({content})'"
             )
         else:
-            code = (
-                f"def __repr__(self):\n    return f'<prefab {{type(self).__qualname__}}; {content}>'"
-            )
+            if content:
+                code = (
+                    f"def __repr__(self):\n    return f'<prefab {{type(self).__qualname__}}; {content}>'"
+                )
+            else:
+                code = (
+                    f"def __repr__(self):\n    return f'<prefab {{type(self).__qualname__}}>'"
+                )
         return code
 
     return autogen(__repr__)
