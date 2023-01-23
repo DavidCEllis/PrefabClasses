@@ -124,7 +124,7 @@ def test_non_init_doesnt_break_syntax():
     from creation import PositionalNotAfterKW
 
     x = PositionalNotAfterKW(1, 2)
-    assert repr(x) == "PositionalNotAfterKW(x=1, y=0, z=2)"
+    assert repr(x) == "<prefab PositionalNotAfterKW; x=1, y=0, z=2>"
 
 
 class TestExceptions:

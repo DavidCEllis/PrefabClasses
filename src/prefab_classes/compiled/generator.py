@@ -581,9 +581,13 @@ class PrefabDetails:
             defaults=[],
         )
 
-        field_strings = [self.ast_qualname_str, ast.Constant(value="(")]
+        field_strings = []
+        use_eval_repr = True
         first_field = True
         for field in self.resolved_field_list:
+            if use_eval_repr and (field.exclude_field or (field.repr_ ^ field.init_)):
+                use_eval_repr=False
+
             if field.repr_ and not field.exclude_field:
                 if first_field:
                     first_field = False
@@ -596,7 +600,28 @@ class PrefabDetails:
                 )
                 field_strings.extend([target, value])
 
-        field_strings.append(ast.Constant(value=")"))
+        if use_eval_repr:
+            field_strings = [
+                self.ast_qualname_str,
+                ast.Constant(value="("),
+                *field_strings,
+                ast.Constant(value=")")
+            ]
+        else:
+            if field_strings:
+                field_strings = [
+                    ast.Constant(value="<prefab "),
+                    self.ast_qualname_str,
+                    ast.Constant(value="; "),
+                    *field_strings,
+                    ast.Constant(value=">")
+                ]
+            else:
+                field_strings = [
+                    ast.Constant(value="<prefab "),
+                    self.ast_qualname_str,
+                    ast.Constant(value=">"),
+                ]
 
         repr_string = ast.JoinedStr(values=field_strings)
         body = [ast.Return(value=repr_string)]

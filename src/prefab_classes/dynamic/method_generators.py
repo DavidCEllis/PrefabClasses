@@ -184,16 +184,26 @@ def get_init_maker(*, init_name="__init__"):
     return autogen(__init__, globs)
 
 
-def get_repr_maker():
+def get_repr_maker(will_eval=True):
     def __repr__(cls):
         content = ", ".join(
             f"{name}={{self.{name}!r}}"
             for name, attrib in cls._attributes.items()
             if attrib.repr and not attrib.exclude_field
         )
-        code = (
-            f"def __repr__(self):\n    return f'{{type(self).__qualname__}}({content})'"
-        )
+        if will_eval:
+            code = (
+                f"def __repr__(self):\n    return f'{{type(self).__qualname__}}({content})'"
+            )
+        else:
+            if content:
+                code = (
+                    f"def __repr__(self):\n    return f'<prefab {{type(self).__qualname__}}; {content}>'"
+                )
+            else:
+                code = (
+                    f"def __repr__(self):\n    return f'<prefab {{type(self).__qualname__}}>'"
+                )
         return code
 
     return autogen(__repr__)
@@ -267,7 +277,8 @@ def get_frozen_delattr_maker():
 
 init_maker = get_init_maker()
 prefab_init_maker = get_init_maker(init_name=PREFAB_INIT_FUNC)
-repr_maker = get_repr_maker()
+repr_maker = get_repr_maker(will_eval=True)
+repr_maker_no_eval = get_repr_maker(will_eval=False)
 eq_maker = get_eq_maker()
 iter_maker = get_iter_maker()
 frozen_setattr_maker = get_frozen_setattr_maker()

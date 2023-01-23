@@ -49,6 +49,7 @@ from ..sentinels import NOTHING, KW_ONLY
 from .method_generators import (
     init_maker,
     repr_maker,
+    repr_maker_no_eval,
     eq_maker,
     iter_maker,
     prefab_init_maker,
@@ -262,7 +263,13 @@ def _make_prefab(
 
     default_defined = []
     valid_fields = []
+
+    use_eval_repr = True
+
     for name, attrib in attributes.items():
+        if use_eval_repr and (attrib.exclude_field or (attrib.init ^ attrib.repr)):
+            use_eval_repr = False
+
         if attrib.exclude_field:
             if name not in post_init_args:
                 raise LivePrefabError(
@@ -293,7 +300,10 @@ def _make_prefab(
     else:
         setattr(cls, "__prefab_init__", prefab_init_maker)
     if repr and "__repr__" not in cls.__dict__:
-        setattr(cls, "__repr__", repr_maker)
+        if use_eval_repr:
+            setattr(cls, "__repr__", repr_maker)
+        else:
+            setattr(cls, "__repr__", repr_maker_no_eval)
     if eq and "__eq__" not in cls.__dict__:
         setattr(cls, "__eq__", eq_maker)
     if iter and "__iter__" not in cls.__dict__:

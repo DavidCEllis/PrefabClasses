@@ -66,3 +66,7 @@ or will be added to this list.
     * To exclude such values from the fields list and other magic methods set
       `exclude_field=True` as an argument to `attribute`. Such attributes are
       required to be arguments to `__prefab_post_init__`.
+1. The `__repr__` method for prefabs will have a different output if it will not `eval` correctly.
+    * This isn't a guarantee that the regular `__repr__` will eval, but if it is known
+      that the output would not `eval` then an alternative repr is used which does not
+      look like it would `eval`.
