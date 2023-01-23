@@ -15,7 +15,7 @@ def test_repr_exclude(importer):
 
     assert CoordinateNoXRepr.COMPILED == importer
 
-    expected_repr = "CoordinateNoXRepr(y=2)"
+    expected_repr = "<prefab CoordinateNoXRepr; y=2>"
     assert repr(CoordinateNoXRepr(1, 2)) == expected_repr
 
 

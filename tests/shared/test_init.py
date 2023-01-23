@@ -128,8 +128,8 @@ def test_exclude_field(importer):
 
     assert x.x == "EXCLUDED_FIELD"
     assert y.x == "STILL_EXCLUDED"
-    assert repr(x) == "ExcludeField()"
-    assert repr(y) == "ExcludeField()"
+    assert repr(x) == "<prefab ExcludeField>"
+    assert repr(y) == "<prefab ExcludeField>"
     assert x == y
 
 
