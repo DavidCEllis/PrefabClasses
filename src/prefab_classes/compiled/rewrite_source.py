@@ -85,3 +85,49 @@ def rewrite_to_py(
         )
         f.write("\n\n")
         f.write(compiled_source)
+
+
+def get_sources_to_compare(
+    source_path,
+    dest_path,
+    *,
+    header_comment: str = COMPILE_COMMENT,
+    use_black: bool = False,
+) -> tuple[str, str]:
+    """
+    Get the converted original source and the dest source.
+
+    Currently an option to use Black to reformat the code to make it slightly more
+    readable is provided. Potentially this could be extended to be more generic.
+
+    :param source_path: Source file to rewrite
+    :param dest_path: Destination output for compiled prefab code
+    :param header_comment: String to insert at the top of the file
+    :param use_black: Attempt to run black on the output to make it more readable
+    """
+    from .. import __version__
+    from pathlib import Path
+    from io import StringIO
+
+    source_path, dest_path = Path(source_path), Path(dest_path)
+
+    if source_path == dest_path:
+        raise CompiledPrefabError("Can not overwrite source file.")
+
+    source = source_path.read_text(encoding="utf-8")
+
+    compiled_source = rewrite_code(source, use_black=use_black)
+
+    dest_source = dest_path.read_text()
+
+    str_out = StringIO()
+
+    str_out.write(
+        header_comment.format(
+            dest=dest_path.name, source=source_path.name, version=__version__
+        )
+    )
+    str_out.write("\n\n")
+    str_out.write(compiled_source)
+
+    return str_out.getvalue(), dest_source
