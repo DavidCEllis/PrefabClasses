@@ -7,8 +7,6 @@ def test_code_result_simple():
     ex_simple = Path(__file__).parent / "compile_targets" / "example_simple.py"
     result = preview(ex_simple, use_black=False)
     code = (
-        "from prefab_classes import prefab\n"
-        "\n"
         "class Coordinate:\n"
         '    """Coordinate Data"""\n'
         "    COMPILED = True\n"
@@ -37,8 +35,6 @@ def test_code_result_plain():
     ex_plain = Path(__file__).parent / "compile_targets" / "example_plain.py"
     result = preview(ex_plain, use_black=False)
     code = (
-        "from prefab_classes import prefab\n"
-        "\n"
         "class Coordinate:\n"
         "\n"
         "    def __init__(self, x: float, y: float):\n"
