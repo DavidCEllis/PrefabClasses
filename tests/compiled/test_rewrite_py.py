@@ -21,7 +21,6 @@ def test_rewrite_to_py():
     rewrite_to_py(
         source_file,
         temporary_output,
-        delete_firstlines=1,
         header_comment=COMPILE_COMMENT,
     )
 
