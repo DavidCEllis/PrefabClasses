@@ -2,9 +2,10 @@ from functools import lru_cache
 
 from .constants import FIELDS_ATTRIBUTE
 
-# noinspection PyUnreachableCode
-if False:
-    from typing import Optional, Callable
+# Importing from collections.abc brings in collections and is slow.
+# The actual module is _collections_abc so just import that directly.
+# As this module is already imported in python's start this is 'free'
+from _collections_abc import Callable
 
 
 def is_prefab(o):
@@ -53,7 +54,7 @@ def _as_dict_cache(cls, excludes=None):
     return method
 
 
-def as_dict(inst, *, excludes: "Optional[tuple[str, ...]]" = None):
+def as_dict(inst, *, excludes: "None | tuple[str, ...]" = None):
     """
     Represent the prefab as a dictionary of attribute names and values.
     Exclude any keys listed in `excludes`
@@ -68,7 +69,7 @@ def as_dict(inst, *, excludes: "Optional[tuple[str, ...]]" = None):
 
 
 @lru_cache
-def _as_dict_json_wrapper(excludes: "Optional[tuple[str, ...]]" = None):
+def _as_dict_json_wrapper(excludes: "None | tuple[str, ...]" = None):
     def _as_dict_json_inner(inst):
         """Wrapper that gives a more accurate TypeError message for serialization"""
         try:
@@ -79,7 +80,7 @@ def _as_dict_json_wrapper(excludes: "Optional[tuple[str, ...]]" = None):
 
 
 @lru_cache
-def _get_json_encoder(excludes: "Optional[tuple[str, ...]]" = None):
+def _get_json_encoder(excludes: "None | tuple[str, ...]" = None):
     import json
     return json.JSONEncoder(default=_as_dict_json_wrapper(excludes))
 
@@ -108,8 +109,8 @@ def _merge_defaults(*defaults):
 def to_json(
         inst,
         *,
-        excludes: "Optional[tuple[str, ...]]" = None,
-        dumps_func: "Callable" = None,
+        excludes: "None | tuple[str, ...]" = None,
+        dumps_func: Callable[[object], str] = None,
         **kwargs
 ) -> str:
     """

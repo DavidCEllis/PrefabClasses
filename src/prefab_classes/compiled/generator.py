@@ -1,6 +1,5 @@
 import ast
 from functools import cached_property
-from typing import Any, Optional, Union
 
 from ..constants import (
     PRE_INIT_FUNC,
@@ -16,7 +15,7 @@ from ..constants import (
 from ..dynamic import prefab
 from ..exceptions import CompiledPrefabError
 
-assignment_type = Union[ast.AnnAssign, ast.Assign]
+assignment_type = "ast.AnnAssign | ast.Assign"
 
 
 def _is_classvar(item):
@@ -54,14 +53,14 @@ def _is_kw_only_sentinel(item):
 @prefab
 class Field:
     name: str
-    field: Any
-    default: Any = None
-    default_factory: ast.Name = None
+    field: assignment_type
+    default: "None | ast.expr" = None
+    default_factory: "None | ast.expr" = None
     init_: bool = True
     repr_: bool = True
     kw_only: bool = False
     exclude_field: bool = False
-    annotation: Any = None
+    annotation: "None | ast.expr" = None
     attribute_func: bool = False
 
     def __prefab_post_init__(self):
@@ -75,7 +74,7 @@ class Field:
     def ast_attribute(
         self,
         obj_name="self",
-        ctx: Union[type[ast.Load], type[ast.Store]] = ast.Load,
+        ctx: "type[ast.Load] | type[ast.Store]" = ast.Load,
     ):
         """Get the ast.Attribute form for loading this attribute"""
         attrib = ast.Attribute(
@@ -141,7 +140,7 @@ class Field:
 class PrefabDetails:
     name: str
     node: ast.ClassDef
-    decorator: Any
+    decorator: ast.Call
     init: bool = True
     repr: bool = True
     eq: bool = True
@@ -155,12 +154,12 @@ class PrefabDetails:
     compile_slots: bool = False
 
     def __prefab_post_init__(self):
-        self._resolved_fields: Optional[dict[str, "Field"]] = None
-        self._prefab_map: Optional[dict[str, "PrefabDetails"]] = None
-        self._flag_kw_only: Optional[ast.AnnAssign] = None
-        self._defined_attr_names: Optional[set[str]] = None
-        self._func_arguments: Optional[dict[str, list[str]]] = None
-        self._resolved_func_arguments: Optional[dict[str, list[str]]] = None
+        self._resolved_fields: "None | dict[str, Field]" = None
+        self._prefab_map: "None | dict[str, 'PrefabDetails']" = None
+        self._flag_kw_only: "None | ast.AnnAssign" = None
+        self._defined_attr_names: "None | set[str]" = None
+        self._func_arguments: "None | dict[str, list[str]]" = None
+        self._resolved_func_arguments: "None | dict[str, list[str]]" = None
 
     @property
     def field_names(self):
@@ -255,12 +254,12 @@ class PrefabDetails:
         return value
 
     @cached_property
-    def fields(self):
+    def fields(self) -> dict[str, Field]:
         def funcid_or_none(value):
             """get .func.id or return None"""
             return getattr(getattr(value, "func", None), "id", None)
 
-        fields: list["Field"] = []
+        fields: list[Field] = []
 
         # If there are any plain assignments, annotated assignments that
         # do not use attribute() calls must be removed to match 'dynamic'
@@ -335,7 +334,7 @@ class PrefabDetails:
         return {field.name: field for field in fields}
 
     @cached_property
-    def parents(self):
+    def parents(self) -> list[str]:
         parents = [
             getattr(item, "id") for item in self.node.bases
             if getattr(item, "id") != "object"  # Ignore inheritance from object
@@ -362,7 +361,7 @@ class PrefabDetails:
         # order this means if a subclass replaces a value
         # it will remain in its original place in the init function
         # but with the new default value (or with the default removed)
-        new_fields: dict[str, "Field"] = {}
+        new_fields: dict[str, Field] = {}
         func_arguments: dict[str, list[str]] = {}
         for parent_name in reversed(self.parents):
             if parent_name not in prefabs:
@@ -381,7 +380,7 @@ class PrefabDetails:
         self._resolved_func_arguments = func_arguments
 
     @property
-    def resolved_fields(self):
+    def resolved_fields(self)  -> dict[str, Field]:
         if self._resolved_fields is None:
             raise CompiledPrefabError(
                 "Inheritance has not yet been resolved, "
@@ -390,7 +389,7 @@ class PrefabDetails:
         return self._resolved_fields
 
     @cached_property
-    def compile_flag(self):
+    def compile_flag(self) -> ast.Assign:
         compiled_flag = ast.Assign(
             targets=[ast.Name(id=COMPILED_FLAG, ctx=ast.Store())],
             value=ast.Constant(value=True),
@@ -398,7 +397,7 @@ class PrefabDetails:
         return compiled_flag
 
     @property
-    def fields_assignment(self):
+    def fields_assignment(self) -> ast.Assign:
         field_consts = [
             ast.Constant(value=field.name)
             for field in self.resolved_field_list
@@ -412,7 +411,7 @@ class PrefabDetails:
         return assignment
 
     @property
-    def slots_assignment(self):
+    def slots_assignment(self) -> ast.Assign:
         """Generate slots"""
         # Don't use resolved fields as we only want fields new to this class
         slot_consts = [ast.Constant(value=name) for name in self.field_names]
@@ -424,7 +423,7 @@ class PrefabDetails:
         return assignment
 
     @property
-    def match_args_assignment(self):
+    def match_args_assignment(self) -> ast.Assign:
 
         field_consts = [
             ast.Constant(value=field.name)
@@ -439,7 +438,7 @@ class PrefabDetails:
         return assignment
 
     @property
-    def init_method(self):
+    def init_method(self) -> ast.FunctionDef:
         funcname = "__init__" if self.init else PREFAB_INIT_FUNC
 
         posonlyargs = []  # Unused
@@ -571,7 +570,7 @@ class PrefabDetails:
         return init_func
 
     @property
-    def repr_method(self):
+    def repr_method(self) -> ast.FunctionDef:
         arguments = [ast.arg(arg="self")]
         args = ast.arguments(
             posonlyargs=[],
@@ -637,7 +636,7 @@ class PrefabDetails:
         return repr_func
 
     @property
-    def eq_method(self):
+    def eq_method(self) -> ast.FunctionDef:
 
         arguments = [ast.arg(arg="self"), ast.arg(arg="other")]
 
@@ -698,7 +697,7 @@ class PrefabDetails:
         return eq_func
 
     @property
-    def iter_method(self):
+    def iter_method(self) -> ast.FunctionDef:
 
         arguments = [ast.arg(arg="self")]
 
@@ -732,7 +731,7 @@ class PrefabDetails:
         return iter_func
 
     @property
-    def frozen_exception_import(self):
+    def frozen_exception_import(self) -> ast.ImportFrom:
         import_call = ast.ImportFrom(
             module='prefab_classes.exceptions',
             names=[ast.alias(name='FrozenPrefabError')],
@@ -742,7 +741,7 @@ class PrefabDetails:
         return import_call
 
     @property
-    def frozen_setattr_method(self):
+    def frozen_setattr_method(self) -> ast.FunctionDef:
         arguments = [
             ast.arg(arg="self"),
             ast.arg(arg="name"),
@@ -845,7 +844,7 @@ class PrefabDetails:
         return setattr_func
 
     @property
-    def frozen_delattr_method(self):
+    def frozen_delattr_method(self) -> ast.FunctionDef:
         arguments = [
             ast.arg(arg="self"),
             ast.arg(arg="name")
@@ -881,7 +880,7 @@ class PrefabDetails:
 
         return delattr_func
 
-    def generate_ast(self, prefabs: dict[str, "PrefabDetails"]):
+    def generate_ast(self, prefabs: dict[str, "PrefabDetails"]) -> None:
         """
         Generate the prefab code and insert it into the body of the class.
 
