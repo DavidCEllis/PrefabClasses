@@ -16,6 +16,7 @@ from ..dynamic import prefab
 from ..exceptions import CompiledPrefabError
 
 assignment_type = "ast.AnnAssign | ast.Assign"
+prefab_essentials = {DECORATOR_NAME, ATTRIBUTE_FUNCNAME}
 
 
 def _is_classvar(item):
@@ -960,13 +961,17 @@ class GatherPrefabs(ast.NodeVisitor):
     def __init__(self):
         super().__init__()
         self.prefabs: dict[str, PrefabDetails] = {}
+        self.dynamic_prefabs_present = False
+        self.import_statements: list[ast.ImportFrom] = []
 
-    def visit_ClassDef(self, node: ast.ClassDef):
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
         # Looking for a call to DECORATOR_NAME with COMPILE_ARGUMENT == True
         # Check for plain classes, these will have the decorator removed and no fields defined
         prefab_decorator = None
         for item in node.decorator_list:
-            if (
+            if isinstance(item, ast.Name) and item.id == DECORATOR_NAME:
+                self.dynamic_prefabs_present = True
+            elif (
                 isinstance(item, ast.Call)
                 and getattr(item.func, "id") == DECORATOR_NAME
             ):
@@ -977,6 +982,9 @@ class GatherPrefabs(ast.NodeVisitor):
                     ):
                         prefab_decorator = item
                         break
+                else:
+                    self.dynamic_prefabs_present = True
+
             if prefab_decorator:
                 break
 
@@ -993,6 +1001,11 @@ class GatherPrefabs(ast.NodeVisitor):
 
             self.prefabs[prefab_details.name] = prefab_details
 
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        if node.module == "prefab_classes":
+            as_imports = {item.name for item in node.names}
+            if as_imports.issubset(prefab_essentials):
+                self.import_statements.append(node)
 
 def compile_prefabs(source: str) -> ast.Module:
     """
@@ -1007,9 +1020,13 @@ def compile_prefabs(source: str) -> ast.Module:
 
     prefabs = gatherer.prefabs
 
-    # First gather field lists and parent class names
     for p in prefabs.values():
         p.generate_ast(prefabs)
+
+    if not gatherer.dynamic_prefabs_present:
+        for item in gatherer.import_statements:
+            tree.body.remove(item)
+
 
     ast.fix_missing_locations(tree)
 
