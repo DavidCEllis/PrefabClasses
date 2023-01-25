@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from prefab_classes.compiled import preview
+from prefab_classes.compiled import rewrite_to_py
 
 
 TEMPLATE_FILE = Path(__file__).parent / "_attribute_template.py"
@@ -15,19 +15,9 @@ GENERATED_NOTIFICATION = """
 """.strip()
 
 
-def generate_attribute_source():
-    code = preview(TEMPLATE_FILE, use_black=False)
-    # Delete the first line
-    code = "\n".join(code.split("\n")[1:])
-
-    source = f"{GENERATED_NOTIFICATION}\n\n{code}"
-    return source
-
-
-def write_attribute_module():
-    source = generate_attribute_source()
-    OUTPUT_FILE.write_text(source)
+def generate_source():
+    rewrite_to_py(TEMPLATE_FILE, OUTPUT_FILE, header_comment=GENERATED_NOTIFICATION)
 
 
 if __name__ == "__main__":
-    write_attribute_module()
+    generate_source()
