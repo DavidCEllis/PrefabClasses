@@ -49,7 +49,6 @@ def rewrite_to_py(
     *,
     header_comment: str = COMPILE_COMMENT,
     use_black: bool = False,
-    delete_firstlines: int = 0,
 ):
     """
     Parse a source python file and rewrite any @prefab(compile_prefab=True) decorated
@@ -65,7 +64,6 @@ def rewrite_to_py(
     :param dest_path: Destination output for compiled prefab code
     :param header_comment: String to insert at the top of the file
     :param use_black: Attempt to run black on the output to make it more readable
-    :param delete_firstlines: Delete the first N non-comment lines of the source in the output.
     """
     from .. import __version__
     from pathlib import Path
@@ -78,9 +76,6 @@ def rewrite_to_py(
     source = source_path.read_text(encoding="utf-8")
 
     compiled_source = rewrite_code(source, use_black=use_black)
-    if delete_firstlines > 0:
-        compiled_lines = compiled_source.split("\n")
-        compiled_source = "\n".join(compiled_lines[delete_firstlines:])
 
     with open(dest_path, mode="w", encoding="utf-8") as f:
         f.write(
