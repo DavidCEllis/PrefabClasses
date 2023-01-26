@@ -59,9 +59,10 @@ They are thoroughly tested, well supported packages. This is a new
 project and has not had the rigorous real world testing of either
 of those.
 
-This started as a way of investigating how modules like `attrs`
-and `dataclasses` work and evolved into an alternative method
-of performing a similar task.
+Initially this was just an investigation into how these modules worked,
+but evolved into a more performance oriented version of the same idea.
+I don't think that writing classes like this should impose a significant
+performance penalty over writing the classes by hand.
 
 For the short answer, here are the start and import times of various 
 modules on my development computer, with `python -c "pass"` as a baseline.
@@ -112,7 +113,6 @@ hyperfine -w 3 -r 100 --export-markdown result.md 'python dataclasses_example.py
 |:---|---:|---:|---:|---:|
 | `python dataclasses_example.py` | 47.0 ± 2.0 | 43.5 | 53.0 | 1.01 ± 0.06 |
 | `python prefab_example.py` | 46.4 ± 1.8 | 43.4 | 50.5 | 1.00 |
-
 
 For more detailed tests you can look at the
 [performance section of the docs](https://prefabclasses.readthedocs.io/en/latest/extra/performance_tests.html).
