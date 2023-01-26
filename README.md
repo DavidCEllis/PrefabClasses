@@ -104,7 +104,9 @@ for i in range(75):
     p.__init__, p.__repr__, p.__eq__
 ```
 
-`hyperfine -w 3 -r 100 --export-markdown result.md 'python dataclasses_example.py' 'python prefab_example.py'`
+```
+hyperfine -w 3 -r 100 --export-markdown result.md 'python dataclasses_example.py' 'python prefab_example.py'
+```
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
