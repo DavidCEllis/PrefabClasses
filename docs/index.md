@@ -15,6 +15,7 @@ why_not_dataclasses
 extra/dataclasses_differences
 extra/performance_tests
 api
+evil_imports
 ```
 
 Prefab Classes is a package that automatically generates basic class magic
