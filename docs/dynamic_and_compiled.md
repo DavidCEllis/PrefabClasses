@@ -3,7 +3,7 @@
 While effort has been put in to making dynamic and compiled prefabs
 behave in the same way, there are some ways in which this is not possible.
 
-Examples of usage can be seen in {doc}`getting_started`
+Examples of usage can be seen in {doc}`basic_usage`
 
 ## Dynamic Prefabs ##
 
