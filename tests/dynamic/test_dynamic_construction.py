@@ -4,15 +4,15 @@ from prefab_classes.constants import COMPILED_FLAG, FIELDS_ATTRIBUTE
 
 def test_build_basic_prefab():
     DynamicTestClass = build_prefab(
-        'DynamicTestClass',
+        "DynamicTestClass",
         [
-            ('x', attribute()),
-            ('y', attribute(default="test")),
-        ]
+            ("x", attribute()),
+            ("y", attribute(default="test")),
+        ],
     )
 
     assert getattr(DynamicTestClass, COMPILED_FLAG) is False
-    assert getattr(DynamicTestClass, FIELDS_ATTRIBUTE) == ['x', 'y']
+    assert getattr(DynamicTestClass, FIELDS_ATTRIBUTE) == ["x", "y"]
 
     inst = DynamicTestClass(12)
     inst_2 = DynamicTestClass(12)
@@ -45,16 +45,16 @@ def test_keep_dict_funcs():
         yield from ["ORIGINAL ITER"]
 
     method_dict = {
-        '__match_args__': __match_args__,
-        '__init__': __init__,
-        '__repr__': __repr__,
-        '__eq__': __eq__,
-        '__iter__': __iter__,
+        "__match_args__": __match_args__,
+        "__init__": __init__,
+        "__repr__": __repr__,
+        "__eq__": __eq__,
+        "__iter__": __iter__,
     }
 
     KeepDefinedMethods = build_prefab(
-        'KeepDefinedMethods',
-        [('x', attribute(default=-1)), ('y', attribute(default=-1))],
+        "KeepDefinedMethods",
+        [("x", attribute(default=-1)), ("y", attribute(default=-1))],
         bases=(),
         class_dict=method_dict,
         iter=True,

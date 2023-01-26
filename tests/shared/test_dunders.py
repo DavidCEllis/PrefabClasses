@@ -78,7 +78,7 @@ def test_dunders_not_overwritten(importer):
     y = DundersExist(1, 1)
 
     # __match_args__
-    assert DundersExist.__match_args__ == ("x", )
+    assert DundersExist.__match_args__ == ("x",)
 
     # __init__
     assert (x.x, x.y) == (0, 0)

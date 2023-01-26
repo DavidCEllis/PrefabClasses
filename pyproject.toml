@@ -41,7 +41,7 @@ build = ["build", "twine"]
 
 [tool.black]
 line-length = 88
-target-version = ['py311']
+target-version = ['py39']
 extend-exclude = '''
 (
     # Don't format generated code

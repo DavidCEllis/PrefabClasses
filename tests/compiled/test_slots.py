@@ -48,7 +48,7 @@ def test_slots_frozen():
     with prefab_compiler():
         from example_slots import FrozenExample
 
-    assert hasattr(FrozenExample, '__slots__')
+    assert hasattr(FrozenExample, "__slots__")
 
     # Make sure basics still work
     x = FrozenExample(x=0)

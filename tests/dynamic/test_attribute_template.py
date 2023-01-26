@@ -2,7 +2,9 @@ from pathlib import Path
 
 import prefab_classes.dynamic as dynamic_prefab
 from prefab_classes.compiled import get_sources_to_compare
-from prefab_classes.dynamic._attribute_class_maker.regenerate_attribute import GENERATED_NOTIFICATION
+from prefab_classes.dynamic._attribute_class_maker.regenerate_attribute import (
+    GENERATED_NOTIFICATION,
+)
 
 
 def test_template_matches_attribute():
@@ -12,9 +14,7 @@ def test_template_matches_attribute():
     output_file = prefab_dir / "_attribute_class.py"
 
     source_text, dest_text = get_sources_to_compare(
-        input_file,
-        output_file,
-        header_comment=GENERATED_NOTIFICATION
+        input_file, output_file, header_comment=GENERATED_NOTIFICATION
     )
 
     assert source_text == dest_text

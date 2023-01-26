@@ -57,11 +57,14 @@ class PrefabHacker(SourceFileLoader):
         try:
             # The fast way
             from _imp import source_hash
+            # noinspection PyProtectedMember
             from importlib._bootstrap_external import _RAW_MAGIC_NUMBER
+
             return source_hash(_RAW_MAGIC_NUMBER, hash_input_bytes)
         except ImportError:
             # The "correct" way
             from importlib.util import source_hash
+
             return source_hash(hash_input_bytes)
 
     # noinspection PyUnresolvedReferences,PyProtectedMember
@@ -204,6 +207,7 @@ class prefab_compiler:
         with prefab_compiler():
             import my_prefab_module
     """
+
     def __enter__(self):
         insert_prefab_importhook()
 

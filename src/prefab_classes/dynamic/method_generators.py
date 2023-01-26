@@ -131,9 +131,7 @@ def get_init_maker(*, init_name="__init__"):
                         func_arglist.append(item)
 
         assignments = []
-        processes = (
-            []
-        )  # post_init values still need default factories to be called.
+        processes = []  # post_init values still need default factories to be called.
         for name, attrib in cls._attributes.items():
             if attrib.init:
                 if attrib.default_factory is not NOTHING:
@@ -175,8 +173,10 @@ def get_init_maker(*, init_name="__init__"):
             post_init_call = ""
 
         code = (
-            f"def {init_name}(self, {args}):"
-            f"\n{pre_init_call}\n{body}\n{post_init_call}\n"
+            f"def {init_name}(self, {args}):\n"
+            f"{pre_init_call}\n"
+            f"{body}\n"
+            f"{post_init_call}\n"
         )
 
         return code
@@ -193,16 +193,19 @@ def get_repr_maker(will_eval=True):
         )
         if will_eval:
             code = (
-                f"def __repr__(self):\n    return f'{{type(self).__qualname__}}({content})'"
+                f"def __repr__(self):\n"
+                f"    return f'{{type(self).__qualname__}}({content})'"
             )
         else:
             if content:
                 code = (
-                    f"def __repr__(self):\n    return f'<prefab {{type(self).__qualname__}}; {content}>'"
+                    f"def __repr__(self):\n"
+                    f"    return f'<prefab {{type(self).__qualname__}}; {content}>'"
                 )
             else:
                 code = (
-                    f"def __repr__(self):\n    return f'<prefab {{type(self).__qualname__}}>'"
+                    f"def __repr__(self):\n"
+                    f"    return f'<prefab {{type(self).__qualname__}}>'"
                 )
         return code
 
@@ -253,7 +256,7 @@ def get_frozen_setattr_maker():
         # Dynamic prefabs are not slotted so it is possible to insert into the dict
         body = (
             f"    if hasattr(self, name) or name not in {field_set}:\n"
-            f"        raise FrozenPrefabError(\"Can not set or change values on frozen instances.\")\n"
+            f'        raise FrozenPrefabError("Can not set or change values on frozen instances.")\n'
             f"    else:\n"
             f"        self.__dict__[name] = value\n"
         )
@@ -267,12 +270,11 @@ def get_frozen_setattr_maker():
 
 def get_frozen_delattr_maker():
     def __delattr__(cls):
-        body = "    raise FrozenPrefabError(\"Can not delete attributes on frozen instances.\")\n"
+        body = '    raise FrozenPrefabError("Can not delete attributes on frozen instances.")\n'
         code = f"def __delattr__(self, name):\n{body}"
         return code
 
     return autogen(__delattr__, {"FrozenPrefabError": FrozenPrefabError})
-
 
 
 init_maker = get_init_maker()
