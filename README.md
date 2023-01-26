@@ -173,7 +173,7 @@ example_compiled.py
 # DO NOT MANUALLY EDIT THIS FILE
 # MODULE: example_compiled.py
 # GENERATED FROM: example.py
-# USING prefab_classes VERSION: v0.7.2
+# USING prefab_classes VERSION: v0.9.1
 
 from pathlib import Path
 
