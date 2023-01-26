@@ -217,7 +217,7 @@ class TestData:
                 for n in range(count):
                     f.write(self.class_template.format(n=n))
 
-            rewrite_to_py(tmpdef, self.def_file, delete_firstlines=1)
+            rewrite_to_py(tmpdef, self.def_file)
 
             tmpdef.unlink()
 
