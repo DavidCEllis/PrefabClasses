@@ -1,6 +1,6 @@
 import pytest
 
-from prefab_classes.compiled import prefab_compiler
+from prefab_classes_hook import prefab_compiler
 
 clear_module_names = [
     ("example_import_clear", "W"),

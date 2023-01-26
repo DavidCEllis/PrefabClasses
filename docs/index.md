@@ -6,14 +6,16 @@ maxdepth: 2
 caption: "Contents:"
 hidden: true
 ---
-getting_started
+basic_usage
+dynamic_construction
+compiled_construction
 pre_post_init
 dynamic_and_compiled
-dynamic_construction
 why_not_dataclasses
 extra/dataclasses_differences
 extra/performance_tests
 api
+evil_imports
 ```
 
 Prefab Classes is a package that automatically generates basic class magic

@@ -1,65 +1,23 @@
-# Getting Started #
-
-Prefab Classes is designed to work much like dataclasses, using different
-underlying methods. The basics should be familiar but there are some 
-differences documented here: {doc}`extra/dataclasses_differences`.
-
-The prefab_classes package provides two main functions in order to assist in
-instructing the module on how you want your classes to be written.
-
-The `@prefab` decorator instructs the module that the decorated class should
-be rewritten with some options for which methods to generate. The `attribute`
-function provides instructions for how to handle a specific field.
-
-## Basic Usage ##
-
-greeting.py
-```python
-from prefab_classes import prefab
-
-@prefab
-class Greeting:
-    greeting: str = "Hello"
-    
-    def greet(self):
-        print(f"{self.greeting} World!")
-```
-
-```python
->>> from greeting import Greeting
->>> hello = Greeting()
->>> hello.greet()
-Hello World!
-
->>> hello
-Greeting(greeting='Hello')
-
->>> hello.greeting
-'Hello'
-
->>> goodbye = Greeting("Goodbye")
->>> hello == goodbye
-False
-
->>> goodbye
-Greeting(greeting='Goodbye')
-```
-
-## Compilation ##
+# Compiling Prefabs #
 
 The `@prefab` decorator can also be used to intruct the module to compile
 the decorated class and generate the methods before the .py file is converted
 to a .pyc.
 
-This is done by parsing the AST of the module and creating the methods there
-instead of creating them dynamically when the code is running. This does pose
-some additional restrictions - for more detail see
-{doc}`dynamic_and_compiled`.
+## Using the importer ##
 
-In order for this to work correctly a special `# COMPILE_PREFABS` comment is
-needed at the top of the file. This directs the importer to process the 
-following file while any other files are passed on to Python's standard
-importer.
+In order to compile the classes 3 extra steps are needed:
+
+1. Provide `compile_prefab=True` to the `prefab` decorator
+2. Place a `# COMPILE_PREFABS` comment at the top of the .py file
+3. Insert the import hook from `prefab_classes_hook` before importing the module
+
+The compilation is done by parsing the AST of the module and creating the methods 
+there before the file is processed and converted to a .pyc. This means that after
+the first run where this compilation take place, provided the import hook is still
+used the .pyc will be imported with the classes already compiled.
+
+Here's an example of the usage:
 
 example.py
 ```python
@@ -85,7 +43,7 @@ class SettingsPath:
 Compiled prefabs can be used directly on import by using the prefab_compiler.
 
 ```python
-from prefab_classes.compiled import prefab_compiler
+from prefab_classes_hook import prefab_compiler
 
 with prefab_compiler():
     from example import SettingsPath
@@ -93,16 +51,19 @@ with prefab_compiler():
 # Use normally from here
 ```
 
+## Generate source code output ##
+
 Alternatively the module can be converted back from the AST to a python file.
 
-By default these are exactly as they return from the `ast.unparse` function,
+This is provided as there are some cases where a pre-processed source code file
+may be usable where an import hook is not. This is actually used inside 
+`prefab_classes` to generate the code for the `Attribute` class for dynamic
+prefabs.
+
+By default the output is exactly as returned from the `ast.unparse` function,
 comments are stripped by the AST parsing stage and all fomatting is lost.
 If `black` is installed there is the option to pass the code through the
-formatter to make it a little more readable. 
-
-The `delete_firstlines` argument is provided so a prefab_classes import 
-can be removed if placed at the top of the file, saving the import time 
-if the module is not needed in the compiled form.
+formatter to make it a little more readable.
 
 ```python
 >>> from prefab_classes.compiled import rewrite_to_py
@@ -116,7 +77,7 @@ example_compiled.py
 # DO NOT MANUALLY EDIT THIS FILE
 # MODULE: example_compiled.py
 # GENERATED FROM: example.py
-# USING prefab_classes VERSION: v0.7.2
+# USING prefab_classes VERSION: v0.9.1
 
 from pathlib import Path
 
@@ -161,3 +122,18 @@ class SettingsPath:
         file_types.extend([".md", ".html"])
         self.file_types = file_types
 ```
+
+## Additional Tools ##
+
+The `prefab_classes.compiled` module provides some additional tools for working with compiled classes.
+
+`preview` can be used to quickly show what a .py file will compile to. This is intended to be used as 
+a quick checking tool when creating compiled prefabs or when learning how to use the module. It 
+automatically defaults to using `black` formatting if the module is installed to make the output
+more readable in the terminal.
+
+`get_sources_to_compare` is a tool intended to assist in testing. If prefab_classes is being used
+to generate source files via `rewrite_to_py` then `get_sources_to_compare` takes the same arguments
+and gives you the code for both the original file converted and what you currently have as your
+output file. This is useful as a check to make sure you haven't changed the 'template' code without
+regenerating the output.

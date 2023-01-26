@@ -3,9 +3,16 @@ Hook into the import mechanism and sneakily translate our modules before python 
 """
 import sys
 
-from importlib.machinery import PathFinder, SourceFileLoader
+# We probably shouldn't be importing from here, but it also halves the import time.
+try:
+    from _frozen_importlib_external import PathFinder, SourceFileLoader
+except ImportError:
+    from importlib.machinery import PathFinder, SourceFileLoader
 
-from .. import PREFAB_MAGIC_BYTES
+from . import PREFAB_MAGIC_BYTES
+
+
+__all__ = ["prefab_compiler", "insert_prefab_importhook", "remove_prefab_importhook"]
 
 
 HOOK_REWRITE = "# COMPILE_PREFABS"
@@ -39,7 +46,9 @@ class PrefabHacker(SourceFileLoader):
 
     def source_to_code(self, data, path, *, _optimize=-1):
         # Only import the generator code if it is actually going to be used
-        from .generator import compile_prefabs
+        from prefab_classes.compiled.generator import compile_prefabs
+        # Here we don't mind that importlib.util is slow to import
+        # as we only do this on the compiling run
         from importlib.util import decode_source
 
         src = decode_source(data)
@@ -57,8 +66,7 @@ class PrefabHacker(SourceFileLoader):
         try:
             # The fast way
             from _imp import source_hash
-            # noinspection PyProtectedMember
-            from importlib._bootstrap_external import _RAW_MAGIC_NUMBER
+            from _frozen_importlib_external import _RAW_MAGIC_NUMBER
 
             return source_hash(_RAW_MAGIC_NUMBER, hash_input_bytes)
         except ImportError:
@@ -85,7 +93,10 @@ class PrefabHacker(SourceFileLoader):
         bytecode, set_data must also be implemented.
         """
         # These imports are all needed just for this function.
-        from importlib._bootstrap_external import (
+        # Unlike most of the other imports I don't know if there's a "right" place
+        # to get these from. They are also in _bootstrap_external but that's already
+        # wrong and slower anyway.
+        from _frozen_importlib_external import (
             cache_from_source,
             _classify_pyc,
             _validate_hash_pyc,
@@ -168,7 +179,6 @@ class PrefabFinder(PathFinder):
 def insert_prefab_importhook():
     """
     Add the prefab import hook to sys.meta_path
-    :return:
     """
     # Don't insert the prefab finder if it is already in the list
     if PrefabFinder in sys.meta_path:
@@ -186,6 +196,9 @@ def insert_prefab_importhook():
 
 
 def remove_prefab_importhook():
+    """
+    Remove the prefab import hook from sys.meta_path
+    """
     try:
         sys.meta_path.remove(PrefabFinder)
     except ValueError:  # PrefabFinder not in the list

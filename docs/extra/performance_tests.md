@@ -42,18 +42,18 @@ scaling significantly different between the two machines.
 Python 3.11.1 (main, Dec 22 2022, 12:04:25) [GCC 9.4.0]
 attrs 22.2.0
 pydantic 1.10.2
-prefab_classes v0.7.8a1
+prefab_classes v0.9.1
 ```
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `python -c "pass"` | 11.3 ± 0.3 | 10.9 | 12.4 | 1.00 |
-| `python -c "import collections"` | 13.3 ± 0.3 | 12.8 | 14.2 | 1.18 ± 0.04 |
-| `python -c "import typing"` | 22.6 ± 0.4 | 22.0 | 24.8 | 2.01 ± 0.06 |
-| `python -c "import dataclasses"` | 30.1 ± 0.5 | 29.3 | 31.6 | 2.67 ± 0.07 |
-| `python -c "import attrs"` | 48.6 ± 0.7 | 47.3 | 52.1 | 4.31 ± 0.12 |
-| `python -c "import pydantic"` | 75.6 ± 0.7 | 74.4 | 79.6 | 6.71 ± 0.16 |
-| `python -c "import prefab_classes"` | 13.3 ± 0.2 | 12.9 | 14.1 | 1.18 ± 0.03 |
+| `python -c "pass"` | 11.3 ± 0.2 | 11.0 | 12.0 | 1.00 |
+| `python -c "import collections"` | 13.3 ± 0.2 | 13.0 | 14.0 | 1.18 ± 0.03 |
+| `python -c "import typing"` | 22.7 ± 0.6 | 22.1 | 25.9 | 2.01 ± 0.07 |
+| `python -c "import dataclasses"` | 30.2 ± 0.6 | 29.2 | 32.7 | 2.67 ± 0.07 |
+| `python -c "import attrs"` | 48.4 ± 0.8 | 47.4 | 51.8 | 4.28 ± 0.11 |
+| `python -c "import pydantic"` | 75.3 ± 0.9 | 74.2 | 78.6 | 6.66 ± 0.16 |
+| `python -c "import prefab_classes"` | 13.1 ± 0.2 | 12.8 | 13.6 | 1.16 ± 0.03 |
 
 
 #### Macbook ####
@@ -62,18 +62,18 @@ prefab_classes v0.7.8a1
 Python 3.11.1 (main, Dec  7 2022, 05:32:48) [Clang 13.0.0 (clang-1300.0.29.30)]
 attrs 22.2.0
 pydantic 1.10.2
-prefab_classes v0.7.8a1
+prefab_classes v0.9.1
 ```
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `python -c "pass"` | 26.4 ± 1.2 | 24.2 | 29.8 | 1.00 |
-| `python -c "import collections"` | 28.8 ± 0.9 | 26.8 | 31.0 | 1.09 ± 0.06 |
-| `python -c "import typing"` | 40.4 ± 1.2 | 38.4 | 44.6 | 1.53 ± 0.08 |
-| `python -c "import dataclasses"` | 49.8 ± 1.3 | 47.1 | 53.4 | 1.89 ± 0.10 |
-| `python -c "import attrs"` | 68.6 ± 1.2 | 66.4 | 72.9 | 2.60 ± 0.13 |
-| `python -c "import pydantic"` | 97.0 ± 1.2 | 94.2 | 100.4 | 3.67 ± 0.17 |
-| `python -c "import prefab_classes"` | 27.4 ± 0.5 | 26.4 | 28.6 | 1.04 ± 0.05 |
+| `python -c "pass"` | 25.5 ± 1.4 | 23.6 | 31.8 | 1.00 |
+| `python -c "import collections"` | 27.4 ± 0.8 | 25.8 | 30.3 | 1.07 ± 0.07 |
+| `python -c "import typing"` | 37.6 ± 0.6 | 36.3 | 39.6 | 1.47 ± 0.08 |
+| `python -c "import dataclasses"` | 45.3 ± 1.1 | 43.7 | 50.7 | 1.78 ± 0.11 |
+| `python -c "import attrs"` | 63.7 ± 1.0 | 62.0 | 67.2 | 2.49 ± 0.14 |
+| `python -c "import pydantic"` | 98.3 ± 2.4 | 94.3 | 111.0 | 3.85 ± 0.23 |
+| `python -c "import prefab_classes"` | 27.0 ± 1.0 | 25.3 | 32.3 | 1.06 ± 0.07 |
 
 
 ### Class Contruction ###
@@ -119,22 +119,22 @@ should be the same speed as regular python classes, as that's what they are.
 Python 3.11.1 (main, Dec 22 2022, 12:04:25) [GCC 9.4.0]
 attrs 22.2.0
 pydantic 1.10.2
-prefab_classes v0.7.8a1
+prefab_classes v0.9.1
 ```
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `python -c "pass"` | 11.3 ± 0.3 | 10.9 | 12.0 | 1.00 |
-| `python hyperfine_importers/native_classes_timer.py` | 13.2 ± 0.4 | 12.7 | 14.8 | 1.17 ± 0.04 |
-| `python hyperfine_importers/namedtuples_timer.py` | 21.7 ± 0.4 | 21.0 | 23.9 | 1.92 ± 0.06 |
-| `python hyperfine_importers/typed_namedtuples_timer.py` | 35.9 ± 0.9 | 34.9 | 43.7 | 3.18 ± 0.11 |
-| `python hyperfine_importers/dataclasses_timer.py` | 74.1 ± 0.7 | 73.0 | 78.8 | 6.56 ± 0.16 |
-| `python hyperfine_importers/attrs_timer.py` | 121.4 ± 1.5 | 119.6 | 128.9 | 10.75 ± 0.28 |
-| `python hyperfine_importers/pydantic_timer.py` | 139.1 ± 1.9 | 136.3 | 151.0 | 12.32 ± 0.32 |
-| `python hyperfine_importers/prefab_classes_timer.py` | 17.5 ± 0.4 | 17.0 | 19.5 | 1.55 ± 0.05 |
-| `python hyperfine_importers/prefab_eval_timer.py` | 44.2 ± 3.7 | 42.4 | 74.1 | 3.91 ± 0.34 |
-| `python hyperfine_importers/compiled_prefab_timer.py` | 16.3 ± 0.6 | 15.7 | 20.3 | 1.45 ± 0.06 |
-| `python hyperfine_importers/precompiled_prefab_timer.py` | 13.3 ± 0.4 | 12.9 | 14.7 | 1.18 ± 0.04 |
+| `python -c "pass"` | 11.3 ± 0.3 | 11.0 | 12.2 | 1.00 |
+| `python hyperfine_importers/native_classes_timer.py` | 13.1 ± 0.3 | 12.8 | 14.0 | 1.16 ± 0.03 |
+| `python hyperfine_importers/namedtuples_timer.py` | 21.5 ± 0.5 | 21.1 | 24.3 | 1.91 ± 0.06 |
+| `python hyperfine_importers/typed_namedtuples_timer.py` | 35.4 ± 0.5 | 34.6 | 38.5 | 3.13 ± 0.08 |
+| `python hyperfine_importers/dataclasses_timer.py` | 73.4 ± 0.8 | 72.4 | 76.5 | 6.50 ± 0.16 |
+| `python hyperfine_importers/attrs_timer.py` | 119.9 ± 1.7 | 117.8 | 126.3 | 10.62 ± 0.28 |
+| `python hyperfine_importers/pydantic_timer.py` | 136.6 ± 1.9 | 134.6 | 149.3 | 12.10 ± 0.32 |
+| `python hyperfine_importers/prefab_classes_timer.py` | 17.2 ± 0.5 | 16.8 | 19.7 | 1.52 ± 0.06 |
+| `python hyperfine_importers/prefab_eval_timer.py` | 42.9 ± 0.9 | 41.8 | 48.2 | 3.80 ± 0.12 |
+| `python hyperfine_importers/compiled_prefab_timer.py` | 14.0 ± 0.3 | 13.6 | 15.2 | 1.24 ± 0.04 |
+| `python hyperfine_importers/precompiled_prefab_timer.py` | 13.3 ± 0.3 | 12.9 | 15.4 | 1.18 ± 0.04 |
 
 
 #### Macbook ####
@@ -148,17 +148,17 @@ prefab_classes v0.7.8a1
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `python -c "pass"` | 24.7 ± 1.7 | 22.9 | 32.2 | 1.00 |
-| `python hyperfine_importers/native_classes_timer.py` | 25.8 ± 0.8 | 24.7 | 28.0 | 1.04 ± 0.08 |
-| `python hyperfine_importers/namedtuples_timer.py` | 34.0 ± 1.5 | 31.9 | 37.5 | 1.37 ± 0.11 |
-| `python hyperfine_importers/typed_namedtuples_timer.py` | 48.1 ± 1.9 | 45.4 | 55.9 | 1.95 ± 0.15 |
-| `python hyperfine_importers/dataclasses_timer.py` | 81.6 ± 0.8 | 80.6 | 86.4 | 3.30 ± 0.23 |
-| `python hyperfine_importers/attrs_timer.py` | 123.2 ± 2.2 | 121.1 | 134.2 | 4.98 ± 0.35 |
-| `python hyperfine_importers/pydantic_timer.py` | 141.3 ± 2.0 | 139.1 | 153.5 | 5.71 ± 0.40 |
-| `python hyperfine_importers/prefab_classes_timer.py` | 29.8 ± 0.9 | 28.6 | 32.3 | 1.20 ± 0.09 |
-| `python hyperfine_importers/prefab_eval_timer.py` | 52.0 ± 1.2 | 50.2 | 58.1 | 2.10 ± 0.15 |
-| `python hyperfine_importers/compiled_prefab_timer.py` | 29.1 ± 0.8 | 28.0 | 30.9 | 1.18 ± 0.09 |
-| `python hyperfine_importers/precompiled_prefab_timer.py` | 25.8 ± 0.8 | 24.8 | 27.7 | 1.04 ± 0.08 |
+| `python -c "pass"` | 25.4 ± 1.1 | 23.6 | 28.4 | 1.00 |
+| `python hyperfine_importers/native_classes_timer.py` | 27.0 ± 0.7 | 25.7 | 29.5 | 1.06 ± 0.05 |
+| `python hyperfine_importers/namedtuples_timer.py` | 35.6 ± 1.4 | 33.2 | 42.2 | 1.40 ± 0.08 |
+| `python hyperfine_importers/typed_namedtuples_timer.py` | 49.4 ± 1.6 | 47.0 | 57.6 | 1.95 ± 0.10 |
+| `python hyperfine_importers/dataclasses_timer.py` | 84.7 ± 0.9 | 83.0 | 87.7 | 3.34 ± 0.15 |
+| `python hyperfine_importers/attrs_timer.py` | 127.7 ± 1.4 | 125.4 | 134.9 | 5.03 ± 0.22 |
+| `python hyperfine_importers/pydantic_timer.py` | 147.5 ± 2.8 | 143.6 | 160.9 | 5.82 ± 0.27 |
+| `python hyperfine_importers/prefab_classes_timer.py` | 31.0 ± 0.9 | 29.2 | 35.0 | 1.22 ± 0.06 |
+| `python hyperfine_importers/prefab_eval_timer.py` | 53.8 ± 1.0 | 51.7 | 55.7 | 2.12 ± 0.10 |
+| `python hyperfine_importers/compiled_prefab_timer.py` | 27.9 ± 0.7 | 26.4 | 29.7 | 1.10 ± 0.05 |
+| `python hyperfine_importers/precompiled_prefab_timer.py` | 27.2 ± 0.8 | 25.4 | 30.4 | 1.07 ± 0.06 |
 
 
 ## json tests ##
