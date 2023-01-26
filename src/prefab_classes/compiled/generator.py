@@ -337,7 +337,8 @@ class PrefabDetails:
     @cached_property
     def parents(self) -> list[str]:
         parents = [
-            getattr(item, "id") for item in self.node.bases
+            getattr(item, "id")
+            for item in self.node.bases
             if getattr(item, "id") != "object"  # Ignore inheritance from object
         ]
         if self.name in parents:
@@ -381,7 +382,7 @@ class PrefabDetails:
         self._resolved_func_arguments = func_arguments
 
     @property
-    def resolved_fields(self)  -> dict[str, Field]:
+    def resolved_fields(self) -> dict[str, Field]:
         if self._resolved_fields is None:
             raise CompiledPrefabError(
                 "Inheritance has not yet been resolved, "
@@ -586,7 +587,7 @@ class PrefabDetails:
         first_field = True
         for field in self.resolved_field_list:
             if use_eval_repr and (field.exclude_field or (field.repr_ ^ field.init_)):
-                use_eval_repr=False
+                use_eval_repr = False
 
             if field.repr_ and not field.exclude_field:
                 if first_field:
@@ -605,7 +606,7 @@ class PrefabDetails:
                 self.ast_qualname_str,
                 ast.Constant(value="("),
                 *field_strings,
-                ast.Constant(value=")")
+                ast.Constant(value=")"),
             ]
         else:
             if field_strings:
@@ -614,7 +615,7 @@ class PrefabDetails:
                     self.ast_qualname_str,
                     ast.Constant(value="; "),
                     *field_strings,
-                    ast.Constant(value=">")
+                    ast.Constant(value=">"),
                 ]
             else:
                 field_strings = [
@@ -734,20 +735,16 @@ class PrefabDetails:
     @property
     def frozen_exception_import(self) -> ast.ImportFrom:
         import_call = ast.ImportFrom(
-            module='prefab_classes.exceptions',
-            names=[ast.alias(name='FrozenPrefabError')],
-            level=0
+            module="prefab_classes.exceptions",
+            names=[ast.alias(name="FrozenPrefabError")],
+            level=0,
         )
 
         return import_call
 
     @property
     def frozen_setattr_method(self) -> ast.FunctionDef:
-        arguments = [
-            ast.arg(arg="self"),
-            ast.arg(arg="name"),
-            ast.arg(arg="value")
-        ]
+        arguments = [ast.arg(arg="self"), ast.arg(arg="name"), ast.arg(arg="value")]
         args = ast.arguments(
             posonlyargs=[],
             args=arguments,
@@ -757,29 +754,26 @@ class PrefabDetails:
         )
 
         fields_set = ast.Set(
-            elts=[
-                ast.Constant(value=name)
-                for name in self.resolved_field_names
-            ]
+            elts=[ast.Constant(value=name) for name in self.resolved_field_names]
         )
 
         test_conditions = [
             ast.Call(
-                func=ast.Name(id='hasattr', ctx=ast.Load()),
-                args=[ast.Name(id='self', ctx=ast.Load()), ast.Name(id='name', ctx=ast.Load())],
-                keywords=[]
+                func=ast.Name(id="hasattr", ctx=ast.Load()),
+                args=[
+                    ast.Name(id="self", ctx=ast.Load()),
+                    ast.Name(id="name", ctx=ast.Load()),
+                ],
+                keywords=[],
             ),
             ast.Compare(
                 left=ast.Name(id="name", ctx=ast.Load()),
                 ops=[ast.NotIn()],
-                comparators=[fields_set]
-            )
+                comparators=[fields_set],
+            ),
         ]
 
-        bool_test = ast.BoolOp(
-            op=ast.Or(),
-            values=test_conditions
-        )
+        bool_test = ast.BoolOp(op=ast.Or(), values=test_conditions)
 
         if self.compile_slots:
             else_body = [
@@ -787,15 +781,15 @@ class PrefabDetails:
                     value=ast.Call(
                         func=ast.Attribute(
                             value=ast.Name(id="object", ctx=ast.Load()),
-                            attr='__setattr__',
-                            ctx=ast.Load()
+                            attr="__setattr__",
+                            ctx=ast.Load(),
                         ),
                         args=[
-                            ast.Name(id='self', ctx=ast.Load()),
-                            ast.Name(id='name', ctx=ast.Load()),
-                            ast.Name(id='value', ctx=ast.Load())
+                            ast.Name(id="self", ctx=ast.Load()),
+                            ast.Name(id="name", ctx=ast.Load()),
+                            ast.Name(id="value", ctx=ast.Load()),
                         ],
-                        keywords=[]
+                        keywords=[],
                     )
                 )
             ]
@@ -804,14 +798,15 @@ class PrefabDetails:
                 targets=[
                     ast.Subscript(
                         value=ast.Attribute(
-                            value=ast.Name(id='self', ctx=ast.Load()),
-                            attr='__dict__',
-                            ctx=ast.Load()
+                            value=ast.Name(id="self", ctx=ast.Load()),
+                            attr="__dict__",
+                            ctx=ast.Load(),
                         ),
-                        slice=ast.Name(id='name', ctx=ast.Load()),
-                        ctx=ast.Store())
+                        slice=ast.Name(id="name", ctx=ast.Load()),
+                        ctx=ast.Store(),
+                    )
                 ],
-                value=ast.Name(id='value', ctx=ast.Load())
+                value=ast.Name(id="value", ctx=ast.Load()),
             )
             else_body = [assign]
 
@@ -819,20 +814,18 @@ class PrefabDetails:
             self.frozen_exception_import,
             ast.Raise(
                 exc=ast.Call(
-                    func=ast.Name(id='FrozenPrefabError', ctx=ast.Load()),
-                    args=[ast.Constant(value='Can not set or change values on frozen instances.')],
-                    keywords=[]
+                    func=ast.Name(id="FrozenPrefabError", ctx=ast.Load()),
+                    args=[
+                        ast.Constant(
+                            value="Can not set or change values on frozen instances."
+                        )
+                    ],
+                    keywords=[],
                 )
-            )
+            ),
         ]
 
-        body = [
-            ast.If(
-                test=bool_test,
-                body=cond_body,
-                orelse=else_body
-            )
-        ]
+        body = [ast.If(test=bool_test, body=cond_body, orelse=else_body)]
 
         setattr_func = ast.FunctionDef(
             name="__setattr__",
@@ -846,10 +839,7 @@ class PrefabDetails:
 
     @property
     def frozen_delattr_method(self) -> ast.FunctionDef:
-        arguments = [
-            ast.arg(arg="self"),
-            ast.arg(arg="name")
-        ]
+        arguments = [ast.arg(arg="self"), ast.arg(arg="name")]
 
         args = ast.arguments(
             posonlyargs=[],
@@ -861,14 +851,17 @@ class PrefabDetails:
 
         body = [
             self.frozen_exception_import,
-
             ast.Raise(
                 exc=ast.Call(
-                    func=ast.Name(id='FrozenPrefabError', ctx=ast.Load()),
-                    args=[ast.Constant(value='Can not delete attributes on frozen instances.')],
-                    keywords=[]
+                    func=ast.Name(id="FrozenPrefabError", ctx=ast.Load()),
+                    args=[
+                        ast.Constant(
+                            value="Can not delete attributes on frozen instances."
+                        )
+                    ],
+                    keywords=[],
                 ),
-            )
+            ),
         ]
 
         delattr_func = ast.FunctionDef(
@@ -1007,6 +1000,7 @@ class GatherPrefabs(ast.NodeVisitor):
             if as_imports.issubset(prefab_essentials):
                 self.import_statements.append(node)
 
+
 def compile_prefabs(source: str) -> ast.Module:
     """
     Generate the AST tree with the modified code for prefab classes
@@ -1026,7 +1020,6 @@ def compile_prefabs(source: str) -> ast.Module:
     if not gatherer.dynamic_prefabs_present:
         for item in gatherer.import_statements:
             tree.body.remove(item)
-
 
     ast.fix_missing_locations(tree)
 

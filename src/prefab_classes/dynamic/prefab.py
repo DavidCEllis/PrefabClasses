@@ -229,7 +229,9 @@ def _make_prefab(
         pass
     else:
         if func_code.co_posonlyargcount > 0:
-            raise LivePrefabError("Positional only arguments are not supported in pre or post init functions.")
+            raise LivePrefabError(
+                "Positional only arguments are not supported in pre or post init functions."
+            )
 
         argcount = func_code.co_argcount + func_code.co_kwonlyargcount
         arglist = func_code.co_varnames[:argcount]
@@ -248,7 +250,9 @@ def _make_prefab(
         pass
     else:
         if func_code.co_posonlyargcount > 0:
-            raise LivePrefabError("Positional only arguments are not supported in pre or post init functions.")
+            raise LivePrefabError(
+                "Positional only arguments are not supported in pre or post init functions."
+            )
 
         argcount = func_code.co_argcount + func_code.co_kwonlyargcount
         arglist = func_code.co_varnames[:argcount]

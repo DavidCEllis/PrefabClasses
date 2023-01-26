@@ -2,6 +2,7 @@
 # However the dataclass_transform annotation is useful
 # It's copied here
 
+
 def dataclass_transform(
     *,
     eq_default: bool = True,
@@ -56,6 +57,7 @@ def dataclass_transform(
     It has no other runtime effect.
     See PEP 681 for more details.
     """
+
     def decorator(cls_or_fn):
         cls_or_fn.__dataclass_transform__ = {
             "eq_default": eq_default,
@@ -65,4 +67,5 @@ def dataclass_transform(
             "kwargs": kwargs,
         }
         return cls_or_fn
+
     return decorator

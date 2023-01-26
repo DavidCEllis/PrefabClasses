@@ -45,7 +45,6 @@ class Settings:
 Into this:
 
 ```python
-from prefab_classes import prefab
 from pathlib import Path
 from typing import Union
 

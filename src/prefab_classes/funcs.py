@@ -43,14 +43,16 @@ def _as_dict_cache(cls, excludes=None):
         raise TypeError(f"inst should be a prefab instance, not {cls}")
 
     if excludes:
-        vals = ", ".join(f"'{item}': obj.{item}" for item in attrib_names if item not in excludes)
+        vals = ", ".join(
+            f"'{item}': obj.{item}" for item in attrib_names if item not in excludes
+        )
     else:
         vals = ", ".join(f"'{item}': obj.{item}" for item in attrib_names)
     out_dict = f"{{{vals}}}"
     funcdef = f"def asdict(obj): return {out_dict}"
     globs, locs = {}, {}
     exec(funcdef, globs, locs)
-    method = locs['asdict']
+    method = locs["asdict"]
     return method
 
 
@@ -75,13 +77,17 @@ def _as_dict_json_wrapper(excludes: "None | tuple[str, ...]" = None):
         try:
             return _as_dict_cache(type(inst), excludes)(inst)
         except TypeError:
-            raise TypeError(f"Object of type {type(inst).__name__} is not JSON serializable")
+            raise TypeError(
+                f"Object of type {type(inst).__name__} is not JSON serializable"
+            )
+
     return _as_dict_json_inner
 
 
 @lru_cache
 def _get_json_encoder(excludes: "None | tuple[str, ...]" = None):
     import json
+
     return json.JSONEncoder(default=_as_dict_json_wrapper(excludes))
 
 
@@ -95,6 +101,7 @@ def _merge_defaults(*defaults):
     :param defaults: 'default' functions for json.dumps
     :return: merged default function
     """
+
     def default(o):
         for func in defaults:
             try:
@@ -102,16 +109,19 @@ def _merge_defaults(*defaults):
             except TypeError:
                 pass
         else:
-            raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
+            raise TypeError(
+                f"Object of type {type(o).__name__} is not JSON serializable"
+            )
+
     return default
 
 
 def to_json(
-        inst,
-        *,
-        excludes: "None | tuple[str, ...]" = None,
-        dumps_func: Callable[[object], str] = None,
-        **kwargs
+    inst,
+    *,
+    excludes: "None | tuple[str, ...]" = None,
+    dumps_func: Callable[[object], str] = None,
+    **kwargs,
 ) -> str:
     """
     Output the class attributes as JSON
@@ -131,10 +141,11 @@ def to_json(
         encoder = _get_json_encoder(excludes)
         return encoder.encode(inst)
     else:
-        default = kwargs.pop('default', None)
+        default = kwargs.pop("default", None)
 
         if dumps_func is None:
             import json
+
             dumps_func = json.dumps
 
         dict_converter = _as_dict_json_wrapper(excludes)
