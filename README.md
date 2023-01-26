@@ -4,9 +4,14 @@
 Writes the class boilerplate code so you don't have to. 
 Yet another variation on attrs/dataclasses.
 
-Either written lazily when you first access the methods or
-eagerly when the class is compiled into a .pyc. Can optionally
-be made to rewrite .py source code with plain classes.
+Unlike `dataclasses` or `attrs`, `prefab_classes` has a
+focus on performance and startup time in particular.
+This includes trying to minimise the impact of importing
+the module itself.
+
+Classes are written lazily when you first access the methods or
+eagerly when the module is compiled into a .pyc or rewritten out
+to a new .py source file.
 
 The dynamic method of evaluating lazily is more flexible, while
 the compiled method is faster (once the .pyc file has been generated).
