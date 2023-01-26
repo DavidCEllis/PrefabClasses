@@ -5,7 +5,7 @@ import sys
 
 from importlib.machinery import PathFinder, SourceFileLoader
 
-from .. import PREFAB_MAGIC_BYTES
+from . import PREFAB_MAGIC_BYTES
 
 
 HOOK_REWRITE = "# COMPILE_PREFABS"
@@ -39,7 +39,7 @@ class PrefabHacker(SourceFileLoader):
 
     def source_to_code(self, data, path, *, _optimize=-1):
         # Only import the generator code if it is actually going to be used
-        from .generator import compile_prefabs
+        from prefab_classes.compiled.generator import compile_prefabs
         from importlib.util import decode_source
 
         src = decode_source(data)
