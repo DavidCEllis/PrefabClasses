@@ -200,7 +200,7 @@ class TestData:
     def write_perf_importer(self):
         if self.use_compile_importer:
             data = (
-                f"from prefab_classes_compiler import prefab_compiler\n"
+                f"from prefab_classes_hook import prefab_compiler\n"
                 f"with prefab_compiler():\n"
                 f"    import class_definitions.{self.import_name}_data\n"
             )
