@@ -127,7 +127,7 @@ Compile to a new .py file using rewrite_to_py:
 >>> rewrite_to_py('example.py', 'example_compiled.py', use_black=True)
 ```
 
-Using black to format for ease of reading and deleting the now unused prefab imports.
+Using black to format for ease of reading.
 
 example_compiled.py
 ```python
