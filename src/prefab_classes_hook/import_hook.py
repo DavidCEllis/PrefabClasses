@@ -8,6 +8,9 @@ from importlib.machinery import PathFinder, SourceFileLoader
 from . import PREFAB_MAGIC_BYTES
 
 
+__all__ = ["prefab_compiler", "insert_prefab_importhook", "remove_prefab_importhook"]
+
+
 HOOK_REWRITE = "# COMPILE_PREFABS"
 
 
@@ -168,7 +171,6 @@ class PrefabFinder(PathFinder):
 def insert_prefab_importhook():
     """
     Add the prefab import hook to sys.meta_path
-    :return:
     """
     # Don't insert the prefab finder if it is already in the list
     if PrefabFinder in sys.meta_path:
@@ -186,6 +188,9 @@ def insert_prefab_importhook():
 
 
 def remove_prefab_importhook():
+    """
+    Remove the prefab import hook from sys.meta_path
+    """
     try:
         sys.meta_path.remove(PrefabFinder)
     except ValueError:  # PrefabFinder not in the list
