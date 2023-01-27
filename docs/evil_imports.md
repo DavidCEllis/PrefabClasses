@@ -258,7 +258,9 @@ As shown earlier `_collections_abc` is already imported by `site`
 ## importlib.util and importlib.machinery ##
 
 In some places in the code you'll see that I've ignored the lovely
+
 **This module is NOT meant to be directly imported!**
+
 warning at the top of `_bootstrap_external.py` and directly imported
 its frozen version `_frozen_importlib_external`. This is done both
 because `importlib.util` is far too slow of an import and as it's 
