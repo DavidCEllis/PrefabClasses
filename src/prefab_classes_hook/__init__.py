@@ -5,7 +5,7 @@ import sys
 
 # We probably shouldn't be importing from here, but it also halves the import time.
 try:
-    from _frozen_importlib_external import PathFinder, SourceFileLoader
+    from _frozen_importlib_external import PathFinder, SourceFileLoader  # type: ignore
 except ImportError:
     from importlib.machinery import PathFinder, SourceFileLoader
 
@@ -70,10 +70,10 @@ class PrefabHacker(SourceFileLoader):
 
             try:
                 # Fastest
-                from _frozen_importlib_external import _RAW_MAGIC_NUMBER
+                from _frozen_importlib_external import _RAW_MAGIC_NUMBER  # type: ignore
             except ImportError:
                 # Slightly slower as importlib gets imported
-                from importlib._bootstrap_external import _RAW_MAGIC_NUMBER
+                from importlib._bootstrap_external import _RAW_MAGIC_NUMBER  # type: ignore
 
             return source_hash(_RAW_MAGIC_NUMBER, hash_input_bytes)
         except ImportError:

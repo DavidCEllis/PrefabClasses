@@ -321,7 +321,7 @@ def _make_prefab(
 
 @dataclass_transform(field_specifiers=(attribute,))
 def prefab(
-    cls: type = None,
+    cls: "type | None" = None,
     *,
     init=True,
     repr=True,
