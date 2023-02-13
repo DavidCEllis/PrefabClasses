@@ -31,7 +31,7 @@ version = {attr = "prefab_classes.__version__"}
 
 [project.optional-dependencies]
 testing = ["pytest", "pytest-cov"]
-performance = ["attrs", "pydantic"]
+performance = ["attrs", "pydantic", "cattrs"]
 docs = ["sphinx", "myst-parser", "sphinx_rtd_theme"]
 build = ["build", "twine"]
 
