@@ -9,8 +9,8 @@ try:
 except ImportError:
     from importlib.machinery import PathFinder, SourceFileLoader
 
-__version__ = "v0.9.1"
-PREFAB_MAGIC_BYTES = b"PREFAB_CLASSES_v0.9.1"
+__version__ = "v0.9.2"
+PREFAB_MAGIC_BYTES = b"PREFAB_CLASSES_v0.9.2"
 
 __all__ = ["prefab_compiler", "insert_prefab_importhook", "remove_prefab_importhook"]
 
