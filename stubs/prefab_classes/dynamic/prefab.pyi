@@ -40,9 +40,23 @@ def attribute(
     exclude_field: bool = ...,
 ): ...
 
+@dataclass_transform(field_specifiers=(attribute,))
+def _make_prefab(
+    cls: type[T],
+    *,
+    init: bool = ...,
+    repr: bool = ...,
+    eq: bool = ...,
+    iter: bool = ...,
+    match_args: bool = ...,
+    kw_only: bool = ...,
+    frozen: bool = ...,
+) -> type[T]: ...
+
+
 @overload
 def prefab(
-    cls: None,
+    cls: None = ...,
     *,
     init: bool = ...,
     repr: bool = ...,
@@ -58,7 +72,7 @@ def prefab(
 ) -> Callable[[type[T]], type[T]]: ...
 
 @overload
-@dataclass_transform(field_specifiers=(attribute,))
+# @dataclass_transform(field_specifiers=(attribute,))
 def prefab(
     cls: type[T],
     *,
@@ -80,7 +94,7 @@ def build_prefab(
     attributes: list[tuple[str, Attribute]],
     *,
     bases: tuple[type, ...] = ...,
-    class_dict: dict[str, object] = ...,
+    class_dict: None | dict[str, object] = ...,
     init: bool = ...,
     repr: bool = ...,
     eq: bool = ...,
