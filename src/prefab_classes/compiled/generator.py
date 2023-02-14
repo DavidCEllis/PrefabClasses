@@ -201,7 +201,7 @@ class PrefabDetails:
             self.gather_methods_arguments()
         return self._func_arguments
 
-    @cached_property
+    @property
     def resolved_func_arguments(self):
         if self._resolved_func_arguments is None:
             raise CompiledPrefabError(
