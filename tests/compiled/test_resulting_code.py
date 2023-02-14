@@ -11,7 +11,6 @@ def test_code_result_simple():
         '    """Coordinate Data"""\n'
         "    COMPILED = True\n"
         "    PREFAB_FIELDS = ['x', 'y']\n"
-        "    __prefab_internals__ = {}\n"
         "    x: float\n"
         "    y: float\n"
         "\n"

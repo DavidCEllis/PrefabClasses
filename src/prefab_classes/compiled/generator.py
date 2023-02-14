@@ -915,7 +915,7 @@ class PrefabDetails:
         if not self.compile_plain:
             body.append(self.compile_flag)
             body.append(self.fields_assignment)
-            body.append(self.internals_assignment)
+            # body.append(self.internals_assignment)
 
         if self.compile_slots and "__slots__" not in self.defined_attr_names:
             body.append(self.slots_assignment)
