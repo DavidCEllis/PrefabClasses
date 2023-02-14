@@ -11,6 +11,8 @@ def test_code_result_simple():
         '    """Coordinate Data"""\n'
         "    COMPILED = True\n"
         "    PREFAB_FIELDS = ['x', 'y']\n"
+        "    x: float\n"
+        "    y: float\n"
         "\n"
         "    def __init__(self, x: float, y: float):\n"
         "        self.x = x\n"
@@ -36,6 +38,8 @@ def test_code_result_plain():
     result = preview(ex_plain, use_black=False)
     code = (
         "class Coordinate:\n"
+        "    x: float\n"
+        "    y: float\n"
         "\n"
         "    def __init__(self, x: float, y: float):\n"
         "        self.x = x\n"
