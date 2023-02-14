@@ -1,4 +1,5 @@
 # COMPILE_PREFABS
+# type: ignore
 # !THIS IMPORT MUST STAY AT THE TOP!
 from prefab_classes import prefab, attribute
 
