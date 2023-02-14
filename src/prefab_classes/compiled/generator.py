@@ -59,6 +59,7 @@ class Field:
     default_factory: "None | ast.expr" = None
     init_: bool = True
     repr_: bool = True
+    compare: bool = True
     kw_only: bool = False
     exclude_field: bool = False
     annotation: "None | ast.expr" = None
@@ -99,6 +100,10 @@ class Field:
         except KeyError:
             repr_ = True
         try:
+            compare = keys["compare"].value
+        except KeyError:
+            compare = True
+        try:
             kw_only = keys["kw_only"].value
         except KeyError:
             kw_only = False
@@ -129,6 +134,7 @@ class Field:
             default_factory=default_factory,
             init_=init_,
             repr_=repr_,
+            compare=compare,
             kw_only=kw_only,
             exclude_field=exclude_field,
             annotation=annotation,
@@ -648,7 +654,7 @@ class PrefabDetails:
         other_elts = []
 
         for field in self.resolved_field_list:
-            if not field.exclude_field:
+            if field.compare and not field.exclude_field:
                 class_elts.append(field.ast_attribute())
                 other_elts.append(field.ast_attribute("other"))
 

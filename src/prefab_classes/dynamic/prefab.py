@@ -43,6 +43,7 @@ from ..constants import (
     CLASSVAR_NAME,
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
+    INTERNAL_DICT,
 )
 from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
 from ..sentinels import NOTHING, KW_ONLY
@@ -78,6 +79,7 @@ def attribute(
     default_factory=NOTHING,
     init=True,
     repr=True,
+    compare=True,
     kw_only=False,
     exclude_field=False,
 ):
@@ -90,6 +92,7 @@ def attribute(
                             (for otherwise mutable defaults, eg: list)
     :param init: Include this attribute in the __init__ parameters
     :param repr: Include this attribute in the class __repr__
+    :param compare: Include this attribute in the class __eq__
     :param kw_only: Make this argument keyword only in init
     :param exclude_field: Exclude this field from all magic method generation
                           apart from __init__
@@ -102,6 +105,7 @@ def attribute(
         default_factory=default_factory,
         init=init,
         repr=repr,
+        compare=compare,
         kw_only=kw_only,
         exclude_field=exclude_field,
     )
@@ -134,6 +138,10 @@ def _make_prefab(
     """
     # If this function is called then this is a dynamic prefab
     setattr(cls, COMPILED_FLAG, False)
+
+    # Make the internals dict
+    prefab_internals = {}
+    setattr(cls, INTERNAL_DICT, prefab_internals)
 
     # We need to look at type hints for the type hint
     # syntax variant.
@@ -200,7 +208,7 @@ def _make_prefab(
             except KeyError:
                 pass
 
-    setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
+    prefab_internals['local_attributes'] = cls_attributes
 
     mro = cls.__mro__[:-1]  # skip 'object' base class
 
@@ -211,7 +219,7 @@ def _make_prefab(
         attributes = {}
         for c in reversed(mro):
             try:
-                attributes.update(getattr(c, f"_{c.__name__}_attributes"))
+                attributes.update(getattr(c, INTERNAL_DICT)["local_attributes"])
             except AttributeError:
                 pass
 
@@ -289,7 +297,8 @@ def _make_prefab(
                     )
 
     setattr(cls, FIELDS_ATTRIBUTE, valid_fields)
-    cls._attributes = attributes
+    prefab_internals["attributes"] = attributes
+
     if match_args and "__match_args__" not in cls.__dict__:
         cls.__match_args__ = tuple(valid_fields)
 
