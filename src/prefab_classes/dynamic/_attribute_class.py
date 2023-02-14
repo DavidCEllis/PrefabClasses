@@ -11,6 +11,10 @@ class Attribute:
     PREFAB_FIELDS = ['default', 'default_factory', 'init', 'repr', 'kw_only', 'exclude_field', '_type']
     __slots__ = ('default', 'default_factory', 'init', 'repr', 'kw_only', 'exclude_field', '_type')
     __match_args__ = ('default', 'default_factory', 'init', 'repr', 'kw_only', 'exclude_field', '_type')
+    init: bool
+    repr: bool
+    kw_only: bool
+    exclude_field: bool
 
     def __init__(self, default=NOTHING, default_factory=NOTHING, init: bool=True, repr: bool=True, kw_only: bool=False, exclude_field: bool=False):
         self.__prefab_pre_init__(init=init, default=default, default_factory=default_factory, kw_only=kw_only)

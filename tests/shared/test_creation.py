@@ -38,23 +38,25 @@ class TestEmptyClass:
 
 
 class TestRemoveRecipe:
-    def test_removed_annotations(self, importer):
+    def test_removed_defaults(self, importer):
         from creation import OnlyHints
 
         removed_attributes = ["x", "y", "z"]
         for attrib in removed_attributes:
             assert attrib not in getattr(OnlyHints, "__dict__")
-            assert attrib not in getattr(OnlyHints, "__annotations__", {})
+            assert attrib in getattr(OnlyHints, "__annotations__", {})
 
-    def test_removed_only_used_annotations(self, importer):
+    def test_removed_only_used_defaults(self, importer):
         from creation import MixedHints
 
         assert "x" in getattr(MixedHints, "__annotations__")
+        assert "y" in getattr(MixedHints, "__annotations__")
+
+        assert "x" in getattr(MixedHints, "__dict__")
 
         removed_attributes = ["y", "z"]
         for attrib in removed_attributes:
             assert attrib not in getattr(MixedHints, "__dict__")
-            assert attrib not in getattr(MixedHints, "__annotations__", {})
 
     def test_removed_attributes(self, importer):
         from creation import AllPlainAssignment

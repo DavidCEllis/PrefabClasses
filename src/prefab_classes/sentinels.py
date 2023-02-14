@@ -19,4 +19,4 @@ class _KW_ONLY_TYPE:
         return "<KW_ONLY Sentinel Object>"
 
 
-KW_ONLY = _KW_ONLY_TYPE
+KW_ONLY = _KW_ONLY_TYPE()

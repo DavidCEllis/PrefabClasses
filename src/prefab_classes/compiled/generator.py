@@ -201,7 +201,7 @@ class PrefabDetails:
             self.gather_methods_arguments()
         return self._func_arguments
 
-    @cached_property
+    @property
     def resolved_func_arguments(self):
         if self._resolved_func_arguments is None:
             raise CompiledPrefabError(
@@ -884,12 +884,16 @@ class PrefabDetails:
         # Handle inheritance
         self.resolve_inheritance(prefabs)
 
-        # Remove existing fields
-        # Clear the fields from he self.node body
+        # Remove values from the body
+        # Keep the annotated values to re-insert the annotations later
+        body_annotations = []
         for item in self.field_list:
+            if isinstance(item.field, ast.AnnAssign):
+                body_annotations.append(item.field)
             self.node.body.remove(item.field)
 
         if self._flag_kw_only is not None:
+            body_annotations.append(self._flag_kw_only)
             self.node.body.remove(self._flag_kw_only)
 
         # Build body
@@ -901,6 +905,12 @@ class PrefabDetails:
             body.append(self.slots_assignment)
         if self.match_args and "__match_args__" not in self.defined_attr_names:
             body.append(self.match_args_assignment)
+
+        # Re-insert annotations
+        for item in body_annotations:
+            item.value = None
+            body.append(item)
+
         if (self.init and "__init__" not in self.defined_attr_names) or not self.init:
             body.append(self.init_method)
         if self.repr and "__repr__" not in self.defined_attr_names:

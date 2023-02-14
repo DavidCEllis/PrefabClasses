@@ -56,9 +56,9 @@ def _as_dict_cache(cls, excludes=None):
     return method
 
 
-def as_dict(inst, *, excludes: "None | tuple[str, ...]" = None):
+def as_dict(inst, *, excludes: "None | tuple[str, ...]" = None) -> dict[str, object]:
     """
-    Represent the prefab as a dictionary of attribute names and values.
+    Represent the prefab as a dictionary of attribute names stuband values.
     Exclude any keys listed in `excludes`
 
     This **does not** recurse.
@@ -67,7 +67,7 @@ def as_dict(inst, *, excludes: "None | tuple[str, ...]" = None):
     :param excludes: tuple of field names to exclude from the resulting dict
     :return: dictionary {attribute_name: attribute_value, ...}
     """
-    return _as_dict_cache(type(inst), excludes)(inst)
+    return _as_dict_cache(inst.__class__, excludes)(inst)
 
 
 @lru_cache
@@ -120,7 +120,7 @@ def to_json(
     inst,
     *,
     excludes: "None | tuple[str, ...]" = None,
-    dumps_func: Callable[[object], str] = None,
+    dumps_func: "None | Callable[..., str]" = None,
     **kwargs,
 ) -> str:
     """

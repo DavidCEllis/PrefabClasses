@@ -65,7 +65,7 @@ def test_kw_flag_no_defaults(importer):
     from kw_only import KWFlagNoDefaults
 
     if hasattr(KWFlagNoDefaults, "__annotations__"):
-        assert "_" not in KWFlagNoDefaults.__annotations__
+        assert "_" in KWFlagNoDefaults.__annotations__
 
     with pytest.raises(TypeError):
         x = KWFlagNoDefaults(1, 2)
