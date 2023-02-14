@@ -241,11 +241,11 @@ def main():
     )
     print(f"| cattrs            |     {cattrs_time:.1f} |")
 
-    pydantic_time = timeit(
-        lambda: pydantic_collection.json(),
-        number=LOOPS
-    )
-    print(f"| pydantic          |     {pydantic_time:.1f} |")
+    # pydantic_time = timeit(
+    #     lambda: pydantic_collection.json(),
+    #     number=LOOPS
+    # )
+    # print(f"| pydantic          |     {pydantic_time:.1f} |")
 
 
 if __name__ == "__main__":
