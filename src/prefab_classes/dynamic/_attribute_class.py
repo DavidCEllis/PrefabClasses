@@ -7,8 +7,6 @@ from ..sentinels import NOTHING
 from ..exceptions import LivePrefabError
 
 class Attribute:
-    COMPILED = True
-    PREFAB_FIELDS = ['default', 'default_factory', 'init', 'repr', 'compare', 'kw_only', 'exclude_field', '_type']
     __slots__ = ('default', 'default_factory', 'init', 'repr', 'compare', 'kw_only', 'exclude_field', '_type')
     __match_args__ = ('default', 'default_factory', 'init', 'repr', 'compare', 'kw_only', 'exclude_field', '_type')
     init: bool

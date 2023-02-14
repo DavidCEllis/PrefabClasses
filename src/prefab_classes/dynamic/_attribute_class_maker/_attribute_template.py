@@ -10,7 +10,7 @@ from ..sentinels import NOTHING
 from ..exceptions import LivePrefabError
 
 
-@prefab(compile_prefab=True, compile_slots=True, kw_only=True)
+@prefab(compile_prefab=True, compile_slots=True, compile_plain=True, kw_only=True)
 class Attribute:
     # Note that the interpreted form of prefab would fail here
     # as it would interpret _NOTHING as no value provided

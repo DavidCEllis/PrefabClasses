@@ -11,6 +11,7 @@ from ..constants import (
     COMPILED_FLAG,
     COMPILE_ARGUMENT,
     CLASSVAR_NAME,
+    INTERNAL_DICT,
 )
 from ..dynamic import prefab
 from ..exceptions import CompiledPrefabError
@@ -396,7 +397,7 @@ class PrefabDetails:
             )
         return self._resolved_fields
 
-    @cached_property
+    @property
     def compile_flag(self) -> ast.Assign:
         compiled_flag = ast.Assign(
             targets=[ast.Name(id=COMPILED_FLAG, ctx=ast.Store())],
@@ -417,6 +418,13 @@ class PrefabDetails:
             value=ast.List(elts=field_consts, ctx=ast.Load()),
         )
         return assignment
+
+    @property
+    def internals_assignment(self) -> ast.Assign:
+        return ast.Assign(
+            targets=[ast.Name(id=INTERNAL_DICT, ctx=ast.Store())],
+            value=ast.Dict(keys=[], values=[])
+        )
 
     @property
     def slots_assignment(self) -> ast.Assign:
@@ -907,6 +915,8 @@ class PrefabDetails:
         if not self.compile_plain:
             body.append(self.compile_flag)
             body.append(self.fields_assignment)
+            body.append(self.internals_assignment)
+
         if self.compile_slots and "__slots__" not in self.defined_attr_names:
             body.append(self.slots_assignment)
         if self.match_args and "__match_args__" not in self.defined_attr_names:
