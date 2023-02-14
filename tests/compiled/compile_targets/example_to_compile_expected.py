@@ -16,6 +16,7 @@ class Settings:
     """
     COMPILED = True
     PREFAB_FIELDS = ['output_file', 'hostname', 'port', 'split_separator', 'previous_splits', 'next_splits', 'font_size', 'font_color', 'background_color', 'html_template_folder', 'html_template_file', 'css_folder', 'css_file', 'on_top', 'width', 'height', 'notes_folder']
+    __prefab_internals__ = {}
     __match_args__ = ('output_file', 'hostname', 'port', 'split_separator', 'previous_splits', 'next_splits', 'font_size', 'font_color', 'background_color', 'html_template_folder', 'html_template_file', 'css_folder', 'css_file', 'on_top', 'width', 'height', 'notes_folder')
 
     def __init__(self, output_file=settings_file, hostname='localhost', port=16834, split_separator='', previous_splits=0, next_splits=2, font_size=20, font_color='#000000', background_color='#f1f8ff', html_template_folder=default_template_folder, html_template_file='desktop.html', css_folder=default_static_folder, css_file='desktop.css', on_top=False, width=800, height=800, notes_folder=user_path):
