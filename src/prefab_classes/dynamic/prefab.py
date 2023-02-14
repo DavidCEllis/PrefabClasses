@@ -140,9 +140,7 @@ def _make_prefab(
     # If a key exists and is *NOT* in __annotations__ then all
     # annotations will be ignored as it becomes complex to fix the
     # ordering.
-
-    # Make a copy of the __annotations__ dictionary
-    cls_annotations = getattr(cls, "__annotations__", {}).copy()
+    cls_annotations = getattr(cls, "__annotations__", {})
 
     cls_annotation_names = cls_annotations.keys()
 
@@ -189,8 +187,6 @@ def _make_prefab(
                 attrib._type = cls_annotations[name]
                 new_attributes[name] = attrib
 
-            # Remove the original annotation
-            del cls.__annotations__[name]
         cls_attributes = new_attributes
     else:
         for name, attrib in cls_attributes.items():
@@ -200,10 +196,8 @@ def _make_prefab(
             delattr(cls, name)
             # Some items can still be annotated.
             try:
-                attrib._type = cls.__annotations__[name]
-                del cls.__annotations__[name]
-            except (AttributeError, KeyError):
-                # AttributeError as 3.9 does not guarantee the existence of __annotations__
+                attrib._type = cls_annotations[name]
+            except KeyError:
                 pass
 
     setattr(cls, f"_{cls.__name__}_attributes", cls_attributes)
