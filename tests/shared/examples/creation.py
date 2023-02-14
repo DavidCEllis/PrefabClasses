@@ -15,7 +15,7 @@ class OnlyHints:
 @prefab(compile_prefab=True, compile_fallback=True)
 class MixedHints:
     # Remove y and z, leave x in annotations
-    x: int
+    x: int = 2
     y: int = attribute(default=42)
     z = attribute(default="Apple")
 
