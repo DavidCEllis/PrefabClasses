@@ -1,5 +1,5 @@
 from .constants import FIELDS_ATTRIBUTE as FIELDS_ATTRIBUTE
-from _collections_abc import Callable as Callable
+from collections.abc import Callable
 import typing
 
 def is_prefab(o: typing.Any) -> bool: ...
