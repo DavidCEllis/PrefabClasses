@@ -140,7 +140,7 @@ def _make_prefab(
     setattr(cls, COMPILED_FLAG, False)
 
     # Make the internals dict
-    prefab_internals = {}
+    prefab_internals: dict[str, dict[str, Attribute]] = {}
     setattr(cls, INTERNAL_DICT, prefab_internals)
 
     # We need to look at type hints for the type hint
@@ -300,7 +300,7 @@ def _make_prefab(
     prefab_internals["attributes"] = attributes
 
     if match_args and "__match_args__" not in cls.__dict__:
-        cls.__match_args__ = tuple(valid_fields)
+        setattr(cls, "__match_args__", tuple(valid_fields))
 
     if init and "__init__" not in cls.__dict__:
         setattr(cls, "__init__", init_maker)
@@ -324,7 +324,7 @@ def _make_prefab(
 
 @dataclass_transform(field_specifiers=(attribute,))
 def prefab(
-    cls: "type | None" = None,
+    cls=None,
     *,
     init=True,
     repr=True,
