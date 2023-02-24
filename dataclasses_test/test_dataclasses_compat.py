@@ -45,7 +45,7 @@ def api_difference(reason=None):
 
 # Aliases
 def fields(o):
-    return o._attributes
+    return o.__prefab_internals__["attributes"]
 
 
 # Just any custom exception we can catch.
@@ -515,6 +515,7 @@ class TestCase(unittest.TestCase):
 
         self.assertIs(C().x, default)
 
+    @api_difference("If repr doesn't match init, prefab gives a different repr")
     def test_not_in_repr(self):
         @dataclass
         class C:
