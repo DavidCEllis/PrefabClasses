@@ -31,9 +31,8 @@ or will be added to this list.
     * The 'compiled' form has no hidden attributes as they are replaced on compilation.
     * Prefab classes provide a `PREFAB_FIELDS` attribute with the field names
       in order.
-    * The dynamic classes generate their code lazily so they need
-      to keep the 'recipe' details around. `_attributes` and `_CLASSNAME_attributes`
-      contain this information. The plain `_attributes` includes inherited values.
+    * The dynamic classes generate their code lazily so they need to keep the 
+      'recipe' details around. `__prefab_internals__` contains this information.
 1. Plain `attribute(...)` declarations can be used without the use of type hints.
     * If a plain assignment is used, all assignments **must** use `attribute`
 1. Post init processing uses `__prefab_post_init__` instead of `__post_init__`
