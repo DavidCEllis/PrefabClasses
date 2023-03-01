@@ -10,7 +10,7 @@ from ..sentinels import NOTHING
 from ..exceptions import LivePrefabError
 
 
-@prefab(compile_prefab=True, compile_slots=True, eq=False)
+@prefab(compile_prefab=True, compile_slots=True, compile_plain=True, kw_only=True)
 class Attribute:
     # Note that the interpreted form of prefab would fail here
     # as it would interpret _NOTHING as no value provided
@@ -19,9 +19,10 @@ class Attribute:
     default_factory = attribute(default=NOTHING)
     init: bool = attribute(default=True)
     repr: bool = attribute(default=True)
+    compare: bool = attribute(default=True)
     kw_only: bool = attribute(default=False)
     exclude_field: bool = attribute(default=False)
-    _type = attribute(default=NOTHING, init=False, repr=False)
+    _type = attribute(default=NOTHING, init=False, repr=False, compare=False)
 
     @staticmethod
     def __prefab_pre_init__(init, default, default_factory, kw_only):

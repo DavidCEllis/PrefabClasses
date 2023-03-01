@@ -44,6 +44,7 @@ from ..constants import (
     POST_INIT_FUNC,
     PREFAB_INIT_FUNC,
     FIELDS_ATTRIBUTE,
+    INTERNAL_DICT,
 )
 from ..sentinels import NOTHING
 from ..exceptions import FrozenPrefabError
@@ -54,9 +55,11 @@ def get_init_maker(*, init_name="__init__"):
     globs = {}
 
     def __init__(cls):
+        internals = getattr(cls, INTERNAL_DICT)
+        attributes = internals["attributes"]
         pos_arglist = []
         kw_only_arglist = []
-        for name, attrib in cls._attributes.items():
+        for name, attrib in attributes.items():
             if attrib._type is not NOTHING:
                 globs[f"_{name}_type"] = attrib._type
             if attrib.init:
@@ -132,7 +135,7 @@ def get_init_maker(*, init_name="__init__"):
 
         assignments = []
         processes = []  # post_init values still need default factories to be called.
-        for name, attrib in cls._attributes.items():
+        for name, attrib in attributes.items():
             if attrib.init:
                 if attrib.default_factory is not NOTHING:
                     value = f"{name} if {name} is not None else _{name}_factory()"
@@ -186,9 +189,11 @@ def get_init_maker(*, init_name="__init__"):
 
 def get_repr_maker(will_eval=True):
     def __repr__(cls):
+        internals = getattr(cls, INTERNAL_DICT)
+        attributes = internals["attributes"]
         content = ", ".join(
             f"{name}={{self.{name}!r}}"
-            for name, attrib in cls._attributes.items()
+            for name, attrib in attributes.items()
             if attrib.repr and not attrib.exclude_field
         )
         if will_eval:
@@ -235,7 +240,7 @@ def get_eq_maker():
 def get_iter_maker():
     def __iter__(cls):
         field_names = getattr(cls, FIELDS_ATTRIBUTE)
-        if cls._attributes:
+        if field_names:
             values = "\n".join(f"    yield self.{name} " for name in field_names)
         else:
             values = "    yield from ()"

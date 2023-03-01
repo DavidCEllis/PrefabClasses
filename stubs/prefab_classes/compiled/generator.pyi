@@ -116,6 +116,9 @@ class PrefabDetails:
     def fields_assignment(self) -> ast.Assign: ...
 
     @property
+    def internals_assignment(self) -> ast.Assign: ...
+
+    @property
     def slots_assignment(self) -> ast.Assign: ...
 
     @property

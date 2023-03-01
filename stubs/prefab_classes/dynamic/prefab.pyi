@@ -26,7 +26,7 @@ from .method_generators import (
 from collections.abc import Callable
 from typing import dataclass_transform, overload, TypeVar
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 SLOW_TYPING: bool
 
@@ -36,13 +36,14 @@ def attribute(
     default_factory=...,
     init: bool = ...,
     repr: bool = ...,
+    compare: bool = ...,
     kw_only: bool = ...,
     exclude_field: bool = ...,
 ): ...
 
 @dataclass_transform(field_specifiers=(attribute,))
 def _make_prefab(
-    cls: type[T],
+    cls: type[_T],
     *,
     init: bool = ...,
     repr: bool = ...,
@@ -51,7 +52,7 @@ def _make_prefab(
     match_args: bool = ...,
     kw_only: bool = ...,
     frozen: bool = ...,
-) -> type[T]: ...
+) -> type[_T]: ...
 
 
 @overload
@@ -69,12 +70,12 @@ def prefab(
     compile_fallback: bool = ...,
     compile_plain: bool = ...,
     compile_slots: bool = ...,
-) -> Callable[[type[T]], type[T]]: ...
+) -> Callable[[type[_T]], type[_T]]: ...
 
 @overload
 # @dataclass_transform(field_specifiers=(attribute,))
 def prefab(
-    cls: type[T],
+    cls: type[_T],
     *,
     init: bool = ...,
     repr: bool = ...,
@@ -87,7 +88,7 @@ def prefab(
     compile_fallback: bool = ...,
     compile_plain: bool = ...,
     compile_slots: bool = ...,
-) -> type[T]: ...
+) -> type[_T]: ...
 
 def build_prefab(
     class_name: str,

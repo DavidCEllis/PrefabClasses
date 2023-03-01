@@ -11,10 +11,6 @@ on intentional differences. Unintentional differences may be patched
 or will be added to this list.
 
 ## Functional differences ##
-1. Prefab classes delete the initial input values and annotations from the class.
-    * This largely comes from an optimisation for compiled classes to remove the 
-      `attribute` calls. (When written back out as source this allows removal of
-      the prefab/attribute imports).
 1. prefabs do not generate the comparison methods other than `__eq__`
     * This could be added fairly easily but I don't use this feature so it's not a priority.
 1. the `as_dict` method in `prefab_classes` does *not* behave the same as 
@@ -31,9 +27,8 @@ or will be added to this list.
     * The 'compiled' form has no hidden attributes as they are replaced on compilation.
     * Prefab classes provide a `PREFAB_FIELDS` attribute with the field names
       in order.
-    * The dynamic classes generate their code lazily so they need
-      to keep the 'recipe' details around. `_attributes` and `_CLASSNAME_attributes`
-      contain this information. The plain `_attributes` includes inherited values.
+    * The dynamic classes generate their code lazily so they need to keep the 
+      'recipe' details around. `__prefab_internals__` contains this information.
 1. Plain `attribute(...)` declarations can be used without the use of type hints.
     * If a plain assignment is used, all assignments **must** use `attribute`
 1. Post init processing uses `__prefab_post_init__` instead of `__post_init__`

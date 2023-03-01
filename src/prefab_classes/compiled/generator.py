@@ -11,8 +11,9 @@ from ..constants import (
     COMPILED_FLAG,
     COMPILE_ARGUMENT,
     CLASSVAR_NAME,
+    INTERNAL_DICT,
 )
-from ..dynamic import prefab
+from ..dynamic import prefab, attribute
 from ..exceptions import CompiledPrefabError
 
 assignment_type = "ast.AnnAssign | ast.Assign"
@@ -53,20 +54,20 @@ def _is_kw_only_sentinel(item):
 # noinspection PyArgumentList
 @prefab
 class Field:
-    name: str
-    field: assignment_type
-    default: "None | ast.expr" = None
-    default_factory: "None | ast.expr" = None
-    init_: bool = True
-    repr_: bool = True
-    kw_only: bool = False
-    exclude_field: bool = False
-    annotation: "None | ast.expr" = None
-    attribute_func: bool = False
+    name: str = attribute()
+    field: assignment_type = attribute()
+    default: "None | ast.expr" = attribute(default=None)
+    default_factory: "None | ast.expr" = attribute(default=None)
+    init_: bool = attribute(default=True)
+    repr_: bool = attribute(default=True)
+    compare: bool = attribute(default=True)
+    kw_only: bool = attribute(default=False)
+    exclude_field: bool = attribute(default=False)
+    annotation: "None | ast.expr" = attribute(default=None)
+    attribute_func: bool = attribute(default=False)
 
-    def __prefab_post_init__(self):
-        # Special variable to indicate if a field should be made KW_ONLY
-        self._kw_only_flagged = False
+    # Indicator that this Field should be made KW_ONLY
+    _kw_only_flagged = attribute(default=False, init=False, repr=False)
 
     @cached_property
     def default_factory_call(self):
@@ -99,6 +100,10 @@ class Field:
         except KeyError:
             repr_ = True
         try:
+            compare = keys["compare"].value
+        except KeyError:
+            compare = True
+        try:
             kw_only = keys["kw_only"].value
         except KeyError:
             kw_only = False
@@ -129,6 +134,7 @@ class Field:
             default_factory=default_factory,
             init_=init_,
             repr_=repr_,
+            compare=compare,
             kw_only=kw_only,
             exclude_field=exclude_field,
             annotation=annotation,
@@ -136,31 +142,43 @@ class Field:
         )
 
 
-# noinspection PyAttributeOutsideInit,PyProtectedMember
+# noinspection PyProtectedMember
 @prefab
 class PrefabDetails:
-    name: str
-    node: ast.ClassDef
-    decorator: ast.Call
-    init: bool = True
-    repr: bool = True
-    eq: bool = True
-    iter: bool = False
-    match_args: bool = True
-    kw_only: bool = False
-    frozen: bool = False
-    compile_prefab: bool = False
-    compile_plain: bool = False
-    compile_fallback: bool = False
-    compile_slots: bool = False
+    name: str = attribute()
+    node: ast.ClassDef = attribute()
+    decorator: ast.Call = attribute()
+    init: bool = attribute(default=True)
+    repr: bool = attribute(default=True)
+    eq: bool = attribute(default=True)
+    iter: bool = attribute(default=False)
+    match_args: bool = attribute(default=True)
+    kw_only: bool = attribute(default=False)
+    frozen: bool = attribute(default=False)
+    compile_prefab: bool = attribute(default=False)
+    compile_plain: bool = attribute(default=False)
+    compile_fallback: bool = attribute(default=False)
+    compile_slots: bool = attribute(default=False)
 
-    def __prefab_post_init__(self):
-        self._resolved_fields: "None | dict[str, Field]" = None
-        self._prefab_map: "None | dict[str, 'PrefabDetails']" = None
-        self._flag_kw_only: "None | ast.AnnAssign" = None
-        self._defined_attr_names: "None | set[str]" = None
-        self._func_arguments: "None | dict[str, list[str]]" = None
-        self._resolved_func_arguments: "None | dict[str, list[str]]" = None
+    # Private internal variables
+    _resolved_fields: "None | dict[str, Field]" = attribute(
+        default=None, init=False, repr=False, compare=False
+    )
+    _prefab_map: "None | dict[str, 'PrefabDetails']" = attribute(
+        default=None, init=False, repr=False, compare=False
+    )
+    _flag_kw_only: "None | ast.AnnAssign" = attribute(
+        default=None, init=False, repr=False, compare=False
+    )
+    _defined_attr_names: "None | set[str]" = attribute(
+        default=None, init=False, repr=False, compare=False
+    )
+    _func_arguments: "None | dict[str, list[str]]" = attribute(
+        default=None, init=False, repr=False, compare=False
+    )
+    _resolved_func_arguments: "None | dict[str, list[str]]" = attribute(
+        default=None, init=False, repr=False, compare=False
+    )
 
     @property
     def field_names(self):
@@ -390,7 +408,7 @@ class PrefabDetails:
             )
         return self._resolved_fields
 
-    @cached_property
+    @property
     def compile_flag(self) -> ast.Assign:
         compiled_flag = ast.Assign(
             targets=[ast.Name(id=COMPILED_FLAG, ctx=ast.Store())],
@@ -413,6 +431,13 @@ class PrefabDetails:
         return assignment
 
     @property
+    def internals_assignment(self) -> ast.Assign:
+        return ast.Assign(
+            targets=[ast.Name(id=INTERNAL_DICT, ctx=ast.Store())],
+            value=ast.Dict(keys=[], values=[]),
+        )
+
+    @property
     def slots_assignment(self) -> ast.Assign:
         """Generate slots"""
         # Don't use resolved fields as we only want fields new to this class
@@ -426,7 +451,6 @@ class PrefabDetails:
 
     @property
     def match_args_assignment(self) -> ast.Assign:
-
         field_consts = [
             ast.Constant(value=field.name)
             for field in self.resolved_field_list
@@ -639,7 +663,6 @@ class PrefabDetails:
 
     @property
     def eq_method(self) -> ast.FunctionDef:
-
         arguments = [ast.arg(arg="self"), ast.arg(arg="other")]
 
         # elt = element I guess - but this is the terminology used in the
@@ -648,7 +671,7 @@ class PrefabDetails:
         other_elts = []
 
         for field in self.resolved_field_list:
-            if not field.exclude_field:
+            if field.compare and not field.exclude_field:
                 class_elts.append(field.ast_attribute())
                 other_elts.append(field.ast_attribute("other"))
 
@@ -700,7 +723,6 @@ class PrefabDetails:
 
     @property
     def iter_method(self) -> ast.FunctionDef:
-
         arguments = [ast.arg(arg="self")]
 
         body = [
@@ -901,6 +923,8 @@ class PrefabDetails:
         if not self.compile_plain:
             body.append(self.compile_flag)
             body.append(self.fields_assignment)
+            # body.append(self.internals_assignment)
+
         if self.compile_slots and "__slots__" not in self.defined_attr_names:
             body.append(self.slots_assignment)
         if self.match_args and "__match_args__" not in self.defined_attr_names:
