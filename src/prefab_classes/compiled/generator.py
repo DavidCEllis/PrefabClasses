@@ -142,7 +142,7 @@ class Field:
         )
 
 
-# noinspection PyAttributeOutsideInit,PyProtectedMember
+# noinspection PyProtectedMember
 @prefab
 class PrefabDetails:
     name: str = attribute()
