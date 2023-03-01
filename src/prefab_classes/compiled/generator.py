@@ -947,7 +947,7 @@ class PrefabDetails:
             body.append(self.frozen_setattr_method)
             body.append(self.frozen_delattr_method)
 
-        # Add functions andd definitions to the body
+        # Add functions and definitions to the body
         # Remove the @prefab decorator
         # Check if a class starts with what we assume is a docstring.
         if (
