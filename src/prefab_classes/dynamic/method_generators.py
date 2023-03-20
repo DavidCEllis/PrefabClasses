@@ -255,7 +255,7 @@ def get_frozen_setattr_maker():
         field_names = getattr(cls, FIELDS_ATTRIBUTE)
 
         # Make the fields set literal
-        fields_delimited = ", ".join(f"'{field}'" for field in field_names)
+        fields_delimited = ", ".join(f"{field!r}" for field in field_names)
         field_set = f"{{ {fields_delimited} }}"
 
         # Dynamic prefabs are not slotted so it is possible to insert into the dict
