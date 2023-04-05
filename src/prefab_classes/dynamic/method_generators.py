@@ -55,13 +55,45 @@ def get_init_maker(*, init_name="__init__"):
     globs = {}
 
     def __init__(cls):
+        # Get the internals dictionary and prepare attributes
         internals = getattr(cls, INTERNAL_DICT)
         attributes = internals["attributes"]
+
+        # Handle pre/post init first - post_init can change types for __init__
+        # Get pre and post init arguments
+        pre_init_args = []
+        post_init_args = []
+        post_init_annotations = {}
+
+        for func_name, func_arglist in [
+            (PRE_INIT_FUNC, pre_init_args),
+            (POST_INIT_FUNC, post_init_args),
+        ]:
+            try:
+                func = getattr(cls, func_name)
+                func_code = func.__code__
+            except AttributeError:
+                pass
+            else:
+                argcount = func_code.co_argcount + func_code.co_kwonlyargcount
+                arglist = func_code.co_varnames[:argcount]
+
+                for item in arglist:
+                    if item != "self":
+                        func_arglist.append(item)
+
+                if func_name == POST_INIT_FUNC:
+                    post_init_annotations.update(func.__annotations__)
+
         pos_arglist = []
         kw_only_arglist = []
         for name, attrib in attributes.items():
-            if attrib._type is not NOTHING:
+            # post_init annotations can be used to broaden types.
+            if name in post_init_annotations:
+                globs[f"_{name}_type"] = post_init_annotations[name]
+            elif attrib._type is not NOTHING:
                 globs[f"_{name}_type"] = attrib._type
+
             if attrib.init:
                 if attrib.default is not NOTHING:
                     if isinstance(attrib.default, (str, int, float, bool)):
@@ -111,27 +143,6 @@ def get_init_maker(*, init_name="__init__"):
             args = f"*, {kw_args}"
         else:
             args = pos_args
-
-        # Get pre and post init arguments
-        pre_init_args = []
-        post_init_args = []
-
-        for func_name, func_arglist in [
-            (PRE_INIT_FUNC, pre_init_args),
-            (POST_INIT_FUNC, post_init_args),
-        ]:
-            try:
-                func = getattr(cls, func_name)
-                func_code = func.__code__
-            except AttributeError:
-                pass
-            else:
-                argcount = func_code.co_argcount + func_code.co_kwonlyargcount
-                arglist = func_code.co_varnames[:argcount]
-
-                for item in arglist:
-                    if item != "self":
-                        func_arglist.append(item)
 
         assignments = []
         processes = []  # post_init values still need default factories to be called.
