@@ -1,6 +1,7 @@
 # COMPILE_PREFABS
 from prefab_classes import prefab, attribute
 from pathlib import Path
+from typing import Union
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
@@ -87,6 +88,15 @@ class PostInitPartial:
     def __prefab_post_init__(self, z):
         z.append(1)
         self.z = z
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class PostInitAnnotations:
+    x: int
+    y: Path
+
+    def __prefab_post_init__(self, y: Union[str, Path]):
+        self.y = Path(y)
 
 
 @prefab(compile_prefab=True, compile_fallback=True)
