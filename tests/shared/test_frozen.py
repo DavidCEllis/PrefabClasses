@@ -1,5 +1,4 @@
 import pytest
-from prefab_classes.exceptions import FrozenPrefabError
 
 
 def test_basic_frozen(importer):
@@ -11,10 +10,10 @@ def test_basic_frozen(importer):
     assert x.y == "Example Data"
     assert x.z == []
 
-    with pytest.raises(FrozenPrefabError) as e1:
+    with pytest.raises(TypeError) as e1:
         x.x = 2
 
-    with pytest.raises(FrozenPrefabError) as e2:
+    with pytest.raises(TypeError) as e2:
         x.y = "Fail to change data"
 
     assert x.x == 0
@@ -34,7 +33,7 @@ def test_mutable_default(importer):
 
     new_base_list = []
 
-    with pytest.raises(FrozenPrefabError) as e1:
+    with pytest.raises(TypeError) as e1:
         x.z = new_base_list
 
     assert x.z is not new_base_list
@@ -46,7 +45,7 @@ def test_delete_blocked(importer):
 
     x = FrozenExample(x=0)
 
-    with pytest.raises(FrozenPrefabError):
+    with pytest.raises(TypeError):
         del x.x
 
     assert x.x == 0
