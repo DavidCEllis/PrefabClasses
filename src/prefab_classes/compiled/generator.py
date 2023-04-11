@@ -494,10 +494,7 @@ class PrefabDetails:
                 assignment_value = ast.Name(id=field.name, ctx=ast.Load())
                 if field.default or field.default_factory:
                     # Include the annotation if this is an annotated value
-                    if hasattr(field, "annotation"):
-                        arg = ast.arg(arg=field.name, annotation=field.annotation)
-                    else:
-                        arg = ast.arg(arg=field.name)
+                    arg = ast.arg(arg=field.name, annotation=field.annotation)
 
                     # For regular defaults, assign in the signature as expected
                     if field.default:
@@ -535,10 +532,8 @@ class PrefabDetails:
                         raise SyntaxError(
                             "non-default argument follows default argument"
                         )
-                    if field.annotation:
-                        arg = ast.arg(arg=field.name, annotation=field.annotation)
-                    else:
-                        arg = ast.arg(arg=field.name)
+
+                    arg = ast.arg(arg=field.name, annotation=field.annotation)
 
                     if field.kw_only:
                         kw_defaults.append(None)
