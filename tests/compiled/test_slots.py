@@ -1,6 +1,5 @@
 import pytest
 from prefab_classes_hook import prefab_compiler
-from prefab_classes.exceptions import FrozenPrefabError
 
 
 @pytest.mark.usefixtures("compile_folder_modules")
@@ -56,10 +55,10 @@ def test_slots_frozen():
     assert x.y == "Example Data"
     assert x.z == []
 
-    with pytest.raises(FrozenPrefabError) as e1:
+    with pytest.raises(TypeError) as e1:
         x.x = 2
 
-    with pytest.raises(FrozenPrefabError) as e2:
+    with pytest.raises(TypeError) as e2:
         x.y = "Fail to change data"
 
     assert x.x == 0
