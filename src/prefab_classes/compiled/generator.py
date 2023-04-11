@@ -173,10 +173,10 @@ class PrefabDetails:
     _defined_attr_names: "None | set[str]" = attribute(
         default=None, init=False, repr=False, compare=False
     )
-    _func_arguments: "None | dict[str, list[str]]" = attribute(
+    _func_arguments: "None | dict[str, dict[str, None | ast.Expr]]" = attribute(
         default=None, init=False, repr=False, compare=False
     )
-    _resolved_func_arguments: "None | dict[str, list[str]]" = attribute(
+    _resolved_func_arguments: "None | dict[str, dict[str, None | ast.Expr]]" = attribute(
         default=None, init=False, repr=False, compare=False
     )
 
@@ -242,7 +242,7 @@ class PrefabDetails:
 
     @property
     def pre_init_call(self):
-        pre_init_args = self.resolved_func_arguments[PRE_INIT_FUNC]
+        pre_init_args = self.resolved_func_arguments[PRE_INIT_FUNC].keys()
         call_args = [
             ast.keyword(arg=attrib, value=ast.Name(id=attrib, ctx=ast.Load()))
             for attrib in pre_init_args
@@ -253,7 +253,7 @@ class PrefabDetails:
 
     @property
     def post_init_call(self):
-        post_init_args = self.resolved_func_arguments[POST_INIT_FUNC]
+        post_init_args = self.resolved_func_arguments[POST_INIT_FUNC].keys()
         call_args = [
             ast.keyword(arg=attrib, value=ast.Name(id=attrib, ctx=ast.Load()))
             for attrib in post_init_args
@@ -382,7 +382,7 @@ class PrefabDetails:
         # it will remain in its original place in the init function
         # but with the new default value (or with the default removed)
         new_fields: dict[str, Field] = {}
-        func_arguments: dict[str, list[str]] = {}
+        func_arguments: dict[str, dict[str, "None | ast.Expr"]] = {}
         for parent_name in reversed(self.parents):
             if parent_name not in prefabs:
                 raise CompiledPrefabError(
@@ -478,6 +478,9 @@ class PrefabDetails:
         if PRE_INIT_FUNC in self.resolved_func_arguments:
             body.append(self.pre_init_call)
 
+        # Get post_init_args
+        post_init_args = self.resolved_func_arguments.get(POST_INIT_FUNC, {})
+
         has_default = False
 
         args.append(ast.arg(arg="self"))
@@ -493,8 +496,15 @@ class PrefabDetails:
                 # Define the init signature
                 assignment_value = ast.Name(id=field.name, ctx=ast.Load())
                 if field.default or field.default_factory:
-                    # Include the annotation if this is an annotated value
-                    arg = ast.arg(arg=field.name, annotation=field.annotation)
+
+                    # If the argument is given to post_init with a different annotation
+                    # Copy that annotation to __init__
+                    post_annotation = post_init_args.get(field.name, None)
+
+                    arg = ast.arg(
+                        arg=field.name,
+                        annotation=post_annotation if post_annotation else field.annotation
+                    )
 
                     # For regular defaults, assign in the signature as expected
                     if field.default:
@@ -533,16 +543,20 @@ class PrefabDetails:
                             "non-default argument follows default argument"
                         )
 
-                    arg = ast.arg(arg=field.name, annotation=field.annotation)
+                    # If the argument is given to post_init with a different annotation
+                    # Copy that annotation to __init__
+                    post_annotation = post_init_args.get(field.name, None)
+
+                    arg = ast.arg(
+                        arg=field.name,
+                        annotation=post_annotation if post_annotation else field.annotation
+                    )
 
                     if field.kw_only:
                         kw_defaults.append(None)
                         kwonlyargs.append(arg)
                     else:
                         args.append(arg)
-
-            # Define the body
-            post_init_args = self.resolved_func_arguments.get(POST_INIT_FUNC, [])
 
             if field.name not in post_init_args and field.exclude_field:
                 raise CompiledPrefabError(
@@ -961,13 +975,13 @@ class PrefabDetails:
 class GatherClassAttrs(ast.NodeVisitor):
     def __init__(self):
         super().__init__()
-        self.attrnames = set()
-        self.func_arguments = dict()
+        self.attrnames = set()  # set of attribute/function names - to help avoid re-assigning methods
+        self.func_arguments: dict[str, dict[str, "None | ast.Expr"]] = dict()
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         self.attrnames.add(node.name)
         args = node.args.args + node.args.kwonlyargs
-        arguments = [item.arg for item in args]
+        arguments = {item.arg: item.annotation for item in args}
         self.func_arguments[node.name] = arguments
 
     def visit_Assign(self, node: ast.Assign):
