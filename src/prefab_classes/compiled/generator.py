@@ -764,16 +764,6 @@ class PrefabDetails:
         return iter_func
 
     @property
-    def frozen_exception_import(self) -> ast.ImportFrom:
-        import_call = ast.ImportFrom(
-            module="prefab_classes.exceptions",
-            names=[ast.alias(name="FrozenPrefabError")],
-            level=0,
-        )
-
-        return import_call
-
-    @property
     def frozen_setattr_method(self) -> ast.FunctionDef:
         arguments = [ast.arg(arg="self"), ast.arg(arg="name"), ast.arg(arg="value")]
         args = ast.arguments(
@@ -842,13 +832,12 @@ class PrefabDetails:
             else_body = [assign]
 
         cond_body = [
-            self.frozen_exception_import,
             ast.Raise(
                 exc=ast.Call(
-                    func=ast.Name(id="FrozenPrefabError", ctx=ast.Load()),
+                    func=ast.Name(id="TypeError", ctx=ast.Load()),
                     args=[
                         ast.Constant(
-                            value="Can not set or change values on frozen instances."
+                            value=f"{self.name!r} object does not support attribute assignment"
                         )
                     ],
                     keywords=[],
@@ -881,13 +870,12 @@ class PrefabDetails:
         )
 
         body = [
-            self.frozen_exception_import,
             ast.Raise(
                 exc=ast.Call(
-                    func=ast.Name(id="FrozenPrefabError", ctx=ast.Load()),
+                    func=ast.Name(id="TypeError", ctx=ast.Load()),
                     args=[
                         ast.Constant(
-                            value="Can not delete attributes on frozen instances."
+                            value=f"{self.name!r} object does not support attribute deletion"
                         )
                     ],
                     keywords=[],

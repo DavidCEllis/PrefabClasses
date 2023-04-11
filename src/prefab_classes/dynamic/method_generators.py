@@ -47,7 +47,6 @@ from ..constants import (
     INTERNAL_DICT,
 )
 from ..sentinels import NOTHING
-from ..exceptions import FrozenPrefabError
 from .autogen import autogen
 
 
@@ -272,7 +271,7 @@ def get_frozen_setattr_maker():
         # Dynamic prefabs are not slotted so it is possible to insert into the dict
         body = (
             f"    if hasattr(self, name) or name not in {field_set}:\n"
-            f'        raise FrozenPrefabError("Can not set or change values on frozen instances.")\n'
+            f'        raise TypeError("{cls.__name__!r} object does not support attribute assignment")\n'
             f"    else:\n"
             f"        self.__dict__[name] = value\n"
         )
@@ -281,16 +280,16 @@ def get_frozen_setattr_maker():
         return code
 
     # Pass the exception to exec
-    return autogen(__setattr__, {"FrozenPrefabError": FrozenPrefabError})
+    return autogen(__setattr__)
 
 
 def get_frozen_delattr_maker():
     def __delattr__(cls):
-        body = '    raise FrozenPrefabError("Can not delete attributes on frozen instances.")\n'
+        body = f'    raise TypeError("{cls.__name__!r} object does not support attribute deletion")\n'
         code = f"def __delattr__(self, name):\n{body}"
         return code
 
-    return autogen(__delattr__, {"FrozenPrefabError": FrozenPrefabError})
+    return autogen(__delattr__)
 
 
 init_maker = get_init_maker()

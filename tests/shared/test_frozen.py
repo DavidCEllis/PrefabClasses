@@ -13,6 +13,8 @@ def test_basic_frozen(importer):
     with pytest.raises(TypeError) as e1:
         x.x = 2
 
+    assert e1.value.args[0] == "'FrozenExample' object does not support attribute assignment"
+
     with pytest.raises(TypeError) as e2:
         x.y = "Fail to change data"
 
@@ -45,7 +47,9 @@ def test_delete_blocked(importer):
 
     x = FrozenExample(x=0)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError) as e:
         del x.x
+
+    assert e.value.args[0] == "'FrozenExample' object does not support attribute deletion"
 
     assert x.x == 0
