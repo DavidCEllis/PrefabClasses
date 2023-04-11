@@ -52,7 +52,6 @@ def autogen(func, globs=None):
     globs = globs if globs is not None else {}
 
     def __get__(self, instance, cls):
-        # Include the defaultvalue class used as a placeholder for defaults
         local_vars = {}
         code = func(cls)
         exec(code, globs, local_vars)
