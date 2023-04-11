@@ -1,6 +1,5 @@
 import pytest
 from prefab_classes_hook import prefab_compiler
-from prefab_classes.exceptions import FrozenPrefabError
 
 
 @pytest.mark.usefixtures("compile_folder_modules")
