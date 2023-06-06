@@ -12,7 +12,8 @@ or will be added to this list.
 
 ## Functional differences ##
 1. prefabs do not generate the comparison methods other than `__eq__`
-    * This could be added fairly easily but I don't use this feature so it's not a priority.
+    * This could be added fairly easily but I don't use this feature so 
+      it's not a priority.
 1. the `as_dict` method in `prefab_classes` does *not* behave the same as 
    dataclasses' `asdict`
     * `as_dict` does *not* deepcopy the included fields, modification of mutable
@@ -65,3 +66,6 @@ or will be added to this list.
     * This isn't a guarantee that the regular `__repr__` will eval, but if it is known
       that the output would not `eval` then an alternative repr is used which does not
       look like it would `eval`.
+1. default_factory functions will be called if `None` is passed as an argument
+    * This makes it easier to wrap the function, but also doing anything else would 
+      require an import for compiled classes which would break their import performance. 
