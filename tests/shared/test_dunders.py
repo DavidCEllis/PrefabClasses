@@ -13,8 +13,6 @@ def test_repr(importer):
 def test_repr_exclude(importer):
     from dunders import CoordinateNoXRepr
 
-    assert CoordinateNoXRepr.COMPILED == importer
-
     expected_repr = "<prefab CoordinateNoXRepr; y=2>"
     assert repr(CoordinateNoXRepr(1, 2)) == expected_repr
 

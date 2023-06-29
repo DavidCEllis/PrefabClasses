@@ -1,13 +1,33 @@
 """Tests related to serialization to JSON or Pickle"""
 from pathlib import PurePosixPath, PurePath
 
-from prefab_classes.funcs import as_dict, to_json
+from prefab_classes.funcs import is_prefab, is_prefab_instance, as_dict, to_json
 from pytest import raises
 
 
+def test_is_prefab(importer):
+    from funcs_prefabs import Coordinate  # noqa
+
+    # The Class is a prefab
+    assert is_prefab(Coordinate)
+
+    # An instance is also a prefab
+    assert is_prefab(Coordinate(1, 1))
+
+
+def test_is_prefab_instance(importer):
+    from funcs_prefabs import Coordinate  # noqa
+
+    # 'Coordinate' is not a prefab instance, it is a class
+    assert not is_prefab_instance(Coordinate)
+
+    # But an instance of it is a prefab
+    assert is_prefab_instance(Coordinate(1, 1))
+
+
 # Serialization tests
-def test_todict(importer):
-    from serialization import Coordinate
+def test_as_dict(importer):
+    from funcs_prefabs import Coordinate  # noqa
 
     x = Coordinate(1, 2)
 
@@ -16,10 +36,10 @@ def test_todict(importer):
     assert as_dict(x) == expected_dict
 
 
-def test_tojson(importer):
+def test_to_json(importer):
     import json
 
-    from serialization import SystemPath
+    from funcs_prefabs import SystemPath  # noqa
 
     pth = SystemPath("testfile", "path/to/test")
 
@@ -34,11 +54,11 @@ def test_tojson(importer):
     assert to_json(pth, excludes=("filename",), default=str) == expected_json
 
 
-def test_tojson_recurse(importer):
+def test_to_json_recurse(importer):
     """Due to the implementation, json dumps should recurse by default"""
     import json
 
-    from serialization import Circle
+    from funcs_prefabs import Circle  # noqa
 
     circ = Circle()
 
@@ -52,7 +72,7 @@ def test_tojson_recurse(importer):
 def test_jsonencoder_failure(importer):
     """With the encoder for Prefabs it should still typeerror on unencodable types"""
 
-    from serialization import SystemPath
+    from funcs_prefabs import SystemPath  # noqa
 
     pth = SystemPath("testfile", "path/to/test")
 
@@ -70,7 +90,7 @@ def test_jsonencoder_layered(importer):
             f"Object of type {o.__class__.__name__} is not JSON serializable"
         )
 
-    from serialization import SystemPath, Onion
+    from funcs_prefabs import SystemPath, Onion  # noqa
 
     pth = SystemPath("testfile", "path/to/test")
     x = Onion(pth=PurePosixPath("what"), syspath=pth)
@@ -86,7 +106,7 @@ def test_jsonencoder_layered(importer):
 
 
 def test_picklable(importer):
-    from serialization import PicklePrefab
+    from funcs_prefabs import PicklePrefab  # noqa
 
     picktest = PicklePrefab()
 
