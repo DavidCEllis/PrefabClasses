@@ -67,3 +67,24 @@ class PositionalNotAfterKW:
     x: int
     y: int = attribute(default=0, init=False)
     z: int
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class SplitVarDef:
+    # Split the definition of x over 2 lines
+    # This should work the same way as defining over 1 line
+    x: str
+    x = "test"
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class SplitVarDefReverseOrder:
+    # This should still work in the reverse order
+    x = "test"
+    x: str
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class SplitVarRedef:
+    # This should only use the last value
+    x: str = "fake_test"
+    x = "test"  # noqa

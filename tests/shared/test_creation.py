@@ -168,3 +168,18 @@ class TestExceptions:
             e_info.value.args[0]
             == "Cannot define both a default value and a default factory."
         )
+
+
+class TestSplitVarDef:
+    # Tests for a split variable definition
+    @pytest.mark.parametrize("classname", ["SplitVarDef", "SplitVarDefReverseOrder", "SplitVarRedef"])
+    def test_splitvardef(self, importer, classname):
+        import creation
+
+        cls = getattr(creation, classname)
+
+        assert cls.__annotations__['x'] == str
+
+        inst = cls()
+        assert inst.x == "test"
+
