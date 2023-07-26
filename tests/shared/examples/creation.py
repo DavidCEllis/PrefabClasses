@@ -88,3 +88,12 @@ class SplitVarRedef:
     # This should only use the last value
     x: str = "fake_test"
     x = "test"  # noqa
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class SplitVarAttribDef:
+    # x here is an attribute, but it *is* typed
+    # So this should still define Y correctly.
+    x: str
+    x = attribute(default="test")
+    y: str = "test_2"

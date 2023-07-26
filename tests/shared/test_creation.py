@@ -183,3 +183,13 @@ class TestSplitVarDef:
         inst = cls()
         assert inst.x == "test"
 
+    def test_splitvarattribdef(self, importer):
+        from creation import SplitVarAttribDef as cls
+
+        inst = cls()
+
+        assert 'x' in cls.PREFAB_FIELDS
+        assert 'y' in cls.PREFAB_FIELDS
+
+        assert inst.x == "test"
+        assert inst.y == "test_2"
