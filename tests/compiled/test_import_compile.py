@@ -25,7 +25,7 @@ def test_mixed_annotations():
 
     assert Y.COMPILED
 
-    assert Y.PREFAB_FIELDS == ["v", "w", "x", "y", "z"]
+    assert Y.PREFAB_FIELDS == ["w", "x", "y", "z"]
 
     y = Y(y="pints")
 
