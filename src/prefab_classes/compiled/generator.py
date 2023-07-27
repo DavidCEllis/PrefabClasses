@@ -1,5 +1,6 @@
 import ast
 from functools import cached_property
+from collections import defaultdict
 
 from ..constants import (
     PRE_INIT_FUNC,
@@ -69,6 +70,13 @@ class Field:
     # Indicator that this Field should be made KW_ONLY
     _kw_only_flagged = attribute(default=False, init=False, repr=False)
 
+    # This keeps a history of all assignments that have been used to remove
+    # them from the AST after compilation
+    all_assignments: set[assignment_type] = attribute(default_factory=set, init=False, repr=False)
+
+    def __prefab_post_init__(self):
+        self.all_assignments.add(self.field)
+
     @cached_property
     def default_factory_call(self):
         return ast.Call(func=self.default_factory, args=[], keywords=[])
@@ -85,6 +93,17 @@ class Field:
             ctx=ctx(),
         )
         return attrib
+
+    @property
+    def ast_annassign(self):
+        """
+        Get an annotated assignment with no value for this field or return None
+        """
+        if self.annotation:
+            name = ast.Name(id=self.name, ctx=ast.Store())
+            assign = ast.AnnAssign(target=name, annotation=self.annotation, value=None, simple=True)
+            return assign
+        return None
 
     @classmethod
     def from_keywords(cls, name, field, keywords, annotation=None):
@@ -278,12 +297,13 @@ class PrefabDetails:
             """get .func.id or return None"""
             return getattr(getattr(value, "func", None), "id", None)
 
-        fields: list[Field] = []
+        fields: dict[str, Field] = {}
 
-        # If there are any plain assignments, annotated assignments that
-        # do not use attribute() calls must be removed to match 'dynamic'
-        # behaviour.
-        require_attribute_func = False
+        # This stores potential default values
+        # Given as plain assignments that are later typed
+        # Keep the assignments to be cleared later
+        potential_defaults: dict = {}
+        plain_assignments: dict[set[assignment_type]] = defaultdict(set)
 
         flag_kw_only = False
         for item in self.node.body:
@@ -307,13 +327,36 @@ class PrefabDetails:
                         keywords=item.value.keywords,
                         annotation=item.annotation,
                     )
+
+                    # Get any potential assignments to clear after generation
+                    old_field = fields.get(field_name, None)
+                    if old_field:
+                        field.all_assignments.update(old_field.all_assignments)
+                    else:
+                        field.all_assignments.update(plain_assignments[field_name])
+
                 else:
-                    field = Field(
-                        name=field_name,
-                        field=item,
-                        default=item.value,
-                        annotation=item.annotation,
-                    )
+                    if field_name in fields and item.value is None:
+                        # If the field exists and this is just an annotation
+                        # Update the field annotation
+                        field = fields[field_name]
+                        field.annotation = item.annotation
+                        field.all_assignments.add(item)
+                    else:
+                        # Otherwise make a new field
+                        field = Field(
+                            name=field_name,
+                            field=item,
+                            default=item.value,
+                            annotation=item.annotation,
+                        )
+
+                        old_field = fields.get(field_name, None)
+                        if old_field:
+                            field.all_assignments.update(old_field.all_assignments)
+                        elif field.default is None:
+                            field.default = potential_defaults.get(field_name, None)
+                            field.all_assignments.update(plain_assignments[field_name])
 
                 if self.kw_only:
                     field.kw_only = True
@@ -323,34 +366,61 @@ class PrefabDetails:
                     # plain assignments are used
                     field._kw_only_flagged = True
 
-                fields.append(field)
+                fields[field_name] = field
+
             elif (
                 isinstance(item, ast.Assign)
                 and len(item.targets) == 1
-                and isinstance(item.value, ast.Call)
             ):
                 field_name = getattr(item.targets[0], "id")
-                field = Field.from_keywords(
-                    name=field_name, field=item, keywords=item.value.keywords
-                )
-                if self.kw_only:
-                    field.kw_only = True
 
-                fields.append(field)
+                if (
+                        isinstance(item.value, ast.Call)
+                        and funcid_or_none(item.value) == ATTRIBUTE_FUNCNAME
+                ):
+                    # This is an attribute declaration
+                    field = Field.from_keywords(
+                        name=field_name, field=item, keywords=item.value.keywords
+                    )
+                    if self.kw_only:
+                        field.kw_only = True
 
-                # If an attribute function is used in a plain assignment
-                # then the function is required for all assignments.
-                require_attribute_func = True
+                    # If there is an old field copy the annotation and all assignment list over
+                    old_field = fields.get(field_name, None)
+                    if old_field:
+                        field.annotation = old_field.annotation
+                        field.all_assignments.update(old_field.all_assignments)
+                    else:
+                        # Otherwise copy potential plain assignments over
+                        field.all_assignments.update(plain_assignments[field_name])
 
-        # Clear fields that are generated just by annotations
+                    fields[field_name] = field
+                else:
+                    # This is a plain value
+                    old_field = fields.get(field_name, None)
+                    if old_field:
+                        # Update the default value and add to the list of all fields
+                        old_field.default = item.value
+                        old_field.all_assignments.add(item)
+                    else:
+                        # Store the non-annotated values in case they
+                        # subsequently get annotated
+                        potential_defaults[field_name] = item.value
+                        plain_assignments[field_name].add(item)
+
+        # If there are any plain assignments, annotated assignments that
+        # do not use attribute() calls must be removed to match 'dynamic'
+        # behaviour. KW_ONLY should only be used if all assignments are annotated.
+        require_attribute_func = any(v.annotation is None for v in fields.values())
         if require_attribute_func:
-            fields = [field for field in fields if field.attribute_func]
+            fields = {k: v for k, v in fields.items() if v.attribute_func}
         else:
-            for field in fields:
+            # Make relevant fields kw_only if no plain assignments used
+            for field in fields.values():
                 if field._kw_only_flagged:
                     field.kw_only = True
 
-        return {field.name: field for field in fields}
+        return fields
 
     @cached_property
     def parents(self) -> list[str]:
@@ -904,16 +974,9 @@ class PrefabDetails:
         self.resolve_inheritance(prefabs)
 
         # Remove values from the body
-        # Keep the annotated values to re-insert the annotations later
-        body_annotations = []
         for item in self.field_list:
-            if isinstance(item.field, ast.AnnAssign):
-                body_annotations.append(item.field)
-            self.node.body.remove(item.field)
-
-        if self._flag_kw_only is not None:
-            body_annotations.append(self._flag_kw_only)
-            self.node.body.remove(self._flag_kw_only)
+            for assign in item.all_assignments:
+                self.node.body.remove(assign)
 
         # Build body
         body = []
@@ -928,9 +991,13 @@ class PrefabDetails:
             body.append(self.match_args_assignment)
 
         # Re-insert annotations
-        for item in body_annotations:
-            item.value = None
-            body.append(item)
+        for item in self.field_list:
+            if item.ast_annassign:
+                body.append(item.ast_annassign)
+
+        if self._flag_kw_only is not None:
+            self.node.body.remove(self._flag_kw_only)
+            body.append(self._flag_kw_only)
 
         if (self.init and "__init__" not in self.defined_attr_names) or not self.init:
             body.append(self.init_method)
