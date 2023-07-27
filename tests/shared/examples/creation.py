@@ -68,6 +68,7 @@ class PositionalNotAfterKW:
     y: int = attribute(default=0, init=False)
     z: int
 
+
 @prefab(compile_prefab=True, compile_fallback=True)
 class SplitVarDef:
     # Split the definition of x over 2 lines
@@ -97,3 +98,13 @@ class SplitVarAttribDef:
     x: str
     x = attribute(default="test")
     y: str = "test_2"
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class HorribleMess:
+    # Nobody should write a class like this, but it should still work
+    x: str
+    x = attribute(default="fake_test", init=False, repr=False)
+    x: str = "test"  # This should override the init and repr False statements
+    y: str = "test_2"
+    y: str

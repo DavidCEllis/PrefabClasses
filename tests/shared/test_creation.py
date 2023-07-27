@@ -193,3 +193,15 @@ class TestSplitVarDef:
 
         assert inst.x == "test"
         assert inst.y == "test_2"
+
+    def test_horriblemess(self, importer):
+        # Nobody should make a class like this but it should behave
+        # as expected
+        from creation import HorribleMess as cls
+
+        inst = cls(x="true_test")
+
+        assert inst.x == "true_test"
+        assert repr(inst) == "HorribleMess(x='true_test', y='test_2')"
+
+        assert cls.__annotations__ == {'x': str, 'y': str}

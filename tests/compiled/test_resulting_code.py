@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from prefab_classes.compiled import preview
+from prefab_classes.compiled import preview, rewrite_code
 
 
 def test_code_result_simple():
@@ -54,3 +54,34 @@ def test_code_result_plain():
     )
 
     assert result == code
+
+
+def test_horriblemess():
+    import textwrap
+    source = textwrap.dedent("""
+    @prefab(compile_prefab=True, repr=False, eq=False)
+    class HorribleMess:
+        # Nobody should write a class like this, but it should still work
+        x: str
+        x = attribute(default="fake_test", init=False)
+        x: str = "test"  # This should override the init False statement
+        y: str = "test_2"
+        y: str
+    """)
+
+    code = textwrap.dedent("""
+    class HorribleMess:
+        COMPILED = True
+        PREFAB_FIELDS = ['x', 'y']
+        __match_args__ = ('x', 'y')
+        x: str
+        y: str
+        
+        def __init__(self, x: str='test', y: str='test_2'):
+            self.x = x
+            self.y = y
+    """)
+
+    result = rewrite_code(source)
+
+    assert result.strip() == code.strip()
