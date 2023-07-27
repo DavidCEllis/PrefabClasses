@@ -205,3 +205,14 @@ class TestSplitVarDef:
         assert repr(inst) == "HorribleMess(x='true_test', y='test_2')"
 
         assert cls.__annotations__ == {'x': str, 'y': str}
+
+
+def test_call_mistaken(importer):
+    from creation import CallMistakenForAttribute as cls
+
+    # Check that ignore_this is a class variable and use_this is not
+    assert cls.ignore_this == "this is a class variable"
+    assert getattr(cls, "use_this", None) is None
+
+    inst = cls()
+    assert inst.use_this == "this is an attribute"

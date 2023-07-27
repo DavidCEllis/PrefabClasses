@@ -108,3 +108,10 @@ class HorribleMess:
     x: str = "test"  # This should override the init and repr False statements
     y: str = "test_2"
     y: str
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class CallMistakenForAttribute:
+    # Check that a call to str() is no longer mistaken for an attribute call
+    ignore_this = str("this is a class variable")
+    use_this = attribute(default="this is an attribute")
