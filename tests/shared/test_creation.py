@@ -168,3 +168,51 @@ class TestExceptions:
             e_info.value.args[0]
             == "Cannot define both a default value and a default factory."
         )
+
+
+class TestSplitVarDef:
+    # Tests for a split variable definition
+    @pytest.mark.parametrize("classname", ["SplitVarDef", "SplitVarDefReverseOrder", "SplitVarRedef"])
+    def test_splitvardef(self, importer, classname):
+        import creation
+
+        cls = getattr(creation, classname)
+
+        assert cls.__annotations__['x'] == str
+
+        inst = cls()
+        assert inst.x == "test"
+
+    def test_splitvarattribdef(self, importer):
+        from creation import SplitVarAttribDef as cls
+
+        inst = cls()
+
+        assert 'x' in cls.PREFAB_FIELDS
+        assert 'y' in cls.PREFAB_FIELDS
+
+        assert inst.x == "test"
+        assert inst.y == "test_2"
+
+    def test_horriblemess(self, importer):
+        # Nobody should make a class like this but it should behave
+        # as expected
+        from creation import HorribleMess as cls
+
+        inst = cls(x="true_test")
+
+        assert inst.x == "true_test"
+        assert repr(inst) == "HorribleMess(x='true_test', y='test_2')"
+
+        assert cls.__annotations__ == {'x': str, 'y': str}
+
+
+def test_call_mistaken(importer):
+    from creation import CallMistakenForAttribute as cls
+
+    # Check that ignore_this is a class variable and use_this is not
+    assert cls.ignore_this == "this is a class variable"
+    assert getattr(cls, "use_this", None) is None
+
+    inst = cls()
+    assert inst.use_this == "this is an attribute"

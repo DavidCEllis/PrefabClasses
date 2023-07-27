@@ -67,3 +67,51 @@ class PositionalNotAfterKW:
     x: int
     y: int = attribute(default=0, init=False)
     z: int
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class SplitVarDef:
+    # Split the definition of x over 2 lines
+    # This should work the same way as defining over 1 line
+    x: str
+    x = "test"
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class SplitVarDefReverseOrder:
+    # This should still work in the reverse order
+    x = "test"
+    x: str
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class SplitVarRedef:
+    # This should only use the last value
+    x: str = "fake_test"
+    x = "test"  # noqa
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class SplitVarAttribDef:
+    # x here is an attribute, but it *is* typed
+    # So this should still define Y correctly.
+    x: str
+    x = attribute(default="test")
+    y: str = "test_2"
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class HorribleMess:
+    # Nobody should write a class like this, but it should still work
+    x: str
+    x = attribute(default="fake_test", init=False, repr=False)
+    x: str = "test"  # This should override the init and repr False statements
+    y: str = "test_2"
+    y: str
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class CallMistakenForAttribute:
+    # Check that a call to str() is no longer mistaken for an attribute call
+    ignore_this = str("this is a class variable")
+    use_this = attribute(default="this is an attribute")
