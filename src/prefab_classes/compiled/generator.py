@@ -56,14 +56,14 @@ def _is_kw_only_sentinel(item):
 class Field:
     name: str = attribute()
     field: assignment_type = attribute()
-    default: "None | ast.expr" = attribute(default=None)
-    default_factory: "None | ast.expr" = attribute(default=None)
+    default: None | ast.expr = attribute(default=None)
+    default_factory: None | ast.expr = attribute(default=None)
     init_: bool = attribute(default=True)
     repr_: bool = attribute(default=True)
     compare: bool = attribute(default=True)
     kw_only: bool = attribute(default=False)
     exclude_field: bool = attribute(default=False)
-    annotation: "None | ast.expr" = attribute(default=None)
+    annotation: None | ast.expr = attribute(default=None)
     attribute_func: bool = attribute(default=False)
 
     # Indicator that this Field should be made KW_ONLY
@@ -76,7 +76,7 @@ class Field:
     def ast_attribute(
         self,
         obj_name="self",
-        ctx: "type[ast.Load] | type[ast.Store]" = ast.Load,
+        ctx: type[ast.Load] | type[ast.Store] = ast.Load,
     ):
         """Get the ast.Attribute form for loading this attribute"""
         attrib = ast.Attribute(
@@ -161,22 +161,22 @@ class PrefabDetails:
     compile_slots: bool = attribute(default=False)
 
     # Private internal variables
-    _resolved_fields: "None | dict[str, Field]" = attribute(
+    _resolved_fields: None | dict[str, Field] = attribute(
         default=None, init=False, repr=False, compare=False
     )
-    _prefab_map: "None | dict[str, 'PrefabDetails']" = attribute(
+    _prefab_map: None | dict[str, 'PrefabDetails'] = attribute(
         default=None, init=False, repr=False, compare=False
     )
-    _flag_kw_only: "None | ast.AnnAssign" = attribute(
+    _flag_kw_only: None | ast.AnnAssign = attribute(
         default=None, init=False, repr=False, compare=False
     )
-    _defined_attr_names: "None | set[str]" = attribute(
+    _defined_attr_names: None | set[str] = attribute(
         default=None, init=False, repr=False, compare=False
     )
-    _func_arguments: "None | dict[str, dict[str, None | ast.Expr]]" = attribute(
+    _func_arguments: None | dict[str, dict[str, None | ast.Expr]] = attribute(
         default=None, init=False, repr=False, compare=False
     )
-    _resolved_func_arguments: "None | dict[str, dict[str, None | ast.Expr]]" = attribute(
+    _resolved_func_arguments: None | dict[str, dict[str, None | ast.Expr]] = attribute(
         default=None, init=False, repr=False, compare=False
     )
 
