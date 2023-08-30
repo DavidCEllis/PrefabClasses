@@ -64,13 +64,12 @@ They are thoroughly tested, well supported packages. This is a new
 project and has not had the rigorous real world testing of either
 of those.
 
-Initially this was just an investigation into how these modules worked,
-but evolved into a more performance oriented version of the same idea.
-I don't think that writing classes like this should impose a significant
-performance penalty over writing the classes by hand.
+Dataclasses/attrs/pydantic all impose some overhead on startup time.
+Prefab classes aims to minimise startup time and performance impact
+of class generation and in doing so sacrifices some features or 
+nice internals of these other implementations.
 
-For the short answer, here are the start and import times of various 
-modules on my development computer, with `python -c "pass"` as a baseline.
+Import time example:
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
@@ -79,45 +78,6 @@ modules on my development computer, with `python -c "pass"` as a baseline.
 | `python -c "import dataclasses"` | 48.4 ± 1.0 | 46.5 | 51.5 | 1.82 ± 0.09 |
 | `python -c "import attrs"` | 67.3 ± 0.7 | 65.9 | 71.1 | 2.53 ± 0.11 |
 | `python -c "import pydantic"` | 105.4 ± 3.4 | 100.3 | 115.7 | 3.96 ± 0.22 |
-
-This difference in import time means `prefab_classes` can generate approximately 75
-simple classes with all of their methods before `dataclasses` has finished importing.
-
-**dataclasses_example.py**
-
-```python
-import dataclasses
-```
-
-**prefab_example.py**
-
-```python
-from prefab_classes import build_prefab, attribute
-
-
-for i in range(75):
-    p = build_prefab(
-        f"Prefab{i}",
-        [
-            ('a', attribute()),
-            ('b', attribute()),
-            ('c', attribute()),
-            ('d', attribute()),
-            ('e', attribute()),
-        ],
-    )
-    # Force method generation
-    p.__init__, p.__repr__, p.__eq__
-```
-
-```
-hyperfine -w 3 -r 100 --export-markdown result.md 'python dataclasses_example.py' 'python prefab_example.py'
-```
-
-| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
-|:---|---:|---:|---:|---:|
-| `python dataclasses_example.py` | 47.0 ± 2.0 | 43.5 | 53.0 | 1.01 ± 0.06 |
-| `python prefab_example.py` | 46.4 ± 1.8 | 43.4 | 50.5 | 1.00 |
 
 For more detailed tests you can look at the
 [performance section of the docs](https://prefabclasses.readthedocs.io/en/latest/extra/performance_tests.html).
