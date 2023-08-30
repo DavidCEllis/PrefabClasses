@@ -409,7 +409,7 @@ def build_prefab(
     attributes: list[tuple[str, Attribute]],
     *,
     bases: tuple[type, ...] = (),
-    class_dict: "None | dict[str, object]" = None,
+    class_dict: None | dict[str, object] = None,
     init=True,
     repr=True,
     eq=True,
