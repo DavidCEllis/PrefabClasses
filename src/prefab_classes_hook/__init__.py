@@ -29,6 +29,8 @@ def check_parse(module_path):
     try:
         with open(module_path, "r") as f:
             for line in f:
+                if not line.strip():
+                    continue
                 if line[0] != "#":
                     break
                 elif line.strip() == HOOK_REWRITE:
