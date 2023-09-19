@@ -131,11 +131,6 @@ class Field:
         except KeyError:
             exclude_field = False
 
-        if not init_ and default is None and default_factory is None:
-            raise CompiledPrefabError(
-                "Must provide a default value/factory if the attribute is not in init."
-            )
-
         if kw_only and not init_:
             raise CompiledPrefabError(
                 "Attribute cannot be keyword only if it is not in init."
@@ -555,13 +550,21 @@ class PrefabDetails:
 
         args.append(ast.arg(arg="self"))
 
+        # If the __init__ body is empty we need a pass statement
+        # Fields with init=False and no default don't exist in the __init__ function
+        # So need to be excluded when checking for emptiness
+        non_assigned_fields = 0
+
         for field in self.resolved_field_list:
             # if init is false, just assign the default value in the body
             if field.init_ is False:
                 if field.default:
                     assignment_value = field.default
-                else:
+                elif field.default_factory:
                     assignment_value = field.default_factory_call
+                else:
+                    # Do not assign if no default is given.
+                    assignment_value = None
             else:
                 # Define the init signature
                 assignment_value = ast.Name(id=field.name, ctx=ast.Load())
@@ -642,15 +645,17 @@ class PrefabDetails:
                             value=assignment_value,
                         )
                     )
-            else:
+            elif assignment_value is not None:
                 body.append(
                     ast.Assign(
                         targets=[field.ast_attribute(ctx=ast.Store)],
                         value=assignment_value,
                     )
                 )
+            else:  # init=False and no default
+                non_assigned_fields += 1
 
-        if not self.resolved_field_list:
+        if non_assigned_fields >= len(self.resolved_field_list):
             body.append(ast.Pass())
 
         if POST_INIT_FUNC in self.resolved_func_arguments:

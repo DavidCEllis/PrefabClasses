@@ -154,13 +154,15 @@ def get_init_maker(*, init_name="__init__"):
             else:
                 if attrib.default_factory is not NOTHING:
                     value = f"_{name}_factory()"
-                else:
+                elif attrib.default is not NOTHING:
                     value = f"_{name}_default"
+                else:
+                    value = None
 
             if name in post_init_args:
                 if attrib.default_factory is not NOTHING:
                     processes.append((name, value))
-            else:
+            elif value is not None:
                 assignments.append((name, value))
 
         if hasattr(cls, PRE_INIT_FUNC):
