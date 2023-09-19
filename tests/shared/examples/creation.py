@@ -115,3 +115,9 @@ class CallMistakenForAttribute:
     # Check that a call to str() is no longer mistaken for an attribute call
     ignore_this = str("this is a class variable")
     use_this = attribute(default="this is an attribute")
+
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class ConstructInitFalse:
+    # Check that a class with init=False works even without a default
+    x = attribute(init=False)

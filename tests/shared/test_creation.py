@@ -120,14 +120,6 @@ def test_skipped_classvars(importer):
     assert "z" in getattr(IgnoreClassVars, "__dict__")
 
 
-def test_non_init_doesnt_break_syntax():
-    # No syntax error if an attribute with a default is defined
-    # before one without - if init=False for that attribute
-    from creation import PositionalNotAfterKW
-
-    x = PositionalNotAfterKW(1, 2)
-    assert repr(x) == "<prefab PositionalNotAfterKW; x=1, y=0, z=2>"
-
 
 class TestExceptions:
     def test_kw_not_in_init(self, importer):
@@ -149,15 +141,6 @@ class TestExceptions:
             from fails.creation_3 import FailSyntax
 
         assert e_info.value.args[0] == "non-default argument follows default argument"
-
-    def test_no_default_no_init_error(self, importer):
-        with pytest.raises(PrefabError) as e_info:
-            from fails.creation_4 import Construct
-
-        assert (
-            e_info.value.args[0]
-            == "Must provide a default value/factory if the attribute is not in init."
-        )
 
     def test_default_value_and_factory_error(self, importer):
         """Error if defining both a value and a factory"""
@@ -216,3 +199,25 @@ def test_call_mistaken(importer):
 
     inst = cls()
     assert inst.use_this == "this is an attribute"
+
+
+@pytest.mark.usefixtures("importer")
+class TestNonInit:
+    def test_non_init_works_no_default(self):
+        from creation import ConstructInitFalse
+
+        x = ConstructInitFalse()
+
+        assert not hasattr(x, "x")
+
+        x.x = 12
+
+        assert repr(x) == "<prefab ConstructInitFalse; x=12>"
+
+    def test_non_init_doesnt_break_syntax(self):
+        # No syntax error if an attribute with a default is defined
+        # before one without - if init=False for that attribute
+        from creation import PositionalNotAfterKW
+
+        x = PositionalNotAfterKW(1, 2)
+        assert repr(x) == "<prefab PositionalNotAfterKW; x=1, y=0, z=2>"
