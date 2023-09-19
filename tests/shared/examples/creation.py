@@ -121,9 +121,3 @@ class CallMistakenForAttribute:
 class ConstructInitFalse:
     # Check that a class with init=False works even without a default
     x = attribute(init=False)
-
-
-# @prefab(compile_prefab=True, compile_fallback=True)
-# class ConstructInitFalseExclude:
-      # Test a class with init=False and exclude_field=True works
-#     x = attribute(exclude_field=True, init=False)
