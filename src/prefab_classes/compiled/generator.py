@@ -193,6 +193,10 @@ class PrefabDetails:
     _resolved_func_arguments: None | dict[str, dict[str, None | ast.Expr]] = attribute(
         default=None, init=False, repr=False, compare=False
     )
+    # Correct method resolution order for subclasses
+    _mro: None | list[str] = attribute(
+        default=None, init=False, repr=False, compare=False
+    )
 
     @property
     def field_names(self):
@@ -428,13 +432,12 @@ class PrefabDetails:
             raise CompiledPrefabError(f"Class {self.name} cannot inherit from itself.")
         return parents
 
-    def resolve_inheritance(self, prefabs: dict[str, "PrefabDetails"]):
+    def resolve_inheritance(self, prefabs: dict[str, "PrefabDetails"]) -> None:
         """
         Work out the complete list of fields in the inheritance tree and the correct
         arguments for any pre_init or post_init functions.
 
         :param prefabs: The full dict of prefabs
-        :return:
         """
 
         if prefabs == self._prefab_map:
@@ -448,15 +451,16 @@ class PrefabDetails:
         # but with the new default value (or with the default removed)
         new_fields: dict[str, Field] = {}
         func_arguments: dict[str, dict[str, "None | ast.Expr"]] = {}
-        for parent_name in reversed(self.parents):
+
+        for parent_name in reversed(self._mro):
             if parent_name not in prefabs:
                 raise CompiledPrefabError(
                     f"Compiled prefabs can only inherit from other compiled prefabs in the same module.",
                     f"{self.name} attempted to inherit from {parent_name}",
                 )
-            prefabs[parent_name].resolve_inheritance(prefabs)
-            new_fields.update(prefabs[parent_name].resolved_fields)
-            func_arguments.update(prefabs[parent_name].resolved_func_arguments)
+            
+            new_fields.update(prefabs[parent_name].fields)
+            func_arguments.update(prefabs[parent_name].func_arguments)
 
         new_fields.update(self.fields)
         func_arguments.update(self.func_arguments)
@@ -974,7 +978,7 @@ class PrefabDetails:
 
         :param prefabs: Details on all prefabs in this module - for handling inheritance
         """
-
+        
         # Handle inheritance
         self.resolve_inheritance(prefabs)
 
@@ -1060,6 +1064,14 @@ class GatherPrefabs(ast.NodeVisitor):
         self.dynamic_prefabs_present = False
         self.import_statements: list[ast.ImportFrom] = []
 
+    def assign_mros(self):
+        # Resolve MRO for classes using python's MRO for classes by building stubs
+        class_objs = {}
+        for c in self.prefabs.values():
+            stub = type(c.name, tuple(class_objs[p] for p in c.parents), {})
+            class_objs[c.name] = stub
+            c._mro = [cls.__name__ for cls in stub.__mro__ if cls.__name__ != "object"]
+
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         # Looking for a call to DECORATOR_NAME with COMPILE_ARGUMENT == True
         # Check for plain classes, these will have the decorator removed and no fields defined
@@ -1114,6 +1126,7 @@ def compile_prefabs(source: str) -> ast.Module:
     tree = ast.parse(source)
     gatherer = GatherPrefabs()
     gatherer.visit(tree)
+    gatherer.assign_mros()
 
     prefabs = gatherer.prefabs
 
