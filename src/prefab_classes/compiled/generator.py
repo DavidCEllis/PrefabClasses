@@ -453,6 +453,8 @@ class PrefabDetails:
         func_arguments: dict[str, dict[str, "None | ast.Expr"]] = {}
 
         for parent_name in reversed(self._mro):
+            # This check should no longer occur as this is done earlier.
+            # Leave it in for now
             if parent_name not in prefabs:
                 raise CompiledPrefabError(
                     f"Compiled prefabs can only inherit from other compiled prefabs in the same module.",
@@ -1068,6 +1070,13 @@ class GatherPrefabs(ast.NodeVisitor):
         # Resolve MRO for classes using python's MRO for classes by building stubs
         class_objs = {}
         for c in self.prefabs.values():
+            for p in c.parents:
+                if p not in self.prefabs:
+                    raise CompiledPrefabError(
+                        f"Compiled prefabs can only inherit from other compiled prefabs in the same module. "
+                        f"'{c.name}' attempted to inherit from '{p}'."
+                    )
+            
             stub = type(c.name, tuple(class_objs[p] for p in c.parents), {})
             class_objs[c.name] = stub
             c._mro = [cls.__name__ for cls in stub.__mro__ if cls.__name__ != "object"]
