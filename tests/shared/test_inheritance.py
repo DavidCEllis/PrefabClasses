@@ -50,3 +50,10 @@ def test_inherited_pre_post_init(importer):
     inherit_ex = ChildPreInitPostInit()
     assert inherit_ex.pre_init
     assert inherit_ex.post_init
+
+
+def test_mro_correct(importer):
+    from inheritance import GrandChild
+    ex = GrandChild()
+
+    assert ex.field == ex.classvar
