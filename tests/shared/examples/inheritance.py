@@ -40,3 +40,23 @@ class BasePreInitPostInit:
 @prefab(compile_prefab=True, compile_fallback=True)
 class ChildPreInitPostInit(BasePreInitPostInit):
     pass
+
+# Multiple inheritance inconsistency test classes
+# classvar and field should be equal
+@prefab(compile_prefab=True, compile_fallback=True)
+class Base:
+    field: int = 10
+    classvar = 10
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class Child1(Base):
+    pass
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class Child2(Base):
+    field: int = 50
+    classvar = 50
+
+@prefab(compile_prefab=True, compile_fallback=True)
+class GrandChild(Child1, Child2):
+    pass
