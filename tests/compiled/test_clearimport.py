@@ -1,3 +1,8 @@
+"""
+Test that prefab_classes imports are removed correctly after importing the module.
+Check they are only removed if they are not otherwise used.
+"""
+
 import pytest
 
 from prefab_classes_hook import prefab_compiler
