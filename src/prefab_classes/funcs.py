@@ -128,18 +128,21 @@ def to_json(
     **kwargs,
 ) -> str:
     """
-    Output the class attributes as JSON
+    Output the instance attributes as JSON.
 
-    If no dumps function it will attempt to reuse the basic encoder
+    If no dumps function is given and no kwargs are used a basic
+    encoder will be reused.
 
     :param inst: instance of prefab class
     :param excludes: tuple of attribute names to exclude from json
+                     caching used internally requires this to be a tuple
+                     and not a list
                      **note that these attribute names will be excluded
                      from all prefabs encountered during serialization**
     :param dumps_func: function equivalent to stdlib's json.dumps
-                       making it easier to use third party json libraries.
+                       making it easier to use third party json libraries
     :param kwargs: keyword arguments passed directly to dumps_func
-    :return: String of JSON data from the class attributes
+    :return: string of JSON data from the class attributes
     """
     if dumps_func is None and not kwargs:
         encoder = _get_json_encoder(excludes)
