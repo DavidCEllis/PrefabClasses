@@ -4,7 +4,7 @@
 ```
 MIT License
 
-Copyright (c) 2022 David C Ellis
+Copyright (c) 2022-2023 David C Ellis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -58,7 +58,7 @@ greater good.
 ### PSF License for Python ###
 
 This isn't here just because this is a python project:
-the `PrefabHacker.get_code` method in `src/prefab_classes/compiled/import_hook.py`
+the `PrefabHacker.get_code` method in `src/prefab_classes_hook/__init__.py`
 is a modified copy of the `SourceLoader.get_code` method in
 [_bootstrap_external.py](https://github.com/python/cpython/blob/85dd6cb6df996b1197266d1a50ecc9187a91e481/Lib/importlib/_bootstrap_external.py#L1074)
 
