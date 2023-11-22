@@ -1,6 +1,6 @@
 import pytest
 
-from prefab_classes_hook import prefab_compiler
+from prefab_classes.hook import prefab_compiler
 
 
 @pytest.fixture(scope="package", params=[True, False], ids=["Compiled", "Dynamic"])

@@ -10,7 +10,7 @@ In order to compile the classes 3 extra steps are needed:
 
 1. Provide `compile_prefab=True` to the `prefab` decorator
 2. Place a `# COMPILE_PREFABS` comment at the top of the .py file
-3. Insert the import hook from `prefab_classes_hook` before importing the module
+3. Insert the import hook from `prefab_classes.hook` before importing the module
 
 The compilation is done by parsing the AST of the module and creating the methods 
 there before the file is processed and converted to a .pyc. This means that after
@@ -43,7 +43,7 @@ class SettingsPath:
 Compiled prefabs can be used directly on import by using the prefab_compiler.
 
 ```python
-from prefab_classes_hook import prefab_compiler
+from prefab_classes.hook import prefab_compiler
 
 with prefab_compiler():
     from example import SettingsPath

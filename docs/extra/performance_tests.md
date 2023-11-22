@@ -1,5 +1,9 @@
 # Performance test results #
 
+> ** Note **
+> These tests were run on prefab_classes v0.9.1 and earlier 
+> and will need to be rerun for v0.10.0.
+
 These tests compare prefab_classes with other modules that, as at least part of their
 feature set, handle writing class boilerplate. Some of these modules may have more
 features or do extra work which could make them more useful in certain situations.

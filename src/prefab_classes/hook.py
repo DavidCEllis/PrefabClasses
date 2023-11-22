@@ -16,6 +16,9 @@ from ducktools.lazyimporter import (
     TryExceptFromImport,
 )
 
+from . import PREFAB_MAGIC_BYTES
+
+
 # These imports are mostly needed for get_code.
 # Unlike most of the other imports I don't know if there's a
 # "right" place to get these from.
@@ -44,8 +47,6 @@ _laz = LazyImporter([
     *_get_code_imports
 ])
 
-__version__ = "v0.10.0"
-PREFAB_MAGIC_BYTES = b"PREFAB_CLASSES_v0.10.0"
 
 __all__ = ["prefab_compiler", "insert_prefab_importhook", "remove_prefab_importhook"]
 

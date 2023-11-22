@@ -5,7 +5,7 @@ Check they are only removed if they are not otherwise used.
 
 import pytest
 
-from prefab_classes_hook import prefab_compiler
+from prefab_classes.hook import prefab_compiler
 
 clear_module_names = [
     ("example_import_clear", "W"),
