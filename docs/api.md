@@ -28,9 +28,9 @@
 ### Import hook handler ###
 
 ```{eval-rst}
-.. autoclass:: prefab_classes_hook::prefab_compiler
-.. autofunction:: prefab_classes_hook::insert_prefab_importhook
-.. autofunction:: prefab_classes_hook::remove_prefab_importhook
+.. autoclass:: prefab_classes.hook::prefab_compiler
+.. autofunction:: prefab_classes.hook::insert_prefab_importhook
+.. autofunction:: prefab_classes.hook::remove_prefab_importhook
 ```
 
 ### Previewer and .py unparser ###

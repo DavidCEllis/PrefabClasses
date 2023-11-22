@@ -107,7 +107,15 @@ import time:        85 |         85 |   sitecustomize
 import time:      3833 |      11036 | site
 ```
 
-## prefab_classes and prefab_classes_hook ##
+## prefab_classes and prefab_classes.hook ##
+
+> ** Note **
+> 
+> This section is outdated as of v0.10.0
+>
+> v0.10.0 switched to using `ducktools.lazyimporter` and made some imports lazy to 
+> allow for faster access to functions at the cost of slightly slower complete import.
+> `prefab_classes_hook` has also been moved back to `prefab_classes.hook` as a result.
 
 For a baseline for these comparisons here are import times for prefab_classes v0.9.1
 

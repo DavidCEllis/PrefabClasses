@@ -9,7 +9,7 @@
 project = 'Prefab Classes'
 copyright = '2022, David C Ellis'
 author = 'David C Ellis'
-release = '0.7.2'
+release = '0.9.7'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

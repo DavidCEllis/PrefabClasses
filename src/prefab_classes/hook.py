@@ -1,5 +1,5 @@
 """
-Hook into the import mechanism and sneakily translate our modules before python gets there
+Import hook to convert prefabs to regular classes via AST on compilation to .pyc
 """
 import sys
 
@@ -9,8 +9,47 @@ try:
 except ImportError:
     from importlib.machinery import PathFinder, SourceFileLoader
 
-__version__ = "v0.9.6"
-PREFAB_MAGIC_BYTES = b"PREFAB_CLASSES_v0.9.6"
+
+from ducktools.lazyimporter import (
+    LazyImporter,
+    FromImport,
+    TryExceptFromImport,
+)
+
+from . import PREFAB_MAGIC_BYTES
+
+
+# These imports are mostly needed for get_code.
+# Unlike most of the other imports I don't know if there's a
+# "right" place to get these from.
+
+_get_code_imports = [
+    TryExceptFromImport(
+        module_name="_frozen_importlib_external",
+        attribute_name=attrib,
+        except_module="importlib._bootstrap_external",
+        except_attribute=attrib,
+        asname=attrib.removeprefix("_"),
+    )
+    for attrib in [
+        "cache_from_source",
+        "_classify_pyc",
+        "_validate_hash_pyc",
+        "_compile_bytecode",
+        "_code_to_hash_pyc",
+        "_RAW_MAGIC_NUMBER"
+    ]
+]
+
+_laz = LazyImporter(
+    [
+        FromImport(".compiled.generator", "compile_prefabs"),
+        FromImport("importlib.util", "decode_source"),
+        *_get_code_imports
+    ],
+    globs=globals(),
+)
+
 
 __all__ = ["prefab_compiler", "insert_prefab_importhook", "remove_prefab_importhook"]
 
@@ -47,15 +86,8 @@ class PrefabHacker(SourceFileLoader):
         return super().__getattribute__(item)
 
     def source_to_code(self, data, path, *, _optimize=-1):
-        # Only import the generator code if it is actually going to be used
-        from prefab_classes.compiled.generator import compile_prefabs
-
-        # Here we don't mind that importlib.util is slow to import
-        # as we only do this on the compiling run
-        from importlib.util import decode_source
-
-        src = decode_source(data)
-        prefab_src = compile_prefabs(src)
+        src = _laz.decode_source(data)
+        prefab_src = _laz.compile_prefabs(src)
 
         code = super().source_to_code(prefab_src, path, _optimize=_optimize)
         # sys.stdout.write(f"Prefab Converted File: {path}\n")
@@ -69,22 +101,10 @@ class PrefabHacker(SourceFileLoader):
         try:
             # The fast way
             from _imp import source_hash
-
-            try:
-                # Fastest
-                from _frozen_importlib_external import _RAW_MAGIC_NUMBER  # type: ignore
-            except ImportError:
-                # Slightly slower as importlib gets imported
-                from importlib._bootstrap_external import _RAW_MAGIC_NUMBER  # type: ignore
-
-            return source_hash(_RAW_MAGIC_NUMBER, hash_input_bytes)
+            return source_hash(_laz.RAW_MAGIC_NUMBER, hash_input_bytes)
         except ImportError:
-            # The "correct"/slow way
-            from importlib.util import source_hash
+            return _laz.source_hash(hash_input_bytes)
 
-            return source_hash(hash_input_bytes)
-
-    # noinspection PyUnresolvedReferences,PyProtectedMember
     def get_code(self, fullname):
         """
         Modified from SourceLoader.get_code method in _bootstrap_external
@@ -101,32 +121,13 @@ class PrefabHacker(SourceFileLoader):
         Reading of bytecode requires path_stats to be implemented. To write
         bytecode, set_data must also be implemented.
         """
-        # These imports are all needed just for this function.
-        # Unlike most of the other imports I don't know if there's a "right" place
-        # to get these from.
-        try:
-            from _frozen_importlib_external import (
-                cache_from_source,
-                _classify_pyc,
-                _validate_hash_pyc,
-                _compile_bytecode,
-                _code_to_hash_pyc,
-            )
-        except ImportError:
-            from importlib._bootstrap_external import (
-                cache_from_source,
-                _classify_pyc,
-                _validate_hash_pyc,
-                _compile_bytecode,
-                _code_to_hash_pyc,
-            )
 
         source_path = self.get_filename(fullname)
         source_bytes = None
         source_hash_data = None
         check_source = True
         try:
-            bytecode_path = cache_from_source(source_path)
+            bytecode_path = _laz.cache_from_source(source_path)
         except NotImplementedError:
             bytecode_path = None
         else:
@@ -140,13 +141,13 @@ class PrefabHacker(SourceFileLoader):
                     "path": bytecode_path,
                 }
                 try:
-                    flags = _classify_pyc(data, fullname, exc_details)
+                    flags = _laz.classify_pyc(data, fullname, exc_details)
                     bytes_data = memoryview(data)[16:]
                     used_hash = flags & 0b1 != 0
                     if used_hash:
                         source_bytes = self.get_data(source_path)
                         source_hash_data = self.make_pyc_hash(source_bytes)
-                        _validate_hash_pyc(
+                        _laz.validate_hash_pyc(
                             data, source_hash_data, fullname, exc_details
                         )
                     else:
@@ -156,7 +157,7 @@ class PrefabHacker(SourceFileLoader):
                 except (ImportError, EOFError):
                     pass
                 else:
-                    return _compile_bytecode(
+                    return _laz.compile_bytecode(
                         bytes_data,
                         name=fullname,
                         bytecode_path=bytecode_path,
@@ -172,7 +173,7 @@ class PrefabHacker(SourceFileLoader):
             if source_hash_data is None:
                 source_hash_data = self.make_pyc_hash(source_bytes)
 
-            data = _code_to_hash_pyc(code_object, source_hash_data, check_source)
+            data = _laz.code_to_hash_pyc(code_object, source_hash_data, check_source)
 
             try:
                 self._cache_bytecode(source_path, bytecode_path, data)
