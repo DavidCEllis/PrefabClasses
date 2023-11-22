@@ -41,11 +41,14 @@ _get_code_imports = [
     ]
 ]
 
-_laz = LazyImporter([
-    FromImport("prefab_classes.compiled.generator", "compile_prefabs"),
-    FromImport("importlib.util", "decode_source"),
-    *_get_code_imports
-])
+_laz = LazyImporter(
+    [
+        FromImport(".compiled.generator", "compile_prefabs"),
+        FromImport("importlib.util", "decode_source"),
+        *_get_code_imports
+    ],
+    globs=globals(),
+)
 
 
 __all__ = ["prefab_compiler", "insert_prefab_importhook", "remove_prefab_importhook"]
