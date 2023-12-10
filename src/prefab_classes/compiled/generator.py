@@ -17,7 +17,7 @@ from ..constants import (
 from ..dynamic import prefab, attribute
 from ..exceptions import CompiledPrefabError
 
-assignment_type = "ast.AnnAssign | ast.Assign"
+assignment_type = ast.AnnAssign | ast.Assign
 prefab_essentials = {DECORATOR_NAME, ATTRIBUTE_FUNCNAME}
 
 
@@ -302,7 +302,7 @@ class PrefabDetails:
         # Given as plain assignments that are later typed
         # Keep the assignments to be cleared later
         potential_defaults: dict = {}
-        plain_assignments: dict[set[assignment_type]] = defaultdict(set)
+        plain_assignments: dict[str, set[assignment_type]] = defaultdict(set)
 
         flag_kw_only = False
         for item in self.node.body:
