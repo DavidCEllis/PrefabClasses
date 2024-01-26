@@ -1,2 +1,0 @@
-These type stubs are incomplete and probably incorrect.
-They are not currently included with the package as they may be more harmful than helpful.
