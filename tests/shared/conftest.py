@@ -27,7 +27,7 @@ def clear_pycache(base_path):
         shutil.rmtree(compiled_data)
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def example_modules():
     # Folder with test examples to compile
     base_path = Path(__file__).parent / "examples"
