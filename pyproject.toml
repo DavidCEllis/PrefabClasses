@@ -6,7 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name="prefab_classes"
+name="prefab-classes"
 description="Boilerplate Generator for Classes"
 authors = [
   { name="David C Ellis" },
