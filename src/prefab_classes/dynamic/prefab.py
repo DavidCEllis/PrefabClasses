@@ -27,15 +27,37 @@ import sys
 import warnings
 
 
-# Typing is a slow import so the 'dataclass_transform' code is copied
-# into a separate file. This also provides 3.9/3.10 support without
-# needing to install typing_extensions.
-# If typing ever becomes fast to import we can use the code from the right place.
-SLOW_TYPING = True
-if SLOW_TYPING:
-    from .._typing import dataclass_transform
+# False imports for typing dataclass transform and implementation otherwise
+# The 'typing' import takes over 2x as long as importing this entire module
+# So the impact on import time of the typing import is unacceptable.
+# noinspection PyUnreachableCode
+if False:  # I'd like to correctly use "if TYPE_CHECKING" but that requires importing typing.
+    try:
+        from typing import dataclass_transform
+    except ImportError:
+        from typing_extensions import dataclass_transform
 else:
-    from typing import dataclass_transform
+    def dataclass_transform(
+            *,
+            eq_default: bool = True,
+            order_default: bool = False,
+            kw_only_default: bool = False,
+            frozen_default: bool = False,
+            field_specifiers: tuple = (),
+            **kwargs,
+    ):
+        def decorator(cls_or_fn):
+            cls_or_fn.__dataclass_transform__ = {
+                "eq_default": eq_default,
+                "order_default": order_default,
+                "kw_only_default": kw_only_default,
+                "frozen_default": frozen_default,
+                "field_specifiers": field_specifiers,
+                "kwargs": kwargs,
+            }
+            return cls_or_fn
+        return decorator
+
 
 from ..constants import (
     FIELDS_ATTRIBUTE,
