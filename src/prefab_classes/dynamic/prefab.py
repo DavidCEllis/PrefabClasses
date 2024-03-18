@@ -36,7 +36,6 @@ if SLOW_TYPING:
 else:
     from typing import dataclass_transform
 
-from ._attribute_class import Attribute
 from ..constants import (
     FIELDS_ATTRIBUTE,
     COMPILED_FLAG,
@@ -71,6 +70,101 @@ def _is_classvar(hint):
         elif isinstance(hint, str) and CLASSVAR_NAME in hint:
             return True
     return False
+
+
+class Attribute:
+    __slots__ = (
+        "default",
+        "default_factory",
+        "init",
+        "repr",
+        "compare",
+        "kw_only",
+        "exclude_field",
+        "_type",
+    )
+    __match_args__ = (
+        "default",
+        "default_factory",
+        "init",
+        "repr",
+        "compare",
+        "kw_only",
+        "exclude_field",
+        "_type",
+    )
+    init: bool
+    repr: bool
+    compare: bool
+    kw_only: bool
+    exclude_field: bool
+
+    def __init__(
+        self,
+        *,
+        default=NOTHING,
+        default_factory=NOTHING,
+        init: bool = True,
+        repr: bool = True,
+        compare: bool = True,
+        kw_only: bool = False,
+        exclude_field: bool = False,
+    ):
+
+        if kw_only and (not init):
+            raise LivePrefabError(
+                "Attribute cannot be keyword only if it is not in init."
+            )
+        if default is not NOTHING and default_factory is not NOTHING:
+            raise LivePrefabError(
+                "Cannot define both a default value and a default factory."
+            )
+
+        self.default = default
+        self.default_factory = default_factory
+        self.init = init
+        self.repr = repr
+        self.compare = compare
+        self.kw_only = kw_only
+        self.exclude_field = exclude_field
+        self._type = NOTHING
+
+    def __repr__(self):
+        return (
+            f"{type(self).__qualname__}("
+            f"default={self.default!r}, "
+            f"default_factory={self.default_factory!r}, "
+            f"init={self.init!r}, "
+            f"repr={self.repr!r}, "
+            f"compare={self.compare!r}, "
+            f"kw_only={self.kw_only!r}, "
+            f"exclude_field={self.exclude_field!r}"
+            f")"
+        )
+
+    def __eq__(self, other):
+        return (
+            (
+                self.default,
+                self.default_factory,
+                self.init,
+                self.repr,
+                self.compare,
+                self.kw_only,
+                self.exclude_field,
+            )
+            == (
+                other.default,
+                other.default_factory,
+                other.init,
+                other.repr,
+                other.compare,
+                other.kw_only,
+                other.exclude_field,
+            )
+            if self.__class__ == other.__class__
+            else NotImplemented
+        )
 
 
 def attribute(
