@@ -59,7 +59,7 @@ else:
         return decorator
 
 
-from ..constants import (
+from ..shared import (
     FIELDS_ATTRIBUTE,
     COMPILED_FLAG,
     CLASSVAR_NAME,
@@ -67,8 +67,9 @@ from ..constants import (
     POST_INIT_FUNC,
     INTERNAL_DICT,
 )
-from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
-from ..sentinels import NOTHING, KW_ONLY
+from ..shared import PrefabError, LivePrefabError, CompiledPrefabError
+from ..shared import NOTHING, KW_ONLY
+
 from .method_generators import (
     init_maker,
     repr_maker,

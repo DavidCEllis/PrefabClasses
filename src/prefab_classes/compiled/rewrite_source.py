@@ -1,4 +1,4 @@
-from ..exceptions import CompiledPrefabError
+from ..shared import CompiledPrefabError
 
 
 COMPILE_COMMENT = """

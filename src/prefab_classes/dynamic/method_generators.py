@@ -39,14 +39,15 @@
 # greater good.
 # ----------------------------------------------------------------------
 
-from ..constants import (
+from ..shared import (
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
     PREFAB_INIT_FUNC,
     FIELDS_ATTRIBUTE,
     INTERNAL_DICT,
+
+    NOTHING,
 )
-from ..sentinels import NOTHING
 
 
 def autogen(func, globs=None):

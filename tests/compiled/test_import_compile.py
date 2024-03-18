@@ -1,7 +1,7 @@
 import pytest
 
 from prefab_classes.hook import prefab_compiler
-from prefab_classes.exceptions import CompiledPrefabError
+from prefab_classes.shared import CompiledPrefabError
 
 
 # noinspection PyUnresolvedReferences
