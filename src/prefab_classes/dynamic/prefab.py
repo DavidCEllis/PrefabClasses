@@ -24,6 +24,7 @@
 Handle boilerplate generation for classes.
 """
 import sys
+import warnings
 
 
 # Typing is a slow import so the 'dataclass_transform' code is copied
@@ -427,7 +428,7 @@ def prefab(
     match_args=True,
     kw_only=False,
     frozen=False,
-    compile_prefab=False,
+    compile_prefab=NOTHING,
     compile_fallback=False,
     compile_plain=False,
     compile_slots=False,
@@ -454,6 +455,14 @@ def prefab(
     :param compile_slots: Make the resulting compiled class use slots
     :return: class with __ methods defined
     """
+    if compile_prefab is NOTHING:
+        compile_prefab = False
+    else:
+        warnings.warn(
+            "Compiled Prefabs are deprecated and will be removed in v0.12.0 or later.",
+            category=DeprecationWarning,
+        )
+
     if not cls:
         # Called as () method to change defaults
         # Skip compile arguments other than prefab/fallback
