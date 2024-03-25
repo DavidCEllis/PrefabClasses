@@ -36,3 +36,23 @@ def test_pre_init_static():
 
     with pytest.raises(ValueError):
         ex = PreInitStatic(2, 1)
+
+
+def test_post_init_not_self():
+    @prefab
+    class PostInitNotSelf:
+        x: int = 1
+        y: int = 2
+
+        def __prefab_post_init__(this, x, y):
+            if x > y:
+                raise ValueError("X must be less than Y")
+
+            this.x = x
+            this.y = y
+
+    ex = PostInitNotSelf(1, 2)
+
+    with pytest.raises(ValueError):
+        ex = PostInitNotSelf(2, 1)
+

@@ -354,10 +354,14 @@ def _make_prefab(
             )
 
         argcount = func_code.co_argcount + func_code.co_kwonlyargcount
-        arglist = func_code.co_varnames[:argcount]
+
+        # Include the first argument if the method is static
+        is_static = type(cls.__dict__.get(PRE_INIT_FUNC)) is staticmethod
+
+        arglist = func_code.co_varnames[:argcount] if is_static else func_code.co_varnames[1:argcount]
 
         for item in arglist:
-            if item not in attributes.keys() and item != "self":
+            if item not in attributes.keys():
                 raise LivePrefabError(
                     f"{item} argument in __prefab_pre_init__ is not a valid attribute."
                 )
@@ -375,15 +379,19 @@ def _make_prefab(
             )
 
         argcount = func_code.co_argcount + func_code.co_kwonlyargcount
-        arglist = func_code.co_varnames[:argcount]
+
+        # Include the first argument if the method is static
+        is_static = type(cls.__dict__.get(POST_INIT_FUNC)) is staticmethod
+
+        arglist = func_code.co_varnames[:argcount] if is_static else func_code.co_varnames[1:argcount]
 
         for item in arglist:
-            if item != "self":
-                if item not in attributes.keys():
-                    raise LivePrefabError(
-                        f"{item} argument in __prefab_post_init__ is not a valid attribute."
-                    )
-                post_init_args.append(item)
+            if item not in attributes.keys():
+                raise LivePrefabError(
+                    f"{item} argument in __prefab_post_init__ is not a valid attribute."
+                )
+
+        post_init_args.extend(arglist)
 
     default_defined = []
     valid_fields = []
