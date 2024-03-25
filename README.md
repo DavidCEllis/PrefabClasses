@@ -85,10 +85,21 @@ For more detailed tests you can look at the
 
 ## How does it work ##
 
-The `@prefab` decorator either rewrites the class dynamically using non-data descriptors.
+The `@prefab` decorator analyses the class it is decorating and prepares an internals dict, along
+with performing some other early checks (this may potentially be deferred in a future update,
+**do not depend on any of the prefab internals directly**). Once this is done it sets any direct
+values (`PREFAB_FIELDS` and `__match_args__` if required) and places non-data descriptors for
+all of the magic methods to be generated.
 
-Compiled classes can both be imported directly or converted back to new .py
-files. Direct import will perform the conversion before creating the .pyc file.
+The non-data descriptors for each of the magic methods perform code generation when first called
+in order to generate the actual methods. Once the method has been generated, the descriptor is 
+replaced on the class with the resulting method so there is no overhead regenerating the method
+on each access. 
+
+By only generating methods the first time they are used the start time can be
+improved and methods that are never used don't have to be created at all (for example the 
+`__repr__` method is useful when debugging but may not be used in normal runtime). In contrast
+`dataclasses` generates all of its methods when the class is created..
 
 ## Credit ##
 
