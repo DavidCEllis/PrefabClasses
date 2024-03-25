@@ -101,11 +101,13 @@ def get_init_maker(*, init_name="__init__"):
                 pass
             else:
                 argcount = func_code.co_argcount + func_code.co_kwonlyargcount
-                arglist = func_code.co_varnames[:argcount]
 
-                for item in arglist:
-                    if item != "self":
-                        func_arglist.append(item)
+                # Identify if method is static, if so include first arg, otherwise skip
+                is_static = type(cls.__dict__.get(func_name)) is staticmethod
+
+                arglist = func_code.co_varnames[:argcount] if is_static else func_code.co_varnames[1:argcount]
+
+                func_arglist.extend(arglist)
 
                 if func_name == POST_INIT_FUNC:
                     post_init_annotations.update(func.__annotations__)
