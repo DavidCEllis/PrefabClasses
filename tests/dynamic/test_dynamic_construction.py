@@ -1,5 +1,5 @@
 from prefab_classes import build_prefab, attribute
-from prefab_classes.constants import COMPILED_FLAG, FIELDS_ATTRIBUTE
+from prefab_classes.shared import COMPILED_FLAG, FIELDS_ATTRIBUTE
 
 
 def test_build_basic_prefab():

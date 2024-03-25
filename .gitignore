@@ -1,7 +1,6 @@
 .idea
 .mypy_cache
 .pytest_cache
-env
 references
 .coverage
 scratch/
@@ -11,6 +10,8 @@ _build/
 dist/
 perftemp.py
 hyperfine_testfiles/
+
+/env*/
 
 __pycache__/
 *.pyc

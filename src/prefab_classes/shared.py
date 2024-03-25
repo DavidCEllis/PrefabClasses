@@ -1,5 +1,5 @@
 # ==============================================================================
-# Copyright (c) 2022 David C Ellis
+# Copyright (c) 2022-2024 David C Ellis
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,44 @@
 # SOFTWARE.
 # ==============================================================================
 
+__all__ = [
+    "PRE_INIT_FUNC",
+    "POST_INIT_FUNC",
+    "PREFAB_INIT_FUNC",
+    "DECORATOR_NAME",
+    "ATTRIBUTE_FUNCNAME",
+    "FIELDS_ATTRIBUTE",
+    "COMPILED_FLAG",
+    "COMPILE_ARGUMENT",
+    "CLASSVAR_NAME",
+    "INTERNAL_DICT",
 
+    "PrefabError",
+    "LivePrefabError",
+    "CompiledPrefabError",
+
+    "NOTHING",
+    "KW_ONLY",
+]
+
+
+# CONSTANT STRINGS
+# DO NOT CHANGE - EXTERNALLY USABLE NAMES
+PRE_INIT_FUNC = "__prefab_pre_init__"
+POST_INIT_FUNC = "__prefab_post_init__"
+PREFAB_INIT_FUNC = "__prefab_init__"
+DECORATOR_NAME = "prefab"
+ATTRIBUTE_FUNCNAME = "attribute"
+
+# WILL PROBABLY BREAK CODE
+FIELDS_ATTRIBUTE = "PREFAB_FIELDS"
+COMPILED_FLAG = "COMPILED"
+COMPILE_ARGUMENT = "compile_prefab"
+CLASSVAR_NAME = "ClassVar"
+INTERNAL_DICT = "__prefab_internals__"
+
+
+# EXCEPTIONS
 class PrefabError(Exception):
     pass
 
@@ -31,3 +68,27 @@ class LivePrefabError(PrefabError):
 
 class CompiledPrefabError(PrefabError):
     pass
+
+
+# SENTINEL VALUES
+
+# Special indicator to use in places where NONE could be a legitimate value
+# to indicate that no value has been set.
+# noinspection PyPep8Naming
+class _NOTHING_TYPE:
+    def __repr__(self):
+        return "<NOTHING Sentinel Object>"
+
+
+NOTHING = _NOTHING_TYPE()
+
+
+# KW_ONLY sentinel 'type' to use to indicate all subsequent attributes are
+# keyword only
+# noinspection PyPep8Naming
+class _KW_ONLY_TYPE:
+    def __repr__(self):
+        return "<KW_ONLY Sentinel Object>"
+
+
+KW_ONLY = _KW_ONLY_TYPE()

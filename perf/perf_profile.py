@@ -168,50 +168,16 @@ class C{n}:
 C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
-compiled_prefab_template = '''
-@prefab(compile_prefab=True)
-class C{n}:
-    a: int
-    b: int
-    c: int
-    d: int
-    e: int
-    
-C{n}.__init__, C{n}.__repr__, C{n}.__eq__
-'''
 
+def run_test(name, n):
 
-def run_test(name, n, exclude_compile=False, clear_cache=False):
-    if exclude_compile and not clear_cache:
-        if 'compiled' in name:
-            from prefab_classes.hook import prefab_compiler
-            with prefab_compiler():
-                import perftemp
-        else:
-            import perftemp
-
-        del sys.modules['perftemp']
+    import perftemp
+    del sys.modules["perftemp"]
 
     start = time.time()
     while n > 0:
-        if 'compiled' in name:
-            from prefab_classes.hook import prefab_compiler
-            with prefab_compiler():
-                import perftemp
-        else:
-            import perftemp
+        import perftemp
         del sys.modules['perftemp']
-        # Delete the cached .pyc file
-        if clear_cache:
-            perftemp_pyc = getattr(perftemp, "__cached__")
-            if perftemp_pyc:
-                try:
-                    os.remove(perftemp_pyc)
-                except FileNotFoundError:
-                    raise FileNotFoundError(
-                        f"Could not delete performance {perftemp_pyc=} "
-                        f"as it was not generated"
-                    )
         n -= 1
     end = time.time()
     print(f"| {name} | {end - start:.2f} |")
@@ -224,84 +190,69 @@ def write_perftemp(count, template, setup):
             f.write(template.format(n=n))
 
 
-def main(reps, test_everything=False, exclude_compile=False):
+def main(reps, test_everything=False):
     """
 
     :param reps: Number of repeat imports
     :param test_everything: test against dataclasses/attrs/pydantic/cluegen/dataklasses
-    :param exclude_compile: Exclude the time for 1 cycle to generate the .pyc file.
     :return:
     """
     print(f"Python Version: {sys.version}")
     print(f"Prefab Classes version: {prefab_classes.__version__}")
     print(f"Platform: {platform.platform()}")
-    if exclude_compile:
-        print("Initial compilation time EXCLUDED")
-    else:
-        print("Initial compilation time INCLUDED")
 
     print(f"Time for {reps} imports of 100 classes defined with 5 basic attributes")
     print("| Method | Total Time (seconds) |")
     print("| --- | --- |")
     write_perftemp(100, standard_template, '')
-    run_test('standard classes', reps, exclude_compile=exclude_compile)
+    run_test('standard classes', reps)
 
     if test_everything:
         write_perftemp(100, namedtuple_template, 'from collections import namedtuple\n')
-        run_test('namedtuple', reps, exclude_compile=exclude_compile)
+        run_test('namedtuple', reps)
 
         write_perftemp(100, NamedTuple_template, 'from typing import NamedTuple\n')
-        run_test('NamedTuple', reps, exclude_compile=exclude_compile)
+        run_test('NamedTuple', reps)
 
         write_perftemp(100, dataclass_template, 'from dataclasses import dataclass\n')
-        run_test('dataclasses', reps, exclude_compile=exclude_compile)
+        run_test('dataclasses', reps)
 
         try:
             import attrs
             write_perftemp(100, attr_template, 'from attrs import define\n')
-            run_test(f'attrs {attrs.__version__}', reps, exclude_compile=exclude_compile)
+            run_test(f'attrs {attrs.__version__}', reps)
         except ImportError:
             print("attrs not installed")
 
         try:
             import pydantic
             write_perftemp(100, pydantic_template, 'from pydantic import BaseModel\n')
-            run_test(f'pydantic {pydantic.__version__}', reps, exclude_compile=exclude_compile)
+            run_test(f'pydantic {pydantic.__version__}', reps)
         except ImportError:
             print("pydantic not installed")
 
         write_perftemp(100, cluegen_template, 'from cluegen import Datum\n')
-        run_test('dabeaz/cluegen', reps, exclude_compile=exclude_compile)
+        run_test('dabeaz/cluegen', reps)
 
         write_perftemp(100, cluegen_eval_template, 'from cluegen import Datum\n')
-        run_test('dabeaz/cluegen_eval', reps, exclude_compile=exclude_compile)
+        run_test('dabeaz/cluegen_eval', reps)
 
         write_perftemp(100, dataklass_template, 'from dataklasses import dataklass\n')
-        run_test('dabeaz/dataklasses', reps, exclude_compile=exclude_compile)
+        run_test('dabeaz/dataklasses', reps)
 
         write_perftemp(100, dataklass_eval_template, 'from dataklasses import dataklass\n')
-        run_test('dabeaz/dataklasses_eval', reps, exclude_compile=exclude_compile)
+        run_test('dabeaz/dataklasses_eval', reps)
 
     prefab_import = "from prefab_classes import prefab, attribute\n"
 
     write_perftemp(100, prefab_template, prefab_import)
-    run_test(f'prefab {prefab_classes.__version__}', reps, exclude_compile=exclude_compile)
+    run_test(f'prefab {prefab_classes.__version__}', reps)
 
     write_perftemp(100, prefab_attribute_template, prefab_import)
-    run_test(f'prefab_attributes {prefab_classes.__version__}', reps, exclude_compile=exclude_compile)
+    run_test(f'prefab_attributes {prefab_classes.__version__}', reps)
 
     write_perftemp(100, prefab_eval_template, prefab_import)
-    run_test(f'prefab_eval {prefab_classes.__version__}', reps, exclude_compile=exclude_compile)
-
-    compiled_prefab_import = "# COMPILE_PREFABS\n" \
-                             "from prefab_classes import prefab\n"
-
-    write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
-    run_test(f'compiled_prefab {prefab_classes.__version__}', reps, exclude_compile=exclude_compile)
-
-    # write_perftemp(100, compiled_prefab_template, compiled_prefab_import)
-    # run_test(f'compiled_prefab_nocache {prefab_classes.__version__}', reps, exclude_compile=False,
-    #          clear_cache=True)
+    run_test(f'prefab_eval {prefab_classes.__version__}', reps)
 
 
 if __name__ == '__main__':
@@ -309,4 +260,4 @@ if __name__ == '__main__':
         reps = int(sys.argv[1])
     else:
         reps = 100
-    main(reps, test_everything=True, exclude_compile=True)
+    main(reps, test_everything=True)

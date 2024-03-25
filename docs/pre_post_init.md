@@ -27,7 +27,7 @@ Input code:
 ```python
 from prefab_classes import prefab
 
-@prefab(repr=False, eq=False, compile_prefab=True)
+@prefab(repr=False, eq=False)
 class ExampleValidate:
     x: int
     
@@ -41,7 +41,6 @@ Output code:
 
 ```python
 class ExampleValidate:
-    COMPILED = True
     PREFAB_FIELDS = ['x']
     __match_args__ = ('x',)
     
@@ -63,7 +62,7 @@ Input code:
 from prefab_classes import prefab, attribute
 from pathlib import Path
 
-@prefab(repr=False, eq=False, compile_prefab=True)
+@prefab(repr=False, eq=False)
 class ExampleConvert:
     x = attribute(default='path/to/source')
 
@@ -76,7 +75,6 @@ Output code:
 ```python
 from pathlib import Path
 class ExampleConvert:
-    COMPILED = True
     PREFAB_FIELDS = ['x']
     __match_args__ = ('x',)
     

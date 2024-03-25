@@ -24,20 +24,42 @@
 Handle boilerplate generation for classes.
 """
 import sys
+import warnings
 
 
-# Typing is a slow import so the 'dataclass_transform' code is copied
-# into a separate file. This also provides 3.9/3.10 support without
-# needing to install typing_extensions.
-# If typing ever becomes fast to import we can use the code from the right place.
-SLOW_TYPING = True
-if SLOW_TYPING:
-    from .._typing import dataclass_transform
+# False imports for typing dataclass transform and implementation otherwise
+# The 'typing' import takes over 2x as long as importing this entire module
+# So the impact on import time of the typing import is unacceptable.
+# noinspection PyUnreachableCode
+if False:  # I'd like to correctly use "if TYPE_CHECKING" but that requires importing typing.
+    try:
+        from typing import dataclass_transform
+    except ImportError:
+        from typing_extensions import dataclass_transform
 else:
-    from typing import dataclass_transform
+    def dataclass_transform(
+            *,
+            eq_default: bool = True,
+            order_default: bool = False,
+            kw_only_default: bool = False,
+            frozen_default: bool = False,
+            field_specifiers: tuple = (),
+            **kwargs,
+    ):
+        def decorator(cls_or_fn):
+            cls_or_fn.__dataclass_transform__ = {
+                "eq_default": eq_default,
+                "order_default": order_default,
+                "kw_only_default": kw_only_default,
+                "frozen_default": frozen_default,
+                "field_specifiers": field_specifiers,
+                "kwargs": kwargs,
+            }
+            return cls_or_fn
+        return decorator
 
-from ._attribute_class import Attribute
-from ..constants import (
+
+from ..shared import (
     FIELDS_ATTRIBUTE,
     COMPILED_FLAG,
     CLASSVAR_NAME,
@@ -45,8 +67,9 @@ from ..constants import (
     POST_INIT_FUNC,
     INTERNAL_DICT,
 )
-from ..exceptions import PrefabError, LivePrefabError, CompiledPrefabError
-from ..sentinels import NOTHING, KW_ONLY
+from ..shared import PrefabError, LivePrefabError, CompiledPrefabError
+from ..shared import NOTHING, KW_ONLY
+
 from .method_generators import (
     init_maker,
     repr_maker,
@@ -71,6 +94,101 @@ def _is_classvar(hint):
         elif isinstance(hint, str) and CLASSVAR_NAME in hint:
             return True
     return False
+
+
+class Attribute:
+    __slots__ = (
+        "default",
+        "default_factory",
+        "init",
+        "repr",
+        "compare",
+        "kw_only",
+        "exclude_field",
+        "_type",
+    )
+    __match_args__ = (
+        "default",
+        "default_factory",
+        "init",
+        "repr",
+        "compare",
+        "kw_only",
+        "exclude_field",
+        "_type",
+    )
+    init: bool
+    repr: bool
+    compare: bool
+    kw_only: bool
+    exclude_field: bool
+
+    def __init__(
+        self,
+        *,
+        default=NOTHING,
+        default_factory=NOTHING,
+        init: bool = True,
+        repr: bool = True,
+        compare: bool = True,
+        kw_only: bool = False,
+        exclude_field: bool = False,
+    ):
+
+        if kw_only and (not init):
+            raise LivePrefabError(
+                "Attribute cannot be keyword only if it is not in init."
+            )
+        if default is not NOTHING and default_factory is not NOTHING:
+            raise LivePrefabError(
+                "Cannot define both a default value and a default factory."
+            )
+
+        self.default = default
+        self.default_factory = default_factory
+        self.init = init
+        self.repr = repr
+        self.compare = compare
+        self.kw_only = kw_only
+        self.exclude_field = exclude_field
+        self._type = NOTHING
+
+    def __repr__(self):
+        return (
+            f"{type(self).__qualname__}("
+            f"default={self.default!r}, "
+            f"default_factory={self.default_factory!r}, "
+            f"init={self.init!r}, "
+            f"repr={self.repr!r}, "
+            f"compare={self.compare!r}, "
+            f"kw_only={self.kw_only!r}, "
+            f"exclude_field={self.exclude_field!r}"
+            f")"
+        )
+
+    def __eq__(self, other):
+        return (
+            (
+                self.default,
+                self.default_factory,
+                self.init,
+                self.repr,
+                self.compare,
+                self.kw_only,
+                self.exclude_field,
+            )
+            == (
+                other.default,
+                other.default_factory,
+                other.init,
+                other.repr,
+                other.compare,
+                other.kw_only,
+                other.exclude_field,
+            )
+            if self.__class__ == other.__class__
+            else NotImplemented
+        )
 
 
 def attribute(
@@ -333,7 +451,7 @@ def prefab(
     match_args=True,
     kw_only=False,
     frozen=False,
-    compile_prefab=False,
+    compile_prefab=NOTHING,
     compile_fallback=False,
     compile_plain=False,
     compile_slots=False,
@@ -360,6 +478,14 @@ def prefab(
     :param compile_slots: Make the resulting compiled class use slots
     :return: class with __ methods defined
     """
+    if compile_prefab is NOTHING:
+        compile_prefab = False
+    else:
+        warnings.warn(
+            "Compiled Prefabs are deprecated and will be removed in v0.12.0 or later.",
+            category=DeprecationWarning,
+        )
+
     if not cls:
         # Called as () method to change defaults
         # Skip compile arguments other than prefab/fallback

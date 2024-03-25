@@ -1,5 +1,5 @@
 from prefab_classes import prefab, attribute
-from prefab_classes.constants import INTERNAL_DICT
+from prefab_classes.shared import INTERNAL_DICT
 
 
 def test_dynamic_internals():

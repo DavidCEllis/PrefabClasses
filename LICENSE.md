@@ -4,7 +4,7 @@
 ```
 MIT License
 
-Copyright (c) 2022-2023 David C Ellis
+Copyright (c) 2022-2024 David C Ellis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,6 @@ Cluegen can be found here: https://github.com/dabeaz/cluegen/blob/master/cluegen
 
 Code from Cluegen is used in:
 
-* src/prefab_classes/live/autogen.py
 * src/prefab_classes/live/method_generators.py
 
 ```

@@ -1,5 +1,5 @@
 from .dynamic import prefab, attribute, build_prefab
-from .sentinels import KW_ONLY
+from .shared import KW_ONLY
 from .hook import prefab_compiler
 from .funcs import is_prefab, is_prefab_instance
 

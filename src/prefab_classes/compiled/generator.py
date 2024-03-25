@@ -2,7 +2,7 @@ import ast
 from functools import cached_property
 from collections import defaultdict
 
-from ..constants import (
+from ..shared import (
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
     PREFAB_INIT_FUNC,
@@ -13,9 +13,10 @@ from ..constants import (
     COMPILE_ARGUMENT,
     CLASSVAR_NAME,
     INTERNAL_DICT,
+
+    CompiledPrefabError
 )
 from ..dynamic import prefab, attribute
-from ..exceptions import CompiledPrefabError
 
 assignment_type = ast.AnnAssign | ast.Assign
 prefab_essentials = {DECORATOR_NAME, ATTRIBUTE_FUNCNAME}

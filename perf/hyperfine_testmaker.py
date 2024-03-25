@@ -1,7 +1,7 @@
 """
 This script makes all of the hyperfine tests used in this project
 """
-
+import sys
 from pathlib import Path
 from prefab_classes import prefab
 
@@ -149,15 +149,6 @@ class C{n}:
 C{n}.__init__, C{n}.__repr__, C{n}.__eq__
 '''
 
-compiled_prefab_template = '''
-@prefab(compile_prefab=True)
-class C{n}:
-    a: int
-    b: int
-    c: int
-    d: int
-    e: int
-'''
 
 # Import Headings #
 
@@ -169,7 +160,6 @@ pydantic_header = "from pydantic import BaseModel"
 cluegen_header = "from cluegen import Datum"
 dataklass_header = "from dataklasses import dataklass"
 prefab_header = "from prefab_classes import prefab, attribute"
-compiled_prefab_header = "# COMPILE_PREFABS\nfrom prefab_classes import prefab, attribute"
 
 
 def write_perf_file(outpath, count, template, setup):
@@ -184,8 +174,6 @@ class TestData:
     import_name: str
     import_header: str
     class_template: str
-    use_compile_importer: bool = False
-    precompile_prefab: bool = False
 
     @property
     def importer_file(self):
@@ -198,34 +186,14 @@ class TestData:
         return classdef_dir / def_name
 
     def write_perf_importer(self):
-        if self.use_compile_importer:
-            data = (
-                f"from prefab_classes.hook import prefab_compiler\n"
-                f"with prefab_compiler():\n"
-                f"    import class_definitions.{self.import_name}_data\n"
-            )
-        else:
-            data = f"import class_definitions.{self.import_name}_data\n"
+        data = f"import class_definitions.{self.import_name}_data\n"
         self.importer_file.write_text(data)
 
     def write_classdef_file(self, count=100):
-        if self.precompile_prefab:
-            from prefab_classes.compiled import rewrite_to_py
-            tmpdef = self.def_file.with_suffix('.temp')
-            with tmpdef.open(mode='w') as f:
-                f.write(self.import_header)
-                for n in range(count):
-                    f.write(self.class_template.format(n=n))
-
-            rewrite_to_py(tmpdef, self.def_file)
-
-            tmpdef.unlink()
-
-        else:
-            with self.def_file.open(mode='w') as f:
-                f.write(self.import_header)
-                for n in range(count):
-                    f.write(self.class_template.format(n=n))
+        with self.def_file.open(mode='w') as f:
+            f.write(self.import_header)
+            for n in range(count):
+                f.write(self.class_template.format(n=n))
 
 
 datasets = [
@@ -239,8 +207,6 @@ datasets = [
     # TestData('cluegen_eval', cluegen_header, cluegen_eval_template),
     TestData('prefab_classes', prefab_header, prefab_template),
     TestData('prefab_eval', prefab_header, prefab_eval_template),
-    TestData('compiled_prefab', compiled_prefab_header, compiled_prefab_template, use_compile_importer=True),
-    TestData('precompiled_prefab', compiled_prefab_header, compiled_prefab_template, precompile_prefab=True),
 ]
 
 
@@ -250,12 +216,14 @@ def write_tests(*, runs=100, includes_pass=True):
     classdef_dir.mkdir(exist_ok=True)
     results_dir.mkdir(exist_ok=True)
 
+    script_ext = "bat" if sys.platform == "win32" else "sh"
+
     for data in datasets:
         data.write_perf_importer()
         data.write_classdef_file(count=100)
 
     tests = " ".join(
-        f"'python hyperfine_importers/{data.import_name}_timer.py'"
+        f'"python hyperfine_importers/{data.import_name}_timer.py"'
         for data in datasets
     )
 
@@ -267,7 +235,7 @@ def write_tests(*, runs=100, includes_pass=True):
     )
 
     if includes_pass:
-        tests = f"'python -c \"pass\"' {tests}"
+        tests = f'"python -c \\"pass\\"" {tests}'
 
     outpath = results_dir / 'hyperfine_result.md'
 
@@ -277,26 +245,26 @@ def write_tests(*, runs=100, includes_pass=True):
         f"hyperfine --export-markdown {outpath} --shell=none --runs {runs} --warmup 10 {tests}"
     )
 
-    shell_pth = base_dir / "hyperfine_runner.sh"
+    shell_pth = base_dir / f"hyperfine_runner.{script_ext}"
     shell_pth.write_text(zsh_script)
 
     outpath = results_dir / 'hyperfine_importtimes.md'
 
     tests = (
-        """'python -c "pass"' """
-        """'python -c "import collections"' """
-        """'python -c "import typing"' """
-        """'python -c "import dataclasses"' """
-        """'python -c "import attrs"' """
-        """'python -c "import pydantic"' """
-        """'python -c "import prefab_classes"' """
+        '''"python -c \\"pass\\"" '''
+        '''"python -c \\"from prefab_classes import prefab\\"" '''
+        '''"python -c \\"from collections import namedtuple\\"" '''
+        '''"python -c \\"from typing import NamedTuple\\"" '''
+        '''"python -c \\"from dataclasses import dataclass\\"" '''
+        '''"python -c \\"from attrs import define\\"" '''
+        '''"python -c \\"from pydantic import BaseModel\\"" '''
     )
 
     import_script = (
         f"hyperfine --export-markdown {outpath} --shell=none --runs {runs} --warmup 10 {tests}"
     )
 
-    shell_pth = base_dir / 'hyperfine_importtimes.sh'
+    shell_pth = base_dir / f'hyperfine_importtimes.{script_ext}'
     shell_pth.write_text(import_script)
 
 

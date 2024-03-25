@@ -39,15 +39,41 @@
 # greater good.
 # ----------------------------------------------------------------------
 
-from ..constants import (
+from ..shared import (
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
     PREFAB_INIT_FUNC,
     FIELDS_ATTRIBUTE,
     INTERNAL_DICT,
+
+    NOTHING,
 )
-from ..sentinels import NOTHING
-from .autogen import autogen
+
+
+def autogen(func, globs=None):
+    """
+    Basically the cluegen function from David Beazley's cluegen
+    Modified slightly due to other changes.
+
+    Using this as a decorator indicates that the function will return a string
+    which should be used to replace the function itself for that specific class.
+    """
+    # globs can be a given empty dict, so specifically check for None.
+    globs = globs if globs is not None else {}
+
+    def __get__(self, instance, cls):
+        local_vars = {}
+        code = func(cls)
+        exec(code, globs, local_vars)
+        # Having executed the code, the method should now exist
+        # and can be retrieved by name from the dict
+        method = local_vars[func.__name__]
+        method.__qualname__ = f"{cls.__qualname__}.{method.__name__}"
+        # Replace the attribute with the real function - this will only be called once.
+        setattr(cls, func.__name__, method)
+        return method.__get__(instance, cls)
+
+    return type(f"AutoGen_{func.__name__}", (), dict(__get__=__get__))()
 
 
 def get_init_maker(*, init_name="__init__"):
