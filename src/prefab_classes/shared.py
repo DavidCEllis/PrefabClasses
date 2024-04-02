@@ -31,7 +31,6 @@ __all__ = [
     "INTERNAL_DICT",
 
     "PrefabError",
-    "LivePrefabError",
 
     "NOTHING",
     "KW_ONLY",
@@ -54,10 +53,6 @@ INTERNAL_DICT = "__prefab_internals__"
 
 # EXCEPTIONS
 class PrefabError(Exception):
-    pass
-
-
-class LivePrefabError(PrefabError):
     pass
 
 

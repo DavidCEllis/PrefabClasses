@@ -66,7 +66,7 @@ from ..shared import (
     POST_INIT_FUNC,
     INTERNAL_DICT,
 )
-from ..shared import PrefabError, LivePrefabError
+from ..shared import PrefabError
 from ..shared import NOTHING, KW_ONLY
 
 from .method_generators import (
@@ -135,11 +135,11 @@ class Attribute:
     ):
 
         if kw_only and (not init):
-            raise LivePrefabError(
+            raise PrefabError(
                 "Attribute cannot be keyword only if it is not in init."
             )
         if default is not NOTHING and default_factory is not NOTHING:
-            raise LivePrefabError(
+            raise PrefabError(
                 "Cannot define both a default value and a default factory."
             )
 
@@ -283,7 +283,7 @@ def _make_prefab(
             # Look for the KW_ONLY annotation
             if value is KW_ONLY or value == "KW_ONLY":
                 if kw_flag:
-                    raise LivePrefabError(
+                    raise PrefabError(
                         "Class can not be defined as keyword only twice"
                     )
                 kw_flag = True
@@ -346,7 +346,7 @@ def _make_prefab(
         pass
     else:
         if func_code.co_posonlyargcount > 0:
-            raise LivePrefabError(
+            raise PrefabError(
                 "Positional only arguments are not supported in pre or post init functions."
             )
 
@@ -359,7 +359,7 @@ def _make_prefab(
 
         for item in arglist:
             if item not in attributes.keys():
-                raise LivePrefabError(
+                raise PrefabError(
                     f"{item} argument in __prefab_pre_init__ is not a valid attribute."
                 )
 
@@ -371,7 +371,7 @@ def _make_prefab(
         pass
     else:
         if func_code.co_posonlyargcount > 0:
-            raise LivePrefabError(
+            raise PrefabError(
                 "Positional only arguments are not supported in pre or post init functions."
             )
 
@@ -384,7 +384,7 @@ def _make_prefab(
 
         for item in arglist:
             if item not in attributes.keys():
-                raise LivePrefabError(
+                raise PrefabError(
                     f"{item} argument in __prefab_post_init__ is not a valid attribute."
                 )
 
@@ -401,7 +401,7 @@ def _make_prefab(
 
         if attrib.exclude_field:
             if name not in post_init_args:
-                raise LivePrefabError(
+                raise PrefabError(
                     f"{name} is an excluded attribute but is not passed to post_init"
                 )
         else:
