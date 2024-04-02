@@ -57,6 +57,26 @@ Settings(hostname='localhost', template_folder='base/path', template_name='index
 
 For further details see the `usage` pages in the documentation.
 
+There is experimental support for creating classes defined via `__slots__` using a PrefabSlots instance.
+
+Similarly to the type hinted form, plain values given to a PrefabSlots instance are treated as defaults
+while `attribute` calls are handled normally. `doc` values will be seen when calling `help(...)` on the class
+while the `__annotations__` dictionary will be updated with `type` values given. Annotations can also still
+be given normally (which will probably be necessary for static typing tools).
+
+```python
+from prefab_classes import prefab, attribute, PrefabSlots
+
+@prefab
+class Settings:
+    __slots__ = PrefabSlots(
+        hostname="localhost",
+        template_folder="base/path",
+        template_name=attribute(default="index", type=str, doc="Name of the template"),
+    )
+    
+```
+
 ## Why not just use attrs/dataclasses? ##
 
 If attrs or dataclasses solves your problem then you should use them.
