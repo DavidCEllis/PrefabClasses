@@ -332,6 +332,8 @@ def _make_prefab(
 
         # Replace the PrefabSlots instance with a regular dict
         # So that help() works
+        # This also prevents subclasses from unintentionally reusing the slots
+        # If they do not declare their own slots.
         setattr(cls, "__slots__", slot_replacement)
         # Update annotations with any types from the slots assignment
         cls_annotations.update(updated_types)
