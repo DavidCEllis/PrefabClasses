@@ -3,7 +3,6 @@ from .shared import KW_ONLY
 from .funcs import is_prefab, is_prefab_instance
 
 __version__: str
-PREFAB_MAGIC_BYTES: bytes
 
 __all__: list[str] = [
     "__version__",

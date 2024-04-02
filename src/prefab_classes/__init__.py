@@ -16,8 +16,7 @@ __all__ = [
     "is_prefab_instance",
 ]
 
-__version__ = "v0.11.1"
-PREFAB_MAGIC_BYTES = b"PREFAB_CLASSES_v0.11.1"
+__version__ = "v0.12.0"
 
 _imports = [
     MultiFromImport(".dynamic", ["prefab", "attribute", "build_prefab"]),
