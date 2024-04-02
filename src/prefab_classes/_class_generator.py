@@ -266,18 +266,6 @@ class PrefabSlots(Mapping):
     def __iter__(self):
         yield from self._attributes
 
-    @property
-    def slot_replacement(self):
-        """
-        Get the replacement dictionary to be left in the __slots__ attribute.
-        This allows the help(...) builtin to provide attribute documentation.
-        """
-        return {
-            key: value.doc
-            for key, value in self._attributes.items()
-            if isinstance(value, Attribute) and getattr(value, "doc", None)
-        }
-
 
 def _make_prefab(
     cls: type,
@@ -308,6 +296,10 @@ def _make_prefab(
     prefab_internals: dict[str, dict[str, Attribute]] = {}
     setattr(cls, INTERNAL_DICT, prefab_internals)
 
+    # Check for slots first - if provided as a PrefabSlots instance this will be used
+    # regardless of other data
+    cls_slots = getattr(cls, "__slots__", None)
+
     # We need to look at type hints for the type hint
     # syntax variant.
     # If a key exists and is *NOT* in __annotations__ then all
@@ -317,62 +309,92 @@ def _make_prefab(
 
     cls_annotation_names = cls_annotations.keys()
 
-    cls_attributes = {k: v for k, v in vars(cls).items() if isinstance(v, Attribute)}
+    if isinstance(cls_slots, PrefabSlots):
+        # If slots are defined we must use slots
+        cls_attributes = {}
+        slot_replacement = {}
+        updated_types = {}
 
-    cls_attribute_names = cls_attributes.keys()
-
-    if set(cls_annotation_names).issuperset(set(cls_attribute_names)):
-        # replace the classes' attributes dict with one with the correct
-        # order from the annotations.
-        kw_flag = False
-        new_attributes = {}
-        for name, value in cls_annotations.items():
-            # Ignore ClassVar hints
-            if _is_classvar(value):
-                continue
-
-            # Look for the KW_ONLY annotation
-            if value is KW_ONLY or value == "KW_ONLY":
-                if kw_flag:
-                    raise PrefabError(
-                        "Class can not be defined as keyword only twice"
-                    )
-                kw_flag = True
+        for k, v in cls_slots.items():
+            if isinstance(v, Attribute):
+                attrib = v
+                if v._type is not NOTHING:
+                    updated_types[k] = attrib._type
             else:
-                # Copy atributes that are already defined to the new dict
-                # generate Attribute() values for those that are not defined.
-                cls_slots = getattr(cls, "__slots__", {})
-                if hasattr(cls, name) and name not in cls_slots:
-                    if name in cls_attribute_names:
-                        attrib = cls_attributes[name]
-                    else:
-                        attribute_default = getattr(cls, name)
-                        attrib = attribute(default=attribute_default)
+                # Plain values treated as defaults
+                attrib = attribute(default=v)
 
-                    # Clear the attribute from the class after it has been used
-                    # in the definition.
-                    delattr(cls, name)
-                else:
-                    attrib = attribute()
-
-                if kw_flag or kw_only:
-                    attrib.kw_only = True
-
-                attrib._type = cls_annotations[name]
-                new_attributes[name] = attrib
-
-        cls_attributes = new_attributes
-    else:
-        for name, attrib in cls_attributes.items():
             if kw_only:
                 attrib.kw_only = True
 
-            delattr(cls, name)
-            # Some items can still be annotated.
-            try:
-                attrib._type = cls_annotations[name]
-            except KeyError:
-                pass
+            slot_replacement[k] = attrib.doc
+            cls_attributes[k] = attrib
+
+        # Replace the PrefabSlots instance with a regular dict
+        # So that help() works
+        setattr(cls, "__slots__", slot_replacement)
+        # Update annotations with any types from the slots assignment
+        cls_annotations.update(updated_types)
+        setattr(cls, "__annotations__", cls_annotations)
+    else:
+        cls_attributes = {k: v for k, v in vars(cls).items() if isinstance(v, Attribute)}
+
+        cls_attribute_names = cls_attributes.keys()
+
+        if set(cls_annotation_names).issuperset(set(cls_attribute_names)):
+            # replace the classes' attributes dict with one with the correct
+            # order from the annotations.
+            kw_flag = False
+            new_attributes = {}
+            for name, value in cls_annotations.items():
+                # Ignore ClassVar hints
+                if _is_classvar(value):
+                    continue
+
+                # Look for the KW_ONLY annotation
+                if value is KW_ONLY or value == "KW_ONLY":
+                    if kw_flag:
+                        raise PrefabError(
+                            "Class can not be defined as keyword only twice"
+                        )
+                    kw_flag = True
+                else:
+                    # Copy atributes that are already defined to the new dict
+                    # generate Attribute() values for those that are not defined.
+                    if cls_slots is None:
+                        cls_slots = {}
+
+                    if hasattr(cls, name) and name not in cls_slots:
+                        if name in cls_attribute_names:
+                            attrib = cls_attributes[name]
+                        else:
+                            attribute_default = getattr(cls, name)
+                            attrib = attribute(default=attribute_default)
+
+                        # Clear the attribute from the class after it has been used
+                        # in the definition.
+                        delattr(cls, name)
+                    else:
+                        attrib = attribute()
+
+                    if kw_flag or kw_only:
+                        attrib.kw_only = True
+
+                    attrib._type = cls_annotations[name]
+                    new_attributes[name] = attrib
+
+            cls_attributes = new_attributes
+        else:
+            for name, attrib in cls_attributes.items():
+                if kw_only:
+                    attrib.kw_only = True
+
+                delattr(cls, name)
+                # Some items can still be annotated.
+                try:
+                    attrib._type = cls_annotations[name]
+                except KeyError:
+                    pass
 
     prefab_internals['local_attributes'] = cls_attributes
 
