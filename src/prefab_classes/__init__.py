@@ -1,7 +1,6 @@
 from ducktools.lazyimporter import (
     LazyImporter,
     MultiFromImport,
-    FromImport,
     get_module_funcs,
 )
 
@@ -12,6 +11,7 @@ __all__ = [
     "attribute",
     "build_prefab",
     "KW_ONLY",
+    "PrefabError",
     "is_prefab",
     "is_prefab_instance",
 ]
@@ -20,7 +20,7 @@ __version__ = "v0.12.0"
 
 _imports = [
     MultiFromImport("._class_generator", ["prefab", "attribute", "build_prefab"]),
-    FromImport("._shared", "KW_ONLY"),
+    MultiFromImport("._shared", ["KW_ONLY", "PrefabError"]),
     MultiFromImport(".funcs", ["is_prefab", "is_prefab_instance"]),
 ]
 
