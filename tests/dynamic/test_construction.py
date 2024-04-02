@@ -1,5 +1,5 @@
 from prefab_classes import build_prefab, attribute
-from prefab_classes.shared import COMPILED_FLAG, FIELDS_ATTRIBUTE
+from prefab_classes.shared import FIELDS_ATTRIBUTE
 
 
 def test_build_basic_prefab():
@@ -11,7 +11,6 @@ def test_build_basic_prefab():
         ],
     )
 
-    assert getattr(DynamicTestClass, COMPILED_FLAG) is False
     assert getattr(DynamicTestClass, FIELDS_ATTRIBUTE) == ["x", "y"]
 
     inst = DynamicTestClass(12)

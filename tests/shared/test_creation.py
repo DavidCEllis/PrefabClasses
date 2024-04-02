@@ -5,7 +5,7 @@ import pytest
 
 
 class TestEmptyClass:
-    def test_empty(self, importer):
+    def test_empty(self):
         from creation_empty import Empty
 
         x = Empty()
@@ -13,21 +13,21 @@ class TestEmptyClass:
 
         assert repr(x) == "Empty()"
 
-    def test_empty_classvar(self, importer):
+    def test_empty_classvar(self):
         from creation_empty import EmptyClassVars
 
         x = EmptyClassVars()
         assert x.x == 12
         assert "x" not in x.__dict__
 
-    def test_empty_equal(self, importer):
+    def test_empty_equal(self):
         from creation_empty import Empty
 
         x = Empty()
         y = Empty()
         assert x == y
 
-    def test_empty_iter(self, importer):
+    def test_empty_iter(self):
         from creation_empty import EmptyIter
 
         x = EmptyIter()
@@ -37,7 +37,7 @@ class TestEmptyClass:
 
 
 class TestRemoveRecipe:
-    def test_removed_defaults(self, importer):
+    def test_removed_defaults(self):
         from creation import OnlyHints
 
         removed_attributes = ["x", "y", "z"]
@@ -45,7 +45,7 @@ class TestRemoveRecipe:
             assert attrib not in getattr(OnlyHints, "__dict__")
             assert attrib in getattr(OnlyHints, "__annotations__", {})
 
-    def test_removed_only_used_defaults(self, importer):
+    def test_removed_only_used_defaults(self):
         from creation import MixedHints
 
         assert "x" in getattr(MixedHints, "__annotations__")
@@ -57,7 +57,7 @@ class TestRemoveRecipe:
         for attrib in removed_attributes:
             assert attrib not in getattr(MixedHints, "__dict__")
 
-    def test_removed_attributes(self, importer):
+    def test_removed_attributes(self):
         from creation import AllPlainAssignment
 
         removed_attributes = ["x", "y", "z"]
@@ -65,7 +65,6 @@ class TestRemoveRecipe:
             assert attrib not in getattr(AllPlainAssignment, "__dict__")
 
 
-@pytest.mark.usefixtures("importer")
 class TestKeepDefined:
     def test_keep_init(self):
         from creation import KeepDefinedMethods
@@ -101,7 +100,7 @@ class TestKeepDefined:
         assert KeepDefinedMethods.__match_args__ == ("x",)
 
 
-def test_skipped_classvars(importer):
+def test_skipped_classvars():
     from creation import IgnoreClassVars
 
     fields = getattr(IgnoreClassVars, FIELDS_ATTRIBUTE)
@@ -121,7 +120,7 @@ def test_skipped_classvars(importer):
 
 
 class TestExceptions:
-    def test_kw_not_in_init(self, importer):
+    def test_kw_not_in_init(self):
         with pytest.raises(PrefabError) as e_info:
             from fails.creation_1 import Construct
 
@@ -130,7 +129,7 @@ class TestExceptions:
             == "Attribute cannot be keyword only if it is not in init."
         )
 
-    def test_positional_after_kw_error(self, importer):
+    def test_positional_after_kw_error(self):
         with pytest.raises(SyntaxError) as e_info:
             from fails.creation_2 import FailSyntax
 
@@ -141,7 +140,7 @@ class TestExceptions:
 
         assert e_info.value.args[0] == "non-default argument follows default argument"
 
-    def test_default_value_and_factory_error(self, importer):
+    def test_default_value_and_factory_error(self):
         """Error if defining both a value and a factory"""
         with pytest.raises(PrefabError) as e_info:
             from fails.creation_5 import Construct
@@ -155,7 +154,7 @@ class TestExceptions:
 class TestSplitVarDef:
     # Tests for a split variable definition
     @pytest.mark.parametrize("classname", ["SplitVarDef", "SplitVarDefReverseOrder", "SplitVarRedef"])
-    def test_splitvardef(self, importer, classname):
+    def test_splitvardef(self, classname):
         import creation
 
         cls = getattr(creation, classname)
@@ -165,7 +164,7 @@ class TestSplitVarDef:
         inst = cls()
         assert inst.x == "test"
 
-    def test_splitvarattribdef(self, importer):
+    def test_splitvarattribdef(self):
         from creation import SplitVarAttribDef as cls
 
         inst = cls()
@@ -176,7 +175,7 @@ class TestSplitVarDef:
         assert inst.x == "test"
         assert inst.y == "test_2"
 
-    def test_horriblemess(self, importer):
+    def test_horriblemess(self):
         # Nobody should make a class like this but it should behave
         # as expected
         from creation import HorribleMess as cls
@@ -189,7 +188,7 @@ class TestSplitVarDef:
         assert cls.__annotations__ == {'x': str, 'y': str}
 
 
-def test_call_mistaken(importer):
+def test_call_mistaken():
     from creation import CallMistakenForAttribute as cls
 
     # Check that ignore_this is a class variable and use_this is not
@@ -200,7 +199,6 @@ def test_call_mistaken(importer):
     assert inst.use_this == "this is an attribute"
 
 
-@pytest.mark.usefixtures("importer")
 class TestNonInit:
     def test_non_init_works_no_default(self):
         from creation import ConstructInitFalse

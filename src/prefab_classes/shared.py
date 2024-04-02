@@ -27,14 +27,11 @@ __all__ = [
     "DECORATOR_NAME",
     "ATTRIBUTE_FUNCNAME",
     "FIELDS_ATTRIBUTE",
-    "COMPILED_FLAG",
-    "COMPILE_ARGUMENT",
     "CLASSVAR_NAME",
     "INTERNAL_DICT",
 
     "PrefabError",
     "LivePrefabError",
-    "CompiledPrefabError",
 
     "NOTHING",
     "KW_ONLY",
@@ -51,8 +48,6 @@ ATTRIBUTE_FUNCNAME = "attribute"
 
 # WILL PROBABLY BREAK CODE
 FIELDS_ATTRIBUTE = "PREFAB_FIELDS"
-COMPILED_FLAG = "COMPILED"
-COMPILE_ARGUMENT = "compile_prefab"
 CLASSVAR_NAME = "ClassVar"
 INTERNAL_DICT = "__prefab_internals__"
 
@@ -63,10 +58,6 @@ class PrefabError(Exception):
 
 
 class LivePrefabError(PrefabError):
-    pass
-
-
-class CompiledPrefabError(PrefabError):
     pass
 
 

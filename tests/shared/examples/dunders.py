@@ -1,52 +1,51 @@
-# COMPILE_PREFABS
 from prefab_classes import prefab, attribute
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class Coordinate:
     x: float
     y: float
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class Coordinate3D(Coordinate):
     z: float
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class CoordinateTime:
     t: float
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class Coordinate4D(CoordinateTime, Coordinate3D):
     pass
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class CoordinateNoXRepr:
     x: float = attribute(repr=False)
     y: float
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class NoXReprNoXInit:
     _type = attribute(default=None, init=False, repr=False)
 
 
-@prefab(compile_prefab=True, compile_fallback=True, iter=True)
+@prefab(iter=True)
 class CoordinateIter:
     x: float
     y: float
 
 
-@prefab(compile_prefab=True, compile_fallback=True, match_args=False)
+@prefab(match_args=False)
 class NoMatchArgs:
     x: float
     y: float
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class DundersExist:
     x: int
     y: int

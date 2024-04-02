@@ -12,7 +12,6 @@ __all__ = [
     "attribute",
     "build_prefab",
     "KW_ONLY",
-    "prefab_compiler",
     "is_prefab",
     "is_prefab_instance",
 ]
@@ -23,7 +22,6 @@ PREFAB_MAGIC_BYTES = b"PREFAB_CLASSES_v0.11.1"
 _imports = [
     MultiFromImport(".dynamic", ["prefab", "attribute", "build_prefab"]),
     FromImport(".shared", "KW_ONLY"),
-    FromImport(".hook", "prefab_compiler"),
     MultiFromImport(".funcs", ["is_prefab", "is_prefab_instance"]),
 ]
 

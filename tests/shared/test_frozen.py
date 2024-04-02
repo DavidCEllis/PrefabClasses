@@ -1,7 +1,7 @@
 import pytest
 
 
-def test_basic_frozen(importer):
+def test_basic_frozen():
     from frozen_prefabs import FrozenExample
 
     # Make sure basics still work
@@ -22,7 +22,7 @@ def test_basic_frozen(importer):
     assert x.y == "Example Data"
 
 
-def test_mutable_default(importer):
+def test_mutable_default():
     from frozen_prefabs import FrozenExample
 
     base_list = []
@@ -42,7 +42,7 @@ def test_mutable_default(importer):
     assert x.z is base_list
 
 
-def test_delete_blocked(importer):
+def test_delete_blocked():
     from frozen_prefabs import FrozenExample
 
     x = FrozenExample(x=0)

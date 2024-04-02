@@ -1,6 +1,5 @@
 from .dynamic import prefab, attribute, build_prefab
 from .shared import KW_ONLY
-from .hook import prefab_compiler
 from .funcs import is_prefab, is_prefab_instance
 
 __version__: str
@@ -12,7 +11,6 @@ __all__: list[str] = [
     "attribute",
     "build_prefab",
     "KW_ONLY",
-    "prefab_compiler",
     "is_prefab",
     "is_prefab_instance",
 ]

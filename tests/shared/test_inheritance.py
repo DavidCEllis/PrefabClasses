@@ -2,7 +2,7 @@
 import pytest
 
 
-def test_inherit_object(importer):
+def test_inherit_object():
     from inheritance import InheritObject
 
     x = InheritObject()
@@ -11,7 +11,7 @@ def test_inherit_object(importer):
     assert x == y
 
 
-def test_basic_inheritance(importer):
+def test_basic_inheritance():
     from inheritance import Coordinate3D
 
     x = Coordinate3D(1, 2, 3)
@@ -19,7 +19,7 @@ def test_basic_inheritance(importer):
     assert (x.x, x.y, x.z) == (1, 2, 3)
 
 
-def test_layered_inheritance(importer):
+def test_layered_inheritance():
     from inheritance import Coordinate4D
 
     x = Coordinate4D(1, 2, 3, 4)
@@ -29,7 +29,7 @@ def test_layered_inheritance(importer):
     assert (x.x, x.y, x.z, x.t) == (1, 2, 3, 4)
 
 
-def test_two_fields_one_default(importer):
+def test_two_fields_one_default():
     # Incorrect default argument order should still fail
     # even with inheritance
     with pytest.raises(SyntaxError):
@@ -39,7 +39,7 @@ def test_two_fields_one_default(importer):
         import fails.inheritance_2
 
 
-def test_inherited_pre_post_init(importer):
+def test_inherited_pre_post_init():
     # Inherited pre/post init functions should be used
     from inheritance import BasePreInitPostInit, ChildPreInitPostInit
 
@@ -52,7 +52,7 @@ def test_inherited_pre_post_init(importer):
     assert inherit_ex.post_init
 
 
-def test_mro_correct(importer):
+def test_mro_correct():
     from inheritance import GrandChild
     ex = GrandChild()
 
