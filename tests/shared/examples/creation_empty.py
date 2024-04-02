@@ -1,18 +1,17 @@
-# COMPILE_PREFABS
 from typing import ClassVar
 from prefab_classes import prefab
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class Empty:
     pass
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class EmptyClassVars:
     x: ClassVar = 12
 
 
-@prefab(compile_prefab=True, compile_fallback=True, iter=True)
+@prefab(iter=True)
 class EmptyIter:
     pass

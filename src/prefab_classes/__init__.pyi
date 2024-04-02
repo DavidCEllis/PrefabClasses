@@ -1,10 +1,8 @@
-from .dynamic import prefab, attribute, build_prefab
-from .shared import KW_ONLY
-from .hook import prefab_compiler
+from ._class_generator import prefab, attribute, build_prefab
+from ._shared import KW_ONLY, PrefabError
 from .funcs import is_prefab, is_prefab_instance
 
 __version__: str
-PREFAB_MAGIC_BYTES: bytes
 
 __all__: list[str] = [
     "__version__",
@@ -12,7 +10,7 @@ __all__: list[str] = [
     "attribute",
     "build_prefab",
     "KW_ONLY",
-    "prefab_compiler",
+    "PrefabError",
     "is_prefab",
     "is_prefab_instance",
 ]

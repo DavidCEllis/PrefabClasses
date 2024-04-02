@@ -6,7 +6,7 @@ from prefab_classes.funcs import as_dict, to_json
 from pytest import raises
 
 
-def test_is_prefab(importer):
+def test_is_prefab():
     from funcs_prefabs import Coordinate  # noqa
 
     # The Class is a prefab
@@ -16,7 +16,7 @@ def test_is_prefab(importer):
     assert is_prefab(Coordinate(1, 1))
 
 
-def test_is_prefab_instance(importer):
+def test_is_prefab_instance():
     from funcs_prefabs import Coordinate  # noqa
 
     # 'Coordinate' is not a prefab instance, it is a class
@@ -27,7 +27,7 @@ def test_is_prefab_instance(importer):
 
 
 # Serialization tests
-def test_as_dict(importer):
+def test_as_dict():
     from funcs_prefabs import Coordinate  # noqa
 
     x = Coordinate(1, 2)
@@ -37,7 +37,7 @@ def test_as_dict(importer):
     assert as_dict(x) == expected_dict
 
 
-def test_to_json(importer):
+def test_to_json():
     import json
 
     from funcs_prefabs import SystemPath  # noqa
@@ -55,7 +55,7 @@ def test_to_json(importer):
     assert to_json(pth, excludes=("filename",), default=str) == expected_json
 
 
-def test_to_json_recurse(importer):
+def test_to_json_recurse():
     """Due to the implementation, json dumps should recurse by default"""
     import json
 
@@ -70,7 +70,7 @@ def test_to_json_recurse(importer):
     assert circ_json == to_json(circ)
 
 
-def test_jsonencoder_failure(importer):
+def test_jsonencoder_failure():
     """With the encoder for Prefabs it should still typeerror on unencodable types"""
 
     from funcs_prefabs import SystemPath  # noqa
@@ -81,7 +81,7 @@ def test_jsonencoder_failure(importer):
         to_json(pth)
 
 
-def test_jsonencoder_layered(importer):
+def test_jsonencoder_layered():
     import json
 
     def default_for_path(o):
@@ -106,7 +106,7 @@ def test_jsonencoder_layered(importer):
     )
 
 
-def test_picklable(importer):
+def test_picklable():
     from funcs_prefabs import PicklePrefab  # noqa
 
     picktest = PicklePrefab()

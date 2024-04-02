@@ -6,7 +6,7 @@ from typing import Union
 import pytest
 
 
-def test_basic(importer):
+def test_basic():
     from init_ex import Coordinate
 
     x = Coordinate(1, 2)
@@ -14,7 +14,7 @@ def test_basic(importer):
     assert (x.x, x.y) == (1, 2)
 
 
-def test_basic_kwargs(importer):
+def test_basic_kwargs():
     from init_ex import Coordinate
 
     x = Coordinate(x=1, y=2)
@@ -22,14 +22,14 @@ def test_basic_kwargs(importer):
     assert (x.x, x.y) == (1, 2)
 
 
-def test_init_exclude(importer):
+def test_init_exclude():
     from init_ex import CoordinateFixedY
 
     x = CoordinateFixedY(x=1)
     assert (x.x, x.y) == (1, 2)
 
 
-def test_basic_with_defaults(importer):
+def test_basic_with_defaults():
     from init_ex import CoordinateDefaults
 
     x = CoordinateDefaults()
@@ -39,7 +39,7 @@ def test_basic_with_defaults(importer):
     assert (y.x, y.y) == (0, 5)
 
 
-def test_mutable_defaults_bad(importer):
+def test_mutable_defaults_bad():
     """Test mutable defaults behave as they would in a regular class"""
 
     from init_ex import MutableDefault
@@ -51,7 +51,7 @@ def test_mutable_defaults_bad(importer):
     assert mut1.x is mut2.x
 
 
-def test_default_factory_good(importer):
+def test_default_factory_good():
     from init_ex import FactoryDefault
 
     mut1 = FactoryDefault()
@@ -62,7 +62,7 @@ def test_default_factory_good(importer):
     assert mut1.x is not mut2.x
 
 
-def test_no_default(importer):
+def test_no_default():
     from init_ex import Coordinate
 
     with pytest.raises(TypeError) as e_info:
@@ -79,7 +79,7 @@ def test_no_default(importer):
     assert e_info.value.args[0] == error_message
 
 
-def test_difficult_defaults(importer):
+def test_difficult_defaults():
     from init_ex import Settings
 
     x = Settings()
@@ -87,21 +87,21 @@ def test_difficult_defaults(importer):
     assert x.output_file == Path("Settings.json")
 
 
-def test_pre_init(importer):
+def test_pre_init():
     from init_ex import PreInitExample
 
     x = PreInitExample()
     assert hasattr(x, "pre_init_ran")
 
 
-def test_post_init(importer):
+def test_post_init():
     from init_ex import PostInitExample
 
     x = PostInitExample()
     assert hasattr(x, "post_init_ran")
 
 
-def test_pre_post_init_arguments(importer):
+def test_pre_post_init_arguments():
     from init_ex import PrePostInitArguments
 
     x = PrePostInitArguments()
@@ -113,7 +113,7 @@ def test_pre_post_init_arguments(importer):
         y = PrePostInitArguments(2, 1)
 
 
-def test_post_init_partial(importer):
+def test_post_init_partial():
     from init_ex import PostInitPartial
 
     x = PostInitPartial(1, 2)
@@ -121,7 +121,7 @@ def test_post_init_partial(importer):
     assert (x.x, x.y, x.z) == (1, 2, [1])
 
 
-def test_post_init_annotations(importer):
+def test_post_init_annotations():
     from init_ex import PostInitAnnotations
 
     x = PostInitAnnotations(1, '/usr/bin/python')
@@ -132,7 +132,7 @@ def test_post_init_annotations(importer):
     assert init_annotations['y'] == Union[str, Path]
 
 
-def test_exclude_field(importer):
+def test_exclude_field():
     from init_ex import ExcludeField
 
     assert "x" not in ExcludeField.PREFAB_FIELDS
@@ -146,14 +146,14 @@ def test_exclude_field(importer):
     assert x == y
 
 
-def test_replace_factory_default(importer):
+def test_replace_factory_default():
     from init_ex import FactoryDefault
 
     mut1 = FactoryDefault(x=[1, 2, 3])
     assert mut1.x == [1, 2, 3]
 
 
-def test_empty_containers_factory_default(importer):
+def test_empty_containers_factory_default():
     # Empty containers should be copied and not replaced
     from init_ex import EmptyContainers
 
@@ -173,7 +173,7 @@ def test_empty_containers_factory_default(importer):
     assert ec.z is empty_dict
 
 
-def test_signature(importer):
+def test_signature():
     from init_ex import TypeSignatureInit
     import inspect
 
@@ -181,7 +181,7 @@ def test_signature(importer):
     assert str(init_sig) == "(self, x: int, y: str = 'Test')"
 
 
-def test_partial_signature(importer):
+def test_partial_signature():
     from init_ex import PartialTypeSignatureInit
     import inspect
 

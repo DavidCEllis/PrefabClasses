@@ -2,7 +2,7 @@
 import pytest
 
 
-def test_repr(importer):
+def test_repr():
     from dunders import Coordinate
 
     expected_repr = "Coordinate(x=1, y=2)"
@@ -10,14 +10,14 @@ def test_repr(importer):
     assert repr(Coordinate(1, 2)) == expected_repr
 
 
-def test_repr_exclude(importer):
+def test_repr_exclude():
     from dunders import CoordinateNoXRepr
 
     expected_repr = "<prefab CoordinateNoXRepr; y=2>"
     assert repr(CoordinateNoXRepr(1, 2)) == expected_repr
 
 
-def test_repr_init_exclude(importer):
+def test_repr_init_exclude():
     from dunders import NoXReprNoXInit
 
     x = NoXReprNoXInit()
@@ -36,7 +36,7 @@ def test_iter():
     assert y == [1, 2]
 
 
-def test_eq(importer):
+def test_eq():
     from dunders import Coordinate4D
 
     x = Coordinate4D(1, 2, 3, 4)
@@ -46,7 +46,7 @@ def test_eq(importer):
     assert x == y
 
 
-def test_neq(importer):
+def test_neq():
     from dunders import Coordinate4D
 
     x = Coordinate4D(1, 2, 3, 4)
@@ -56,20 +56,20 @@ def test_neq(importer):
     assert x != y
 
 
-def test_match_args(importer):
+def test_match_args():
     from dunders import Coordinate4D
 
     assert Coordinate4D.__match_args__ == ("x", "y", "z", "t")
 
 
-def test_match_args_disabled(importer):
+def test_match_args_disabled():
     from dunders import NoMatchArgs
 
     with pytest.raises(AttributeError):
         _ = NoMatchArgs.__match_args__
 
 
-def test_dunders_not_overwritten(importer):
+def test_dunders_not_overwritten():
     from dunders import DundersExist
 
     x = DundersExist(0, 0)

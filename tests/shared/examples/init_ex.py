@@ -1,38 +1,37 @@
-# COMPILE_PREFABS
 from prefab_classes import prefab, attribute
 from pathlib import Path
 from typing import Union
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class Coordinate:
     x: float
     y: float
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class CoordinateFixedY:
     x = attribute()
     y = attribute(default=2, init=False)
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class CoordinateDefaults:
     x = attribute(default=0)
     y = attribute(default=0)
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class MutableDefault:
     x = attribute(default=list())
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class FactoryDefault:
     x = attribute(default_factory=list)
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class Settings:
     """
     Global persistent settings handler
@@ -41,7 +40,7 @@ class Settings:
     output_file = attribute(default=Path("Settings.json"))
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class PreInitExample:
     init_value: bool = True
 
@@ -49,7 +48,7 @@ class PreInitExample:
         self.pre_init_ran = True
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class PostInitExample:
     init_value: bool = True
 
@@ -57,7 +56,7 @@ class PostInitExample:
         self.post_init_ran = True
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class PrePostInitArguments:
     x: int = 1
     y: int = 2
@@ -71,7 +70,7 @@ class PrePostInitArguments:
         self.y = 3 * y
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class ExcludeField:
     x = attribute(default="excluded_field", exclude_field=True)
 
@@ -79,7 +78,7 @@ class ExcludeField:
         self.x = x.upper()
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class PostInitPartial:
     x: int
     y: int
@@ -90,7 +89,7 @@ class PostInitPartial:
         self.z = z
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class PostInitAnnotations:
     x: int
     y: Path
@@ -99,20 +98,20 @@ class PostInitAnnotations:
         self.y = Path(y)
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class EmptyContainers:
     x: list = attribute(default_factory=list)
     y: set = attribute(default_factory=set)
     z: dict = attribute(default_factory=dict)
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class TypeSignatureInit:
     x: int
     y: str = "Test"
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class PartialTypeSignatureInit:
     x = attribute()
     y: str = attribute(default="Test")

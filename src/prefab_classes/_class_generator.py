@@ -24,7 +24,6 @@
 Handle boilerplate generation for classes.
 """
 import sys
-import warnings
 
 
 # False imports for typing dataclass transform and implementation otherwise
@@ -59,18 +58,17 @@ else:
         return decorator
 
 
-from ..shared import (
+from ._shared import (
     FIELDS_ATTRIBUTE,
-    COMPILED_FLAG,
     CLASSVAR_NAME,
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
     INTERNAL_DICT,
 )
-from ..shared import PrefabError, LivePrefabError, CompiledPrefabError
-from ..shared import NOTHING, KW_ONLY
+from ._shared import PrefabError
+from ._shared import NOTHING, KW_ONLY
 
-from .method_generators import (
+from ._method_generators import (
     init_maker,
     repr_maker,
     repr_maker_no_eval,
@@ -136,11 +134,11 @@ class Attribute:
     ):
 
         if kw_only and (not init):
-            raise LivePrefabError(
+            raise PrefabError(
                 "Attribute cannot be keyword only if it is not in init."
             )
         if default is not NOTHING and default_factory is not NOTHING:
-            raise LivePrefabError(
+            raise PrefabError(
                 "Cannot define both a default value and a default factory."
             )
 
@@ -254,9 +252,6 @@ def _make_prefab(
                    (This does not prevent the modification of mutable attributes such as lists)
     :return: class with __ methods defined
     """
-    # If this function is called then this is a dynamic prefab
-    setattr(cls, COMPILED_FLAG, False)
-
     # Make the internals dict
     prefab_internals: dict[str, dict[str, Attribute]] = {}
     setattr(cls, INTERNAL_DICT, prefab_internals)
@@ -287,7 +282,7 @@ def _make_prefab(
             # Look for the KW_ONLY annotation
             if value is KW_ONLY or value == "KW_ONLY":
                 if kw_flag:
-                    raise LivePrefabError(
+                    raise PrefabError(
                         "Class can not be defined as keyword only twice"
                     )
                 kw_flag = True
@@ -350,7 +345,7 @@ def _make_prefab(
         pass
     else:
         if func_code.co_posonlyargcount > 0:
-            raise LivePrefabError(
+            raise PrefabError(
                 "Positional only arguments are not supported in pre or post init functions."
             )
 
@@ -363,7 +358,7 @@ def _make_prefab(
 
         for item in arglist:
             if item not in attributes.keys():
-                raise LivePrefabError(
+                raise PrefabError(
                     f"{item} argument in __prefab_pre_init__ is not a valid attribute."
                 )
 
@@ -375,7 +370,7 @@ def _make_prefab(
         pass
     else:
         if func_code.co_posonlyargcount > 0:
-            raise LivePrefabError(
+            raise PrefabError(
                 "Positional only arguments are not supported in pre or post init functions."
             )
 
@@ -388,7 +383,7 @@ def _make_prefab(
 
         for item in arglist:
             if item not in attributes.keys():
-                raise LivePrefabError(
+                raise PrefabError(
                     f"{item} argument in __prefab_post_init__ is not a valid attribute."
                 )
 
@@ -405,7 +400,7 @@ def _make_prefab(
 
         if attrib.exclude_field:
             if name not in post_init_args:
-                raise LivePrefabError(
+                raise PrefabError(
                     f"{name} is an excluded attribute but is not passed to post_init"
                 )
         else:
@@ -460,10 +455,6 @@ def prefab(
     match_args=True,
     kw_only=False,
     frozen=False,
-    compile_prefab=NOTHING,
-    compile_fallback=False,
-    compile_plain=False,
-    compile_slots=False,
 ):
     """
     Generate boilerplate code for dunder methods in a class.
@@ -480,25 +471,10 @@ def prefab(
     :param frozen: Prevent attribute values from being changed once defined
                    (This does not prevent the modification of mutable attributes such as lists)
 
-    :param compile_prefab: Direct the prefab compiler to compile this class
-    :param compile_fallback: Fallback to a dynamic prefab if not compiled.
-    :param compile_plain: Do not include the COMPILED and PREFAB_FIELDS
-                          attributes after compilation
-    :param compile_slots: Make the resulting compiled class use slots
     :return: class with __ methods defined
     """
-    if compile_prefab is NOTHING:
-        compile_prefab = False
-    else:
-        warnings.warn(
-            "Compiled Prefabs are deprecated and will be removed in v0.12.0 or later.",
-            category=DeprecationWarning,
-        )
-
     if not cls:
         # Called as () method to change defaults
-        # Skip compile arguments other than prefab/fallback
-        # These are not needed
         return lambda cls_: prefab(
             cls_,
             init=init,
@@ -506,28 +482,11 @@ def prefab(
             eq=eq,
             iter=iter,
             match_args=match_args,
-            compile_prefab=compile_prefab,
-            compile_fallback=compile_fallback,
             kw_only=kw_only,
             frozen=frozen,
         )
     else:
-        if getattr(cls, COMPILED_FLAG, False):
-            # Do not recompile compiled classes
-            return cls
-        # If the class is not compiled but has the instruction to compile, fail
-        elif compile_prefab and not compile_fallback:
-            raise CompiledPrefabError(
-                f"Class {cls.__name__} has not been compiled and compiled_fallback=False.",
-                f"Make sure the comment '# COMPILE_PREFABS' is at the "
-                f"top of the module {cls.__module__}\n"
-                f"and the module is imported in a 'with prefab_compiler():' block",
-            )
-        elif compile_slots:
-            raise PrefabError("Slots are not supported on 'dynamic' Prefabs.")
-        else:
-            # Create Live Version
-            return _make_prefab(
+        return _make_prefab(
                 cls,
                 init=init,
                 repr=repr,

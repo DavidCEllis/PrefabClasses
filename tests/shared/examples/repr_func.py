@@ -1,32 +1,31 @@
-# COMPILE_PREFABS
 from prefab_classes import prefab, attribute
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class RegularRepr:
     x: str = "Hello"
     y: str = "World"
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class NoReprAttributes:
     x: str = attribute(default="Hello", repr=False)
     y: str = attribute(default="World", repr=False)
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class OneAttributeNoRepr:
     x: str = attribute(default="Hello", repr=False)
     y: str = "World"
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class OneAttributeNoInit:
     x: str = "Hello"
     y: str = attribute(default="World", init=False)
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class OneAttributeExcludeField:
     x: str = "Hello"
     y: str = attribute(default="World", exclude_field=True)
@@ -35,7 +34,7 @@ class OneAttributeExcludeField:
         self.y = y
 
 
-@prefab(compile_prefab=True, compile_fallback=True)
+@prefab
 class RegularReprOneArg:
     x: str = "Hello"
     y: str = attribute(default="World", init=False, repr=False)
