@@ -12,9 +12,9 @@ def test_dynamic_internals():
     class Z(X):
         z: int = 3
 
-    x_attrib = attribute()
-    y_attrib = attribute(default=2)
-    z_attrib = attribute(default=3)
+    x_attrib = attribute(type=int)
+    y_attrib = attribute(default=2, type=int)
+    z_attrib = attribute(default=3, type=int)
 
     assert hasattr(X, INTERNAL_DICT)
 

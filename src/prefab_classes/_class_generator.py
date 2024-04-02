@@ -25,6 +25,11 @@ Handle boilerplate generation for classes.
 """
 import sys
 
+try:
+    from _collections_abc import Mapping
+except ImportError:
+    from collections.abc import Mapping
+
 
 # False imports for typing dataclass transform and implementation otherwise
 # The 'typing' import takes over 2x as long as importing this entire module
@@ -103,6 +108,7 @@ class Attribute:
         "compare",
         "kw_only",
         "exclude_field",
+        "doc",
         "_type",
     )
     __match_args__ = (
@@ -113,6 +119,7 @@ class Attribute:
         "compare",
         "kw_only",
         "exclude_field",
+        "doc",
         "_type",
     )
     init: bool
@@ -120,6 +127,7 @@ class Attribute:
     compare: bool
     kw_only: bool
     exclude_field: bool
+    doc: str | None
 
     def __init__(
         self,
@@ -131,6 +139,8 @@ class Attribute:
         compare: bool = True,
         kw_only: bool = False,
         exclude_field: bool = False,
+        doc: str | None = None,
+        type=NOTHING,
     ):
 
         if kw_only and (not init):
@@ -149,7 +159,8 @@ class Attribute:
         self.compare = compare
         self.kw_only = kw_only
         self.exclude_field = exclude_field
-        self._type = NOTHING
+        self.doc = doc
+        self._type = type
 
     def __repr__(self):
         return (
@@ -160,7 +171,9 @@ class Attribute:
             f"repr={self.repr!r}, "
             f"compare={self.compare!r}, "
             f"kw_only={self.kw_only!r}, "
-            f"exclude_field={self.exclude_field!r}"
+            f"exclude_field={self.exclude_field!r},"
+            f"doc={self.doc!r},"
+            f"type={self._type!r},"
             f")"
         )
 
@@ -174,6 +187,8 @@ class Attribute:
                 self.compare,
                 self.kw_only,
                 self.exclude_field,
+                self.doc,
+                self._type,
             )
             == (
                 other.default,
@@ -183,6 +198,8 @@ class Attribute:
                 other.compare,
                 other.kw_only,
                 other.exclude_field,
+                other.doc,
+                other._type,
             )
             if self.__class__ == other.__class__
             else NotImplemented
@@ -198,6 +215,8 @@ def attribute(
     compare=True,
     kw_only=False,
     exclude_field=False,
+    doc=None,
+    type=NOTHING,
 ):
     """
     Additional definition for how to generate standard methods
@@ -213,6 +232,8 @@ def attribute(
     :param exclude_field: Exclude this field from all magic method generation
                           apart from __init__
                           and do not include it in PREFAB_FIELDS
+    :param doc: Parameter documentation for slotted classes
+    :param type: Type of this attribute (for slotted classes)
 
     :return: Attribute generated with these parameters.
     """
@@ -224,7 +245,38 @@ def attribute(
         compare=compare,
         kw_only=kw_only,
         exclude_field=exclude_field,
+        doc=doc,
+        type=type,
     )
+
+
+class PrefabSlots(Mapping):
+    """
+    A special mapping class to define slots for a slotted prefab.
+    """
+    def __init__(self, **attributes):
+        self._attributes = attributes
+
+    def __getitem__(self, item):
+        return self._attributes[item]
+
+    def __len__(self):
+        return len(self._attributes)
+
+    def __iter__(self):
+        yield from self._attributes
+
+    @property
+    def slot_replacement(self):
+        """
+        Get the replacement dictionary to be left in the __slots__ attribute.
+        This allows the help(...) builtin to provide attribute documentation.
+        """
+        return {
+            key: value.doc
+            for key, value in self._attributes.items()
+            if isinstance(value, Attribute) and getattr(value, "doc", None)
+        }
 
 
 def _make_prefab(
