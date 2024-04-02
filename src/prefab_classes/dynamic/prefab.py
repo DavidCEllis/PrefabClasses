@@ -294,7 +294,8 @@ def _make_prefab(
             else:
                 # Copy atributes that are already defined to the new dict
                 # generate Attribute() values for those that are not defined.
-                if hasattr(cls, name):
+                cls_slots = getattr(cls, "__slots__", {})
+                if hasattr(cls, name) and name not in cls_slots:
                     if name in cls_attribute_names:
                         attrib = cls_attributes[name]
                     else:
