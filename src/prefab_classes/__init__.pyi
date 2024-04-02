@@ -1,5 +1,5 @@
-from .dynamic import prefab, attribute, build_prefab
-from .shared import KW_ONLY
+from ._class_generator import prefab, attribute, build_prefab
+from ._shared import KW_ONLY
 from .funcs import is_prefab, is_prefab_instance
 
 __version__: str

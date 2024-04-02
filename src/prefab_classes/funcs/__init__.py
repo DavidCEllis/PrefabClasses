@@ -1,4 +1,4 @@
-from ..shared import FIELDS_ATTRIBUTE
+from .._shared import FIELDS_ATTRIBUTE
 
 from ducktools.lazyimporter import LazyImporter, MultiFromImport
 

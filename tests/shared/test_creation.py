@@ -1,5 +1,5 @@
 """Tests for errors raised on class creation"""
-from prefab_classes.shared import FIELDS_ATTRIBUTE, PrefabError
+from prefab_classes._shared import FIELDS_ATTRIBUTE, PrefabError
 
 import pytest
 

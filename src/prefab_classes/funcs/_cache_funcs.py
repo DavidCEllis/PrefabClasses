@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from ..shared import FIELDS_ATTRIBUTE
+from .._shared import FIELDS_ATTRIBUTE
 
 
 @lru_cache

@@ -1,5 +1,5 @@
 from prefab_classes import build_prefab, attribute
-from prefab_classes.shared import FIELDS_ATTRIBUTE
+from prefab_classes._shared import FIELDS_ATTRIBUTE
 
 
 def test_build_basic_prefab():

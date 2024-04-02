@@ -39,7 +39,7 @@
 # greater good.
 # ----------------------------------------------------------------------
 
-from ..shared import (
+from ._shared import (
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
     PREFAB_INIT_FUNC,

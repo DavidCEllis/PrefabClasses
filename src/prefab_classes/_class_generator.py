@@ -24,7 +24,6 @@
 Handle boilerplate generation for classes.
 """
 import sys
-import warnings
 
 
 # False imports for typing dataclass transform and implementation otherwise
@@ -59,17 +58,17 @@ else:
         return decorator
 
 
-from ..shared import (
+from ._shared import (
     FIELDS_ATTRIBUTE,
     CLASSVAR_NAME,
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
     INTERNAL_DICT,
 )
-from ..shared import PrefabError
-from ..shared import NOTHING, KW_ONLY
+from ._shared import PrefabError
+from ._shared import NOTHING, KW_ONLY
 
-from .method_generators import (
+from ._method_generators import (
     init_maker,
     repr_maker,
     repr_maker_no_eval,
