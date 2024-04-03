@@ -301,7 +301,7 @@ def _make_prefab(
         )
 
     # Make the internals dict
-    prefab_internals: dict[str, dict[str, Attribute]] = {}
+    prefab_internals = {}
     setattr(cls, INTERNAL_DICT, prefab_internals)
 
     # Check for slots first
@@ -319,6 +319,8 @@ def _make_prefab(
     cls_annotation_names = cls_annotations.keys()
 
     if isinstance(cls_slots, SlotAttributes):
+        prefab_internals["slotted"] = True
+
         # If slots are defined we must use slots
         cls_attributes = {}
         slot_replacement = {}
@@ -348,6 +350,8 @@ def _make_prefab(
         cls_annotations.update(updated_types)
         setattr(cls, "__annotations__", cls_annotations)
     else:
+        prefab_internals["slotted"] = False
+
         cls_attributes = {k: v for k, v in vars(cls).items() if isinstance(v, Attribute)}
 
         cls_attribute_names = cls_attributes.keys()
