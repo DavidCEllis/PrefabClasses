@@ -55,8 +55,18 @@ class C{n}:
     e: int
 '''
 
-attr_template = '''
-@define
+attr_noslots_template = '''
+@define(slots=False)
+class C{n}:
+    a: int
+    b: int
+    c: int
+    d: int
+    e: int
+'''
+
+attr_slots_template = '''
+@define(slots=True)
 class C{n}:
     a: int
     b: int
@@ -137,6 +147,18 @@ class C{n}:
     e = attribute()
 '''
 
+prefab_slots_template = '''
+@prefab
+class C{n}:
+    __slots__ = SlotAttributes(
+        a=attribute(),
+        b=attribute(),
+        c=attribute(),
+        d=attribute(),
+        e=attribute(),
+    )
+'''
+
 prefab_eval_template = '''
 @prefab
 class C{n}:
@@ -159,7 +181,7 @@ attr_header = "from attrs import define"
 pydantic_header = "from pydantic import BaseModel"
 cluegen_header = "from cluegen import Datum"
 dataklass_header = "from dataklasses import dataklass"
-prefab_header = "from prefab_classes import prefab, attribute"
+prefab_header = "from prefab_classes import prefab, attribute, SlotAttributes"
 
 
 def write_perf_file(outpath, count, template, setup):
@@ -198,15 +220,17 @@ class TestData:
 
 datasets = [
     TestData('native_classes', '', standard_template),
+    TestData('prefab_classes', prefab_header, prefab_template),
+    TestData('prefab_slots', prefab_header, prefab_slots_template),
+    TestData('prefab_eval', prefab_header, prefab_eval_template),
     TestData('namedtuples', namedtuple_header, namedtuple_template),
     TestData('typed_namedtuples', NamedTuple_header, NamedTuple_template),
     TestData('dataclasses', dataclass_header, dataclass_template),
-    TestData('attrs', attr_header, attr_template),
+    TestData('attrs_noslots', attr_header, attr_noslots_template),
+    TestData('attrs_slots', attr_header, attr_slots_template),
     TestData('pydantic', pydantic_header, pydantic_template),
     # TestData('cluegen', cluegen_header, cluegen_template),
     # TestData('cluegen_eval', cluegen_header, cluegen_eval_template),
-    TestData('prefab_classes', prefab_header, prefab_template),
-    TestData('prefab_eval', prefab_header, prefab_eval_template),
 ]
 
 
