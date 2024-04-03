@@ -39,6 +39,8 @@
 # greater good.
 # ----------------------------------------------------------------------
 
+from ducktools.lazyimporter import LazyImporter, FromImport
+
 from ._shared import (
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
@@ -48,6 +50,8 @@ from ._shared import (
 
     NOTHING,
 )
+
+_laz = LazyImporter([FromImport("reprlib", "recursive_repr")])
 
 
 def autogen(func, globs=None):
@@ -238,23 +242,28 @@ def get_repr_maker(will_eval=True):
         )
         if will_eval:
             code = (
+                f"@_laz.recursive_repr()\n"
                 f"def __repr__(self):\n"
-                f"    return f'{{type(self).__qualname__}}({content})'"
+                f"    return f'{{type(self).__qualname__}}({content})'\n"
             )
         else:
             if content:
                 code = (
+                    f"@_laz.recursive_repr()\n"
                     f"def __repr__(self):\n"
-                    f"    return f'<prefab {{type(self).__qualname__}}; {content}>'"
+                    f"    return f'<prefab {{type(self).__qualname__}}; {content}>'\n"
                 )
             else:
                 code = (
+                    f"@_laz.recursive_repr()\n"
                     f"def __repr__(self):\n"
-                    f"    return f'<prefab {{type(self).__qualname__}}>'"
+                    f"    return f'<prefab {{type(self).__qualname__}}>'\n"
                 )
         return code
 
-    return autogen(__repr__)
+    globs = {"_laz": _laz}
+
+    return autogen(__repr__, globs)
 
 
 def get_eq_maker():
