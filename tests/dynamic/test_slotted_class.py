@@ -1,12 +1,12 @@
 import pytest
 
-from prefab_classes import prefab, attribute, PrefabSlots
+from prefab_classes import prefab, attribute, SlotAttributes
 
 
 def test_basic_slotted():
     @prefab
     class SlottedPrefab:
-        __slots__ = PrefabSlots(
+        __slots__ = SlotAttributes(
             x=42,
             y=attribute(default=3.14, type=float, doc="Digits of pi"),
         )
@@ -34,7 +34,7 @@ def test_class_unchanged():
     @prefab
     @save_class
     class Slotted:
-        __slots__ = PrefabSlots(
+        __slots__ = SlotAttributes(
             x="example_data"
         )
 
@@ -48,7 +48,7 @@ def test_class_unchanged():
 def test_actually_slotted():
     @prefab
     class Slotted:
-        __slots__ = PrefabSlots(
+        __slots__ = SlotAttributes(
             x=attribute(default="example_data")
         )
         x: str

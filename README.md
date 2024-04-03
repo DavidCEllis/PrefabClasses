@@ -11,11 +11,6 @@ the module itself.
 
 Classes are written lazily when their methods are first needed.
 
-> [!WARNING]
-> There is a second form of generation that works by modifying the AST, however
-> this is deprecated and will be removed in the next major version.
-> It required placing an import hook in order to use it and it was complex to maintain.
-
 For more detail look at the [documentation](https://prefabclasses.readthedocs.io).
 
 ## Usage ##
@@ -57,7 +52,9 @@ Settings(hostname='localhost', template_folder='base/path', template_name='index
 
 For further details see the `usage` pages in the documentation.
 
-There is experimental support for creating classes defined via `__slots__` using a PrefabSlots instance.
+### Slots ###
+
+There is experimental support for creating classes defined via `__slots__` using a SlotAttributes instance.
 
 Similarly to the type hinted form, plain values given to a PrefabSlots instance are treated as defaults
 while `attribute` calls are handled normally. `doc` values will be seen when calling `help(...)` on the class
@@ -65,16 +62,17 @@ while the `__annotations__` dictionary will be updated with `type` values given.
 be given normally (which will probably be necessary for static typing tools).
 
 ```python
-from prefab_classes import prefab, attribute, PrefabSlots
+from prefab_classes import prefab, attribute, SlotAttributes
+
 
 @prefab
 class Settings:
-    __slots__ = PrefabSlots(
+    __slots__ = SlotAttributes(
         hostname="localhost",
         template_folder="base/path",
         template_name=attribute(default="index", type=str, doc="Name of the template"),
     )
-    
+
 ```
 
 ## Why not just use attrs/dataclasses? ##

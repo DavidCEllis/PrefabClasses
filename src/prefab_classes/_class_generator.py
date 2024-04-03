@@ -250,7 +250,7 @@ def attribute(
     )
 
 
-class PrefabSlots(Mapping):
+class SlotAttributes(Mapping):
     """
     A special mapping class to define slots for a slotted prefab.
     """
@@ -296,7 +296,7 @@ def _make_prefab(
     prefab_internals: dict[str, dict[str, Attribute]] = {}
     setattr(cls, INTERNAL_DICT, prefab_internals)
 
-    # Check for slots first - if provided as a PrefabSlots instance this will be used
+    # Check for slots first - if provided as a SlotAttributes instance this will be used
     # regardless of other data
     cls_slots = getattr(cls, "__slots__", None)
 
@@ -309,7 +309,7 @@ def _make_prefab(
 
     cls_annotation_names = cls_annotations.keys()
 
-    if isinstance(cls_slots, PrefabSlots):
+    if isinstance(cls_slots, SlotAttributes):
         # If slots are defined we must use slots
         cls_attributes = {}
         slot_replacement = {}
@@ -330,7 +330,7 @@ def _make_prefab(
             slot_replacement[k] = attrib.doc
             cls_attributes[k] = attrib
 
-        # Replace the PrefabSlots instance with a regular dict
+        # Replace the SlotAttributes instance with a regular dict
         # So that help() works
         # This also prevents subclasses from unintentionally reusing the slots
         # If they do not declare their own slots.

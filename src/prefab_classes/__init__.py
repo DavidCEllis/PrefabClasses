@@ -10,7 +10,7 @@ __all__ = [
     "prefab",
     "attribute",
     "build_prefab",
-    "PrefabSlots"
+    "SlotAttributes"
     "KW_ONLY",
     "PrefabError",
     "is_prefab",
@@ -20,7 +20,7 @@ __all__ = [
 __version__ = "v0.12.0"
 
 _imports = [
-    MultiFromImport("._class_generator", ["prefab", "attribute", "build_prefab", "PrefabSlots"]),
+    MultiFromImport("._class_generator", ["prefab", "attribute", "build_prefab", "SlotAttributes"]),
     MultiFromImport("._shared", ["KW_ONLY", "PrefabError"]),
     MultiFromImport(".funcs", ["is_prefab", "is_prefab_instance"]),
 ]
