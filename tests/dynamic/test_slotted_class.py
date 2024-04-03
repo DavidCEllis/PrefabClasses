@@ -93,3 +93,19 @@ def test_slotted_inheritance():
     # As a subclass, B now has a dict and this should work
     exb = B()
     exb.attrib = True
+
+
+def test_slotted_frozen():
+    @prefab(frozen=True)
+    class A:
+        __slots__ = SlotAttributes(x=attribute())
+
+    ex = A("test")
+
+    with pytest.raises(TypeError):
+        ex.x = "Can't set attributes on frozen instance"
+
+    with pytest.raises(TypeError):
+        ex.y = "Can't set attributes on frozen instance"
+
+    assert ex.x == "test"

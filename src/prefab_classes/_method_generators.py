@@ -307,12 +307,16 @@ def get_frozen_setattr_maker():
         fields_delimited = ", ".join(f"{field!r}" for field in field_names)
         field_set = f"{{ {fields_delimited} }}"
 
-        # Dynamic prefabs are not slotted so it is possible to insert into the dict
+        # Attempt to insert into the dict assuming the class is not slotted
+        # Fallback to object.__setattr__
         body = (
             f"    if hasattr(self, name) or name not in {field_set}:\n"
             f'        raise TypeError("{cls.__name__!r} object does not support attribute assignment")\n'
             f"    else:\n"
-            f"        self.__dict__[name] = value\n"
+            f"        try:\n"
+            f"            self.__dict__[name] = value\n"
+            f"        except AttributeError:\n"
+            f"            object.__setattr__(self, name, value)\n"
         )
         code = f"def __setattr__(self, name, value):\n{body}"
 
