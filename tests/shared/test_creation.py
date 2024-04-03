@@ -1,4 +1,5 @@
 """Tests for errors raised on class creation"""
+
 from prefab_classes import PrefabError
 from prefab_classes._shared import FIELDS_ATTRIBUTE
 
@@ -119,7 +120,6 @@ def test_skipped_classvars():
     assert "z" in getattr(IgnoreClassVars, "__dict__")
 
 
-
 class TestExceptions:
     def test_kw_not_in_init(self):
         with pytest.raises(PrefabError) as e_info:
@@ -154,13 +154,15 @@ class TestExceptions:
 
 class TestSplitVarDef:
     # Tests for a split variable definition
-    @pytest.mark.parametrize("classname", ["SplitVarDef", "SplitVarDefReverseOrder", "SplitVarRedef"])
+    @pytest.mark.parametrize(
+        "classname", ["SplitVarDef", "SplitVarDefReverseOrder", "SplitVarRedef"]
+    )
     def test_splitvardef(self, classname):
         import creation
 
         cls = getattr(creation, classname)
 
-        assert cls.__annotations__['x'] == str
+        assert cls.__annotations__["x"] == str
 
         inst = cls()
         assert inst.x == "test"
@@ -170,8 +172,8 @@ class TestSplitVarDef:
 
         inst = cls()
 
-        assert 'x' in cls.PREFAB_FIELDS
-        assert 'y' in cls.PREFAB_FIELDS
+        assert "x" in cls.PREFAB_FIELDS
+        assert "y" in cls.PREFAB_FIELDS
 
         assert inst.x == "test"
         assert inst.y == "test_2"
@@ -186,7 +188,7 @@ class TestSplitVarDef:
         assert inst.x == "true_test"
         assert repr(inst) == "HorribleMess(x='true_test', y='test_2')"
 
-        assert cls.__annotations__ == {'x': str, 'y': str}
+        assert cls.__annotations__ == {"x": str, "y": str}
 
 
 def test_call_mistaken():

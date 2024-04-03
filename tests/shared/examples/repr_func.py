@@ -43,4 +43,3 @@ class RegularReprOneArg:
 @prefab
 class RecursiveObject:
     x: "RecursiveObject | None" = None
-

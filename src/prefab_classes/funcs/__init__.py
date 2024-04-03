@@ -43,15 +43,17 @@ __all__ = [
 
 
 _laz = LazyImporter(
-    [MultiFromImport(
-        "._cache_funcs",
-        [
-            "as_dict_cache",
-            "as_dict_json_wrapper",
-            "get_json_encoder",
-            "merge_defaults",
-        ]
-    )],
+    [
+        MultiFromImport(
+            "._cache_funcs",
+            [
+                "as_dict_cache",
+                "as_dict_json_wrapper",
+                "get_json_encoder",
+                "merge_defaults",
+            ],
+        )
+    ],
     globs=globals(),
 )
 

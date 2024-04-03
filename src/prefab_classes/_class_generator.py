@@ -41,14 +41,15 @@ if False:
     except ImportError:
         from typing_extensions import dataclass_transform
 else:
+
     def dataclass_transform(
-            *,
-            eq_default: bool = True,
-            order_default: bool = False,
-            kw_only_default: bool = False,
-            frozen_default: bool = False,
-            field_specifiers: tuple = (),
-            **kwargs,
+        *,
+        eq_default: bool = True,
+        order_default: bool = False,
+        kw_only_default: bool = False,
+        frozen_default: bool = False,
+        field_specifiers: tuple = (),
+        **kwargs,
     ):
         def decorator(cls_or_fn):
             cls_or_fn.__dataclass_transform__ = {
@@ -60,6 +61,7 @@ else:
                 "kwargs": kwargs,
             }
             return cls_or_fn
+
         return decorator
 
 
@@ -144,9 +146,7 @@ class Attribute:
     ):
 
         if kw_only and (not init):
-            raise PrefabError(
-                "Attribute cannot be keyword only if it is not in init."
-            )
+            raise PrefabError("Attribute cannot be keyword only if it is not in init.")
         if default is not NOTHING and default_factory is not NOTHING:
             raise PrefabError(
                 "Cannot define both a default value and a default factory."
@@ -254,6 +254,7 @@ class SlotAttributes(Mapping):
     """
     A special mapping class to define slots for a slotted prefab.
     """
+
     def __init__(self, **attributes):
         self._attributes = attributes
 
@@ -352,7 +353,9 @@ def _make_prefab(
     else:
         prefab_internals["slotted"] = False
 
-        cls_attributes = {k: v for k, v in vars(cls).items() if isinstance(v, Attribute)}
+        cls_attributes = {
+            k: v for k, v in vars(cls).items() if isinstance(v, Attribute)
+        }
 
         cls_attribute_names = cls_attributes.keys()
 
@@ -411,7 +414,7 @@ def _make_prefab(
                 except KeyError:
                     pass
 
-    prefab_internals['local_attributes'] = cls_attributes
+    prefab_internals["local_attributes"] = cls_attributes
 
     mro = cls.__mro__[:-1]  # skip 'object' base class
 
@@ -443,7 +446,11 @@ def _make_prefab(
         # Include the first argument if the method is static
         is_static = type(cls.__dict__.get(PRE_INIT_FUNC)) is staticmethod
 
-        arglist = func_code.co_varnames[:argcount] if is_static else func_code.co_varnames[1:argcount]
+        arglist = (
+            func_code.co_varnames[:argcount]
+            if is_static
+            else func_code.co_varnames[1:argcount]
+        )
 
         for item in arglist:
             if item not in attributes.keys():
@@ -468,7 +475,11 @@ def _make_prefab(
         # Include the first argument if the method is static
         is_static = type(cls.__dict__.get(POST_INIT_FUNC)) is staticmethod
 
-        arglist = func_code.co_varnames[:argcount] if is_static else func_code.co_varnames[1:argcount]
+        arglist = (
+            func_code.co_varnames[:argcount]
+            if is_static
+            else func_code.co_varnames[1:argcount]
+        )
 
         for item in arglist:
             if item not in attributes.keys():
@@ -576,15 +587,15 @@ def prefab(
         )
     else:
         return _make_prefab(
-                cls,
-                init=init,
-                repr=repr,
-                eq=eq,
-                iter=iter,
-                match_args=match_args,
-                kw_only=kw_only,
-                frozen=frozen,
-            )
+            cls,
+            init=init,
+            repr=repr,
+            eq=eq,
+            iter=iter,
+            match_args=match_args,
+            kw_only=kw_only,
+            frozen=frozen,
+        )
 
 
 def build_prefab(

@@ -47,7 +47,6 @@ from ._shared import (
     PREFAB_INIT_FUNC,
     FIELDS_ATTRIBUTE,
     INTERNAL_DICT,
-
     NOTHING,
 )
 
@@ -62,6 +61,7 @@ def autogen(func):
     Using this as a decorator indicates that the function will return a string
     which should be used to replace the function itself for that specific class.
     """
+
     def __get__(self, instance, cls):
         local_vars = {}
         code, globs = func(cls)
@@ -106,7 +106,11 @@ def get_init_maker(*, init_name="__init__"):
                 # Identify if method is static, if so include first arg, otherwise skip
                 is_static = type(cls.__dict__.get(func_name)) is staticmethod
 
-                arglist = func_code.co_varnames[:argcount] if is_static else func_code.co_varnames[1:argcount]
+                arglist = (
+                    func_code.co_varnames[:argcount]
+                    if is_static
+                    else func_code.co_varnames[1:argcount]
+                )
 
                 func_arglist.extend(arglist)
 

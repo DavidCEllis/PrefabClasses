@@ -34,9 +34,7 @@ def test_class_unchanged():
     @prefab
     @save_class
     class Slotted:
-        __slots__ = SlotAttributes(
-            x="example_data"
-        )
+        __slots__ = SlotAttributes(x="example_data")
 
     assert Slotted is cache["Slotted"]
 
@@ -48,9 +46,7 @@ def test_class_unchanged():
 def test_actually_slotted():
     @prefab
     class Slotted:
-        __slots__ = SlotAttributes(
-            x=attribute(default="example_data")
-        )
+        __slots__ = SlotAttributes(x=attribute(default="example_data"))
         x: str
 
     inst = Slotted()

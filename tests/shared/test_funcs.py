@@ -1,4 +1,5 @@
 """Tests related to serialization to JSON or Pickle"""
+
 from pathlib import PurePosixPath, PurePath
 
 from prefab_classes import is_prefab, is_prefab_instance

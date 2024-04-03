@@ -13,7 +13,10 @@ def test_basic_frozen():
     with pytest.raises(TypeError) as e1:
         x.x = 2
 
-    assert e1.value.args[0] == "'FrozenExample' object does not support attribute assignment"
+    assert (
+        e1.value.args[0]
+        == "'FrozenExample' object does not support attribute assignment"
+    )
 
     with pytest.raises(TypeError) as e2:
         x.y = "Fail to change data"
@@ -50,6 +53,8 @@ def test_delete_blocked():
     with pytest.raises(TypeError) as e:
         del x.x
 
-    assert e.value.args[0] == "'FrozenExample' object does not support attribute deletion"
+    assert (
+        e.value.args[0] == "'FrozenExample' object does not support attribute deletion"
+    )
 
     assert x.x == 0

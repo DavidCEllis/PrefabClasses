@@ -76,8 +76,8 @@ def test_double_decorate():
         PrefabError,
         match="Decorated class 'DoubleDecorated' has already been processed as a Prefab.",
     ):
+
         @prefab
         @prefab
         class DoubleDecorated:
             pass
-

@@ -29,9 +29,7 @@ __all__ = [
     "FIELDS_ATTRIBUTE",
     "CLASSVAR_NAME",
     "INTERNAL_DICT",
-
     "PrefabError",
-
     "NOTHING",
     "KW_ONLY",
 ]
@@ -57,6 +55,7 @@ class PrefabError(Exception):
 
 
 # SENTINEL VALUES
+
 
 # Special indicator to use in places where NONE could be a legitimate value
 # to indicate that no value has been set.

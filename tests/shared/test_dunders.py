@@ -1,4 +1,5 @@
 """Test the non-init dunder methods"""
+
 import pytest
 
 
