@@ -64,3 +64,32 @@ def test_actually_slotted():
 
     inst = UnSlotted()
     inst.x = "This Works!"
+
+
+def test_slotted_inheritance():
+    # This is an example that didn't work in attrs/dataclasses
+    # https://github.com/python/cpython/issues/90562
+    # Prefabs don't replace the class so this still works
+
+    @prefab
+    class A:
+        __slots__ = SlotAttributes()
+
+        def test(self):
+            return type(self)
+
+    @prefab
+    class B(A):
+        def test(self):
+            return super().test()
+
+    assert B().test() is B
+
+    # Additional tests to prove slottedness of base class
+    ex = A()
+    with pytest.raises(AttributeError):
+        ex.attrib = True
+
+    # As a subclass, B now has a dict and this should work
+    exb = B()
+    exb.attrib = True
