@@ -52,18 +52,17 @@ Settings(hostname='localhost', template_folder='base/path', template_name='index
 
 For further details see the `usage` pages in the documentation.
 
-### Slots ###
+## Slots ##
 
-There is experimental support for creating classes defined via `__slots__` using a SlotAttributes instance.
+There is new support for creating classes defined via `__slots__` using a SlotAttributes instance.
 
-Similarly to the type hinted form, plain values given to a PrefabSlots instance are treated as defaults
+Similarly to the type hinted form, plain values given to a SlotAttributes instance are treated as defaults
 while `attribute` calls are handled normally. `doc` values will be seen when calling `help(...)` on the class
 while the `__annotations__` dictionary will be updated with `type` values given. Annotations can also still
 be given normally (which will probably be necessary for static typing tools).
 
 ```python
 from prefab_classes import prefab, attribute, SlotAttributes
-
 
 @prefab
 class Settings:
@@ -72,10 +71,45 @@ class Settings:
         template_folder="base/path",
         template_name=attribute(default="index", type=str, doc="Name of the template"),
     )
-
 ```
 
-## Why not just use attrs/dataclasses? ##
+### Why not make slots an argument to the decorator like dataclasses (or attrs)? ###
+
+Because this doesn't work properly.
+
+When you make a slotted dataclass the decorator actually has to create a new class and copy everything defined
+on the original class over because it is impossible to set *functional* slots on a class that already exists.
+This leads to some subtle bugs if anything ends up referring to the original class
+(ex: method decorators that rely on the class or [the `super()` function in a method](https://github.com/python/cpython/pull/111538)).
+
+```python
+from dataclasses import dataclass
+from prefab_classes import prefab, SlotAttributes
+
+cache = {}
+def cacher(cls):
+    cache[cls.__name__] = cls
+    return cls
+
+@dataclass(slots=True)
+@cacher
+class DataclassSlots:
+    pass
+
+@prefab
+@cacher
+class PrefabSlots:
+    __slots__ = SlotAttributes()
+    
+print(f"{cache['DataclassSlots'] is DataclassSlots = }")  # False
+print(f"{cache['PrefabSlots'] is PrefabSlots = }")  # True
+```
+
+By contrast, by using `__slots__` ability to use a mapping as input `@prefab` does not need to create a new
+class and can simply modify the original in-place. Once done `__slots__` is replaced with a dict containing
+the same keys and any docs provided that can be rendered via `help(...)`.
+
+## Why not just use attrs or dataclasses? ##
 
 If attrs or dataclasses solves your problem then you should use them.
 They are thoroughly tested, well supported packages. This is a new
@@ -83,7 +117,8 @@ project and has not had the rigorous real world testing of either
 of those.
 
 Prefab Classes has been created for situations where startup time is important, 
-such as for CLI tools. 
+such as for CLI tools and for handling conversion of inputs in a way that
+was more useful to me than attrs converters (`__prefab_post_init__`).
 
 For example looking at import time (before any classes have been generated).
 
@@ -117,7 +152,31 @@ on each access.
 By only generating methods the first time they are used the start time can be
 improved and methods that are never used don't have to be created at all (for example the 
 `__repr__` method is useful when debugging but may not be used in normal runtime). In contrast
-`dataclasses` generates all of its methods when the class is created..
+`dataclasses` generates all of its methods when the class is created.
+
+## On using an approach vs using a tool ##
+
+As this module's code generation is based on the workings of [David Beazley's Cluegen](https://github.com/dabeaz/cluegen)
+I thought it was briefly worth discussing his note on learning an approach vs using a tool.
+
+This project arose as a result of looking at my own approach to the same problem, based on
+extending the workings of `cluegen`. I found there were some features I needed for 
+the projects I was working on (the first instance being that `cluegen` doesn't support 
+defaults that aren't builtins). 
+
+This grew and on making further extensions and customising the project to my needs I found 
+I wanted to use it in all of my projects and the easiest way to do this and keep things 
+in sync was to publish it as a tool on PyPI.
+
+It has only 1 dependency at runtime which is a small library I've created to handle lazy 
+imports. This is used to provide easy access to functions for the user while keeping the
+overall import time low. It's also used internally to defer some methods from being imported
+(eg: if you never look at a `__repr__`, then you don't need to import `reprlib.recursive_repr`).
+Unfortunately this raises the base import time but it's still a lot faster than `import typing`.
+
+So this is the tool I've created for my use using the approach I've come up with to suit my needs.
+You are welcome to use it if you wish - and if it suits your needs better than `attrs` or 
+`dataclasses` then good. I'm glad you found this useful.
 
 ## Credit ##
 
