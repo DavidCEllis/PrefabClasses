@@ -46,11 +46,13 @@ or will be added to this list.
     * Usually you should use `attribute(default_factory=list)` or similar.
 1. If `init` is `False` in `@prefab(init=False)` the method is still generated
    but renamed to `__prefab_init__`.
-1. Slots are not supported
+1. Slots are supported but only via declaring a class with `__slots__ = SlotAttributes(...)`
     * The support for slots in `attrs` and `dataclasses` involves recreating the
       class as it is not possible to effectively define `__slots__` after class 
-      creation. This can cause bugs where there is a reference to the original
-      class before it was recreated.
+      creation. This can cause bugs where decorators or caches hold references
+      to the original class.
+    * By requiring slotted classes to be declared this way `@prefab` does not
+      need to create a new class so all references are still correct.
 1. InitVar annotations are not supported.
     * Passing arguments to `__prefab_post_init__` is done by adding the argument
       to the method signature.
