@@ -35,7 +35,7 @@ except ImportError:
 # The 'typing' import takes over 2x as long as importing this entire module
 # So the impact on import time of the typing import is unacceptable.
 # noinspection PyUnreachableCode
-if False:  # I'd like to correctly use "if TYPE_CHECKING" but that requires importing typing.
+if False:
     try:
         from typing import dataclass_transform
     except ImportError:
@@ -289,14 +289,23 @@ def _make_prefab(
     :param match_args: generate __match_args__
     :param kw_only: Make all attributes keyword only
     :param frozen: Prevent attribute values from being changed once defined
-                   (This does not prevent the modification of mutable attributes such as lists)
+                   (This does not prevent the modification of mutable attributes
+                   such as lists)
     :return: class with __ methods defined
     """
+    # Check if the class has already been processed
+    if cls.__dict__.get(INTERNAL_DICT) is not None:
+        raise PrefabError(
+            f"Decorated class {cls.__name__!r} "
+            f"has already been processed as a Prefab."
+        )
+
     # Make the internals dict
     prefab_internals: dict[str, dict[str, Attribute]] = {}
     setattr(cls, INTERNAL_DICT, prefab_internals)
 
-    # Check for slots first - if provided as a SlotAttributes instance this will be used
+    # Check for slots first
+    # If provided as a SlotAttributes instance this will be used
     # regardless of other data
     cls_slots = getattr(cls, "__slots__", None)
 

@@ -1,4 +1,6 @@
-from prefab_classes import build_prefab, attribute
+import pytest
+
+from prefab_classes import build_prefab, prefab, attribute, PrefabError
 from prefab_classes._shared import FIELDS_ATTRIBUTE
 
 
@@ -67,3 +69,15 @@ def test_keep_dict_funcs():
     assert x != x
     assert list(x)[0] == "ORIGINAL ITER"
     assert KeepDefinedMethods.__match_args__ == ("x",)
+
+
+def test_double_decorate():
+    with pytest.raises(
+        PrefabError,
+        match="Decorated class 'DoubleDecorated' has already been processed as a Prefab.",
+    ):
+        @prefab
+        @prefab
+        class DoubleDecorated:
+            pass
+
