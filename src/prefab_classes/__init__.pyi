@@ -1,4 +1,4 @@
-from ._class_generator import prefab, attribute, build_prefab
+from ._class_generator import prefab, attribute, build_prefab, SlotAttributes
 from ._shared import KW_ONLY, PrefabError
 from .funcs import is_prefab, is_prefab_instance
 
@@ -9,6 +9,7 @@ __all__: list[str] = [
     "prefab",
     "attribute",
     "build_prefab",
+    "SlotAttributes",
     "KW_ONLY",
     "PrefabError",
     "is_prefab",

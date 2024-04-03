@@ -157,31 +157,31 @@ def main():
         lambda: to_json(prefab_collection),
         number=LOOPS
     )
-    print(f"| prefab_to_json     |     {prefab_to_json_time:.1f} |")
+    print(f"| prefab_to_json     |    {prefab_to_json_time:.2f} |")
 
     dc_naive_time = timeit(
         lambda: plain_serializer.encode(dataclasses.asdict(dataclass_collection)),
         number=LOOPS,
     )
-    print(f"| dataclasses_asdict |     {dc_naive_time:.1f} |")
+    print(f"| dataclasses_asdict |    {dc_naive_time:.2f} |")
 
     attrs_naive_time = timeit(
         lambda: plain_serializer.encode(attrs.asdict(attrs_collection)),
         number=LOOPS
     )
-    print(f"| attrs_asdict       |     {attrs_naive_time:.1f} |")
+    print(f"| attrs_asdict       |    {attrs_naive_time:.2f} |")
 
     cattrs_time = timeit(
         lambda: plain_serializer.encode(cattrs.unstructure(attrs_collection)),
         number=LOOPS,
     )
-    print(f"| cattrs             |     {cattrs_time:.1f} |")
+    print(f"| cattrs             |    {cattrs_time:.2f} |")
 
     pydantic_time = timeit(
         lambda: pydantic_collection.json(),
         number=LOOPS
     )
-    print(f"| pydantic           |     {pydantic_time:.1f} |")
+    print(f"| pydantic           |    {pydantic_time:.2f} |")
 
 
 if __name__ == "__main__":

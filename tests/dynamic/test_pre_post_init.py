@@ -55,4 +55,3 @@ def test_post_init_not_self():
 
     with pytest.raises(ValueError):
         ex = PostInitNotSelf(2, 1)
-

@@ -1,4 +1,5 @@
 """Tests for the behaviour of __init__"""
+
 import sys
 from pathlib import Path
 from typing import Union
@@ -124,12 +125,12 @@ def test_post_init_partial():
 def test_post_init_annotations():
     from init_ex import PostInitAnnotations
 
-    x = PostInitAnnotations(1, '/usr/bin/python')
+    x = PostInitAnnotations(1, "/usr/bin/python")
 
     init_annotations = PostInitAnnotations.__init__.__annotations__
 
-    assert init_annotations['x'] == int
-    assert init_annotations['y'] == Union[str, Path]
+    assert init_annotations["x"] == int
+    assert init_annotations["y"] == Union[str, Path]
 
 
 def test_exclude_field():

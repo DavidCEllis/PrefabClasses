@@ -1,5 +1,5 @@
 # ==============================================================================
-# Copyright (c) 2022 David C Ellis
+# Copyright (c) 2022-2024 David C Ellis
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,18 +39,21 @@
 # greater good.
 # ----------------------------------------------------------------------
 
+from ducktools.lazyimporter import LazyImporter, FromImport
+
 from ._shared import (
     PRE_INIT_FUNC,
     POST_INIT_FUNC,
     PREFAB_INIT_FUNC,
     FIELDS_ATTRIBUTE,
     INTERNAL_DICT,
-
     NOTHING,
 )
 
+_laz = LazyImporter([FromImport("reprlib", "recursive_repr")])
 
-def autogen(func, globs=None):
+
+def autogen(func):
     """
     Basically the cluegen function from David Beazley's cluegen
     Modified slightly due to other changes.
@@ -58,12 +61,10 @@ def autogen(func, globs=None):
     Using this as a decorator indicates that the function will return a string
     which should be used to replace the function itself for that specific class.
     """
-    # globs can be a given empty dict, so specifically check for None.
-    globs = globs if globs is not None else {}
 
     def __get__(self, instance, cls):
         local_vars = {}
-        code = func(cls)
+        code, globs = func(cls)
         exec(code, globs, local_vars)
         # Having executed the code, the method should now exist
         # and can be retrieved by name from the dict
@@ -71,15 +72,15 @@ def autogen(func, globs=None):
         method.__qualname__ = f"{cls.__qualname__}.{method.__name__}"
         # Replace the attribute with the real function - this will only be called once.
         setattr(cls, func.__name__, method)
+
         return method.__get__(instance, cls)
 
     return type(f"AutoGen_{func.__name__}", (), dict(__get__=__get__))()
 
 
 def get_init_maker(*, init_name="__init__"):
-    globs = {}
-
     def __init__(cls):
+        globs = {}
         # Get the internals dictionary and prepare attributes
         internals = getattr(cls, INTERNAL_DICT)
         attributes = internals["attributes"]
@@ -105,7 +106,11 @@ def get_init_maker(*, init_name="__init__"):
                 # Identify if method is static, if so include first arg, otherwise skip
                 is_static = type(cls.__dict__.get(func_name)) is staticmethod
 
-                arglist = func_code.co_varnames[:argcount] if is_static else func_code.co_varnames[1:argcount]
+                arglist = (
+                    func_code.co_varnames[:argcount]
+                    if is_static
+                    else func_code.co_varnames[1:argcount]
+                )
 
                 func_arglist.extend(arglist)
 
@@ -221,10 +226,9 @@ def get_init_maker(*, init_name="__init__"):
             f"{body}\n"
             f"{post_init_call}\n"
         )
+        return code, globs
 
-        return code
-
-    return autogen(__init__, globs)
+    return autogen(__init__)
 
 
 def get_repr_maker(will_eval=True):
@@ -238,21 +242,27 @@ def get_repr_maker(will_eval=True):
         )
         if will_eval:
             code = (
+                f"@_laz.recursive_repr()\n"
                 f"def __repr__(self):\n"
-                f"    return f'{{type(self).__qualname__}}({content})'"
+                f"    return f'{{type(self).__qualname__}}({content})'\n"
             )
         else:
             if content:
                 code = (
+                    f"@_laz.recursive_repr()\n"
                     f"def __repr__(self):\n"
-                    f"    return f'<prefab {{type(self).__qualname__}}; {content}>'"
+                    f"    return f'<prefab {{type(self).__qualname__}}; {content}>'\n"
                 )
             else:
                 code = (
+                    f"@_laz.recursive_repr()\n"
                     f"def __repr__(self):\n"
-                    f"    return f'<prefab {{type(self).__qualname__}}>'"
+                    f"    return f'<prefab {{type(self).__qualname__}}>'\n"
                 )
-        return code
+
+        globs = {"_laz": _laz}
+
+        return code, globs
 
     return autogen(__repr__)
 
@@ -272,7 +282,9 @@ def get_eq_maker():
             f"def __eq__(self, other):\n"
             f"    return {instance_comparison} if {class_comparison} else NotImplemented\n"
         )
-        return code
+        globs = {}
+
+        return code, globs
 
     return autogen(__eq__)
 
@@ -285,29 +297,36 @@ def get_iter_maker():
         else:
             values = "    yield from ()"
         code = f"def __iter__(self):\n{values}"
-        return code
+        globs = {}
+        return code, globs
 
     return autogen(__iter__)
 
 
 def get_frozen_setattr_maker():
     def __setattr__(cls):
+        globs = {}
         field_names = getattr(cls, FIELDS_ATTRIBUTE)
 
         # Make the fields set literal
         fields_delimited = ", ".join(f"{field!r}" for field in field_names)
         field_set = f"{{ {fields_delimited} }}"
 
-        # Dynamic prefabs are not slotted so it is possible to insert into the dict
+        if getattr(cls, INTERNAL_DICT)["slotted"]:
+            globs["__prefab_setattr_func"] = object.__setattr__
+            setattr_method = "__prefab_setattr_func(self, name, value)"
+        else:
+            setattr_method = "self.__dict__[name] = value"
+
         body = (
             f"    if hasattr(self, name) or name not in {field_set}:\n"
             f'        raise TypeError("{cls.__name__!r} object does not support attribute assignment")\n'
             f"    else:\n"
-            f"        self.__dict__[name] = value\n"
+            f"        {setattr_method}\n"
         )
         code = f"def __setattr__(self, name, value):\n{body}"
 
-        return code
+        return code, globs
 
     # Pass the exception to exec
     return autogen(__setattr__)
@@ -317,7 +336,8 @@ def get_frozen_delattr_maker():
     def __delattr__(cls):
         body = f'    raise TypeError("{cls.__name__!r} object does not support attribute deletion")\n'
         code = f"def __delattr__(self, name):\n{body}"
-        return code
+        globs = {}
+        return code, globs
 
     return autogen(__delattr__)
 

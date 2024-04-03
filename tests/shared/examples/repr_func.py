@@ -38,3 +38,8 @@ class OneAttributeExcludeField:
 class RegularReprOneArg:
     x: str = "Hello"
     y: str = attribute(default="World", init=False, repr=False)
+
+
+@prefab
+class RecursiveObject:
+    x: "RecursiveObject | None" = None

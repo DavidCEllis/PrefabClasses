@@ -1,5 +1,5 @@
 # ==============================================================================
-# Copyright (c) 2022 David C Ellis
+# Copyright (c) 2022-2024 David C Ellis
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,25 +25,31 @@ Handle boilerplate generation for classes.
 """
 import sys
 
+try:
+    from _collections_abc import Mapping
+except ImportError:
+    from collections.abc import Mapping
+
 
 # False imports for typing dataclass transform and implementation otherwise
 # The 'typing' import takes over 2x as long as importing this entire module
 # So the impact on import time of the typing import is unacceptable.
 # noinspection PyUnreachableCode
-if False:  # I'd like to correctly use "if TYPE_CHECKING" but that requires importing typing.
+if False:
     try:
         from typing import dataclass_transform
     except ImportError:
         from typing_extensions import dataclass_transform
 else:
+
     def dataclass_transform(
-            *,
-            eq_default: bool = True,
-            order_default: bool = False,
-            kw_only_default: bool = False,
-            frozen_default: bool = False,
-            field_specifiers: tuple = (),
-            **kwargs,
+        *,
+        eq_default: bool = True,
+        order_default: bool = False,
+        kw_only_default: bool = False,
+        frozen_default: bool = False,
+        field_specifiers: tuple = (),
+        **kwargs,
     ):
         def decorator(cls_or_fn):
             cls_or_fn.__dataclass_transform__ = {
@@ -55,6 +61,7 @@ else:
                 "kwargs": kwargs,
             }
             return cls_or_fn
+
         return decorator
 
 
@@ -103,6 +110,7 @@ class Attribute:
         "compare",
         "kw_only",
         "exclude_field",
+        "doc",
         "_type",
     )
     __match_args__ = (
@@ -113,6 +121,7 @@ class Attribute:
         "compare",
         "kw_only",
         "exclude_field",
+        "doc",
         "_type",
     )
     init: bool
@@ -120,6 +129,7 @@ class Attribute:
     compare: bool
     kw_only: bool
     exclude_field: bool
+    doc: str | None
 
     def __init__(
         self,
@@ -131,12 +141,12 @@ class Attribute:
         compare: bool = True,
         kw_only: bool = False,
         exclude_field: bool = False,
+        doc: str | None = None,
+        type=NOTHING,
     ):
 
         if kw_only and (not init):
-            raise PrefabError(
-                "Attribute cannot be keyword only if it is not in init."
-            )
+            raise PrefabError("Attribute cannot be keyword only if it is not in init.")
         if default is not NOTHING and default_factory is not NOTHING:
             raise PrefabError(
                 "Cannot define both a default value and a default factory."
@@ -149,7 +159,8 @@ class Attribute:
         self.compare = compare
         self.kw_only = kw_only
         self.exclude_field = exclude_field
-        self._type = NOTHING
+        self.doc = doc
+        self._type = type
 
     def __repr__(self):
         return (
@@ -160,7 +171,9 @@ class Attribute:
             f"repr={self.repr!r}, "
             f"compare={self.compare!r}, "
             f"kw_only={self.kw_only!r}, "
-            f"exclude_field={self.exclude_field!r}"
+            f"exclude_field={self.exclude_field!r},"
+            f"doc={self.doc!r},"
+            f"type={self._type!r},"
             f")"
         )
 
@@ -174,6 +187,8 @@ class Attribute:
                 self.compare,
                 self.kw_only,
                 self.exclude_field,
+                self.doc,
+                self._type,
             )
             == (
                 other.default,
@@ -183,6 +198,8 @@ class Attribute:
                 other.compare,
                 other.kw_only,
                 other.exclude_field,
+                other.doc,
+                other._type,
             )
             if self.__class__ == other.__class__
             else NotImplemented
@@ -198,6 +215,8 @@ def attribute(
     compare=True,
     kw_only=False,
     exclude_field=False,
+    doc=None,
+    type=NOTHING,
 ):
     """
     Additional definition for how to generate standard methods
@@ -213,6 +232,8 @@ def attribute(
     :param exclude_field: Exclude this field from all magic method generation
                           apart from __init__
                           and do not include it in PREFAB_FIELDS
+    :param doc: Parameter documentation for slotted classes
+    :param type: Type of this attribute (for slotted classes)
 
     :return: Attribute generated with these parameters.
     """
@@ -224,7 +245,27 @@ def attribute(
         compare=compare,
         kw_only=kw_only,
         exclude_field=exclude_field,
+        doc=doc,
+        type=type,
     )
+
+
+class SlotAttributes(Mapping):
+    """
+    A special mapping class to define slots for a slotted prefab.
+    """
+
+    def __init__(self, **attributes):
+        self._attributes = attributes
+
+    def __getitem__(self, item):
+        return self._attributes[item]
+
+    def __len__(self):
+        return len(self._attributes)
+
+    def __iter__(self):
+        yield from self._attributes
 
 
 def _make_prefab(
@@ -249,12 +290,25 @@ def _make_prefab(
     :param match_args: generate __match_args__
     :param kw_only: Make all attributes keyword only
     :param frozen: Prevent attribute values from being changed once defined
-                   (This does not prevent the modification of mutable attributes such as lists)
+                   (This does not prevent the modification of mutable attributes
+                   such as lists)
     :return: class with __ methods defined
     """
+    # Check if the class has already been processed
+    if cls.__dict__.get(INTERNAL_DICT) is not None:
+        raise PrefabError(
+            f"Decorated class {cls.__name__!r} "
+            f"has already been processed as a Prefab."
+        )
+
     # Make the internals dict
-    prefab_internals: dict[str, dict[str, Attribute]] = {}
+    prefab_internals = {}
     setattr(cls, INTERNAL_DICT, prefab_internals)
+
+    # Check for slots first
+    # If provided as a SlotAttributes instance this will be used
+    # regardless of other data
+    cls_slots = getattr(cls, "__slots__", None)
 
     # We need to look at type hints for the type hint
     # syntax variant.
@@ -265,64 +319,102 @@ def _make_prefab(
 
     cls_annotation_names = cls_annotations.keys()
 
-    cls_attributes = {k: v for k, v in vars(cls).items() if isinstance(v, Attribute)}
+    if isinstance(cls_slots, SlotAttributes):
+        prefab_internals["slotted"] = True
 
-    cls_attribute_names = cls_attributes.keys()
+        # If slots are defined we must use slots
+        cls_attributes = {}
+        slot_replacement = {}
+        updated_types = {}
 
-    if set(cls_annotation_names).issuperset(set(cls_attribute_names)):
-        # replace the classes' attributes dict with one with the correct
-        # order from the annotations.
-        kw_flag = False
-        new_attributes = {}
-        for name, value in cls_annotations.items():
-            # Ignore ClassVar hints
-            if _is_classvar(value):
-                continue
-
-            # Look for the KW_ONLY annotation
-            if value is KW_ONLY or value == "KW_ONLY":
-                if kw_flag:
-                    raise PrefabError(
-                        "Class can not be defined as keyword only twice"
-                    )
-                kw_flag = True
+        for k, v in cls_slots.items():
+            if isinstance(v, Attribute):
+                attrib = v
+                if v._type is not NOTHING:
+                    updated_types[k] = attrib._type
             else:
-                # Copy atributes that are already defined to the new dict
-                # generate Attribute() values for those that are not defined.
-                cls_slots = getattr(cls, "__slots__", {})
-                if hasattr(cls, name) and name not in cls_slots:
-                    if name in cls_attribute_names:
-                        attrib = cls_attributes[name]
-                    else:
-                        attribute_default = getattr(cls, name)
-                        attrib = attribute(default=attribute_default)
+                # Plain values treated as defaults
+                attrib = attribute(default=v)
 
-                    # Clear the attribute from the class after it has been used
-                    # in the definition.
-                    delattr(cls, name)
-                else:
-                    attrib = attribute()
-
-                if kw_flag or kw_only:
-                    attrib.kw_only = True
-
-                attrib._type = cls_annotations[name]
-                new_attributes[name] = attrib
-
-        cls_attributes = new_attributes
-    else:
-        for name, attrib in cls_attributes.items():
             if kw_only:
                 attrib.kw_only = True
 
-            delattr(cls, name)
-            # Some items can still be annotated.
-            try:
-                attrib._type = cls_annotations[name]
-            except KeyError:
-                pass
+            slot_replacement[k] = attrib.doc
+            cls_attributes[k] = attrib
 
-    prefab_internals['local_attributes'] = cls_attributes
+        # Replace the SlotAttributes instance with a regular dict
+        # So that help() works
+        # This also prevents subclasses from unintentionally reusing the slots
+        # If they do not declare their own slots.
+        setattr(cls, "__slots__", slot_replacement)
+        # Update annotations with any types from the slots assignment
+        cls_annotations.update(updated_types)
+        setattr(cls, "__annotations__", cls_annotations)
+    else:
+        prefab_internals["slotted"] = False
+
+        cls_attributes = {
+            k: v for k, v in vars(cls).items() if isinstance(v, Attribute)
+        }
+
+        cls_attribute_names = cls_attributes.keys()
+
+        if set(cls_annotation_names).issuperset(set(cls_attribute_names)):
+            # replace the classes' attributes dict with one with the correct
+            # order from the annotations.
+            kw_flag = False
+            new_attributes = {}
+            for name, value in cls_annotations.items():
+                # Ignore ClassVar hints
+                if _is_classvar(value):
+                    continue
+
+                # Look for the KW_ONLY annotation
+                if value is KW_ONLY or value == "KW_ONLY":
+                    if kw_flag:
+                        raise PrefabError(
+                            "Class can not be defined as keyword only twice"
+                        )
+                    kw_flag = True
+                else:
+                    # Copy atributes that are already defined to the new dict
+                    # generate Attribute() values for those that are not defined.
+                    if cls_slots is None:
+                        cls_slots = {}
+
+                    if hasattr(cls, name) and name not in cls_slots:
+                        if name in cls_attribute_names:
+                            attrib = cls_attributes[name]
+                        else:
+                            attribute_default = getattr(cls, name)
+                            attrib = attribute(default=attribute_default)
+
+                        # Clear the attribute from the class after it has been used
+                        # in the definition.
+                        delattr(cls, name)
+                    else:
+                        attrib = attribute()
+
+                    if kw_flag or kw_only:
+                        attrib.kw_only = True
+
+                    attrib._type = cls_annotations[name]
+                    new_attributes[name] = attrib
+
+            cls_attributes = new_attributes
+        else:
+            for name, attrib in cls_attributes.items():
+                if kw_only:
+                    attrib.kw_only = True
+
+                delattr(cls, name)
+                # Some items can still be annotated.
+                try:
+                    attrib._type = cls_annotations[name]
+                except KeyError:
+                    pass
+
+    prefab_internals["local_attributes"] = cls_attributes
 
     mro = cls.__mro__[:-1]  # skip 'object' base class
 
@@ -354,7 +446,11 @@ def _make_prefab(
         # Include the first argument if the method is static
         is_static = type(cls.__dict__.get(PRE_INIT_FUNC)) is staticmethod
 
-        arglist = func_code.co_varnames[:argcount] if is_static else func_code.co_varnames[1:argcount]
+        arglist = (
+            func_code.co_varnames[:argcount]
+            if is_static
+            else func_code.co_varnames[1:argcount]
+        )
 
         for item in arglist:
             if item not in attributes.keys():
@@ -379,7 +475,11 @@ def _make_prefab(
         # Include the first argument if the method is static
         is_static = type(cls.__dict__.get(POST_INIT_FUNC)) is staticmethod
 
-        arglist = func_code.co_varnames[:argcount] if is_static else func_code.co_varnames[1:argcount]
+        arglist = (
+            func_code.co_varnames[:argcount]
+            if is_static
+            else func_code.co_varnames[1:argcount]
+        )
 
         for item in arglist:
             if item not in attributes.keys():
@@ -487,15 +587,15 @@ def prefab(
         )
     else:
         return _make_prefab(
-                cls,
-                init=init,
-                repr=repr,
-                eq=eq,
-                iter=iter,
-                match_args=match_args,
-                kw_only=kw_only,
-                frozen=frozen,
-            )
+            cls,
+            init=init,
+            repr=repr,
+            eq=eq,
+            iter=iter,
+            match_args=match_args,
+            kw_only=kw_only,
+            frozen=frozen,
+        )
 
 
 def build_prefab(

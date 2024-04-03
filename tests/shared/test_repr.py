@@ -38,3 +38,12 @@ def test_regular_one_arg():
 
     x = RegularReprOneArg()
     assert repr(x) == "RegularReprOneArg(x='Hello')"
+
+
+def test_recursive():
+    from repr_func import RecursiveObject
+
+    ex = RecursiveObject()
+    ex.x = ex
+
+    assert repr(ex) == "RecursiveObject(x=...)"
