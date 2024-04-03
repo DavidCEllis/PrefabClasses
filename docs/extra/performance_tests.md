@@ -18,12 +18,11 @@ Rough specs:
 | Software Package | Version Number |
 |:---|---:|
 | Python | 3.12.2 |
-| prefab_classes | 0.11.0 |
+| prefab_classes | 0.12.0 |
 | attrs | 23.2.0 |
 | cattrs | 23.2.3 |
 | pydantic | 2.6.4 |
 | pydantic_core | 2.16.3 |
-
 
 
 ## Hyperfine tests ##
@@ -40,13 +39,13 @@ for constructing classes. `python -c "pass"` used as a baseline.
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `python -c "pass"` | 22.2 ± 0.6 | 21.1 | 24.8 | 1.00 |
-| `python -c "from prefab_classes import prefab"` | 24.3 ± 0.5 | 23.6 | 26.5 | 1.09 ± 0.04 |
-| `python -c "from collections import namedtuple"` | 23.7 ± 0.6 | 22.9 | 27.8 | 1.07 ± 0.04 |
-| `python -c "from typing import NamedTuple"` | 31.3 ± 0.6 | 30.5 | 34.8 | 1.41 ± 0.05 |
-| `python -c "from dataclasses import dataclass"` | 38.2 ± 0.6 | 37.1 | 40.8 | 1.72 ± 0.05 |
-| `python -c "from attrs import define"` | 51.5 ± 0.7 | 50.5 | 54.3 | 2.32 ± 0.07 |
-| `python -c "from pydantic import BaseModel"` | 68.4 ± 2.0 | 65.9 | 76.5 | 3.09 ± 0.13 |
+| `python -c "pass"` | 22.7 ± 0.8 | 21.4 | 24.9 | 1.00 |
+| `python -c "from prefab_classes import prefab"` | 23.9 ± 1.0 | 23.0 | 27.1 | 1.06 ± 0.06 |
+| `python -c "from collections import namedtuple"` | 23.6 ± 0.5 | 22.9 | 24.9 | 1.04 ± 0.04 |
+| `python -c "from typing import NamedTuple"` | 31.3 ± 0.4 | 30.7 | 32.7 | 1.38 ± 0.05 |
+| `python -c "from dataclasses import dataclass"` | 38.0 ± 0.5 | 36.9 | 38.9 | 1.68 ± 0.06 |
+| `python -c "from attrs import define"` | 52.1 ± 0.8 | 50.7 | 54.0 | 2.30 ± 0.09 |
+| `python -c "from pydantic import BaseModel"` | 70.0 ± 3.7 | 65.6 | 79.3 | 3.09 ± 0.20 |
 
 
 ### Class Contruction ###
@@ -82,16 +81,17 @@ methods as they would be after first use.
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `python -c "pass"` | 22.2 ± 0.8 | 20.9 | 26.2 | 1.00 |
-| `python hyperfine_importers/native_classes_timer.py` | 23.1 ± 0.4 | 22.4 | 25.9 | 1.04 ± 0.04 |
-| `python hyperfine_importers/namedtuples_timer.py` | 27.9 ± 0.5 | 27.0 | 29.8 | 1.26 ± 0.05 |
-| `python hyperfine_importers/typed_namedtuples_timer.py` | 37.2 ± 0.6 | 36.3 | 39.8 | 1.68 ± 0.07 |
-| `python hyperfine_importers/dataclasses_timer.py` | 60.0 ± 1.0 | 58.1 | 63.3 | 2.71 ± 0.11 |
-| `python hyperfine_importers/attrs_timer.py` | 89.9 ± 1.1 | 87.8 | 95.1 | 4.06 ± 0.16 |
-| `python hyperfine_importers/pydantic_timer.py` | 166.3 ± 3.7 | 161.1 | 176.4 | 7.51 ± 0.32 |
-| `python hyperfine_importers/prefab_classes_timer.py` | 26.4 ± 1.0 | 25.5 | 32.8 | 1.19 ± 0.06 |
-| `python hyperfine_importers/prefab_eval_timer.py` | 36.4 ± 0.7 | 35.3 | 38.4 | 1.64 ± 0.07 |
-
+| `python -c "pass"` | 22.3 ± 0.5 | 21.4 | 23.5 | 1.00 |
+| `python hyperfine_importers/native_classes_timer.py` | 23.1 ± 0.6 | 22.5 | 25.7 | 1.04 ± 0.04 |
+| `python hyperfine_importers/prefab_classes_timer.py` | 25.7 ± 1.0 | 24.7 | 30.0 | 1.15 ± 0.05 |
+| `python hyperfine_importers/prefab_slots_timer.py` | 25.9 ± 0.4 | 25.0 | 27.2 | 1.16 ± 0.03 |
+| `python hyperfine_importers/prefab_eval_timer.py` | 36.4 ± 0.6 | 35.2 | 37.6 | 1.63 ± 0.05 |
+| `python hyperfine_importers/namedtuples_timer.py` | 27.6 ± 0.6 | 26.8 | 29.2 | 1.24 ± 0.04 |
+| `python hyperfine_importers/typed_namedtuples_timer.py` | 37.4 ± 0.7 | 36.4 | 39.4 | 1.68 ± 0.05 |
+| `python hyperfine_importers/dataclasses_timer.py` | 59.1 ± 1.9 | 57.0 | 67.9 | 2.65 ± 0.10 |
+| `python hyperfine_importers/attrs_noslots_timer.py` | 87.4 ± 2.8 | 84.2 | 94.9 | 3.92 ± 0.16 |
+| `python hyperfine_importers/attrs_slots_timer.py` | 93.1 ± 3.5 | 87.1 | 102.8 | 4.18 ± 0.19 |
+| `python hyperfine_importers/pydantic_timer.py` | 167.3 ± 5.2 | 159.0 | 180.9 | 7.51 ± 0.30 |
 
 ## json tests ##
 
@@ -118,11 +118,11 @@ Platform: Windows-10-10.0.19045-SP0
 
 | Method             | Time /s |
 |--------------------|---------|
-| prefab_to_json     |     0.5 |
-| dataclasses_asdict |     1.0 |
-| attrs_asdict       |     1.1 |
-| cattrs             |     0.3 |
-| pydantic           |     0.1 |
+| prefab_to_json     |    0.45 |
+| dataclasses_asdict |    0.94 |
+| attrs_asdict       |    1.12 |
+| cattrs             |    0.29 |
+| pydantic           |    0.16 |
 
 While improvements to match at least `cattrs` performance would be nice, 
 the current focus is still on improving import and class generation time.
@@ -148,14 +148,14 @@ Time for 100 imports of 100 classes defined with 5 basic attributes
 | --- | --- |
 | standard classes | 0.07 |
 | namedtuple | 0.30 |
-| NamedTuple | 0.47 |
-| dataclasses | 1.92 |
-| attrs 23.2.0 | 3.53 |
-| pydantic 2.6.4 | 4.12 |
+| NamedTuple | 0.46 |
+| dataclasses | 1.87 |
+| attrs 23.2.0 | 3.49 |
+| pydantic 2.6.4 | 4.06 |
 | dabeaz/cluegen | 0.09 |
 | dabeaz/cluegen_eval | 0.86 |
-| dabeaz/dataklasses | 0.10 |
+| dabeaz/dataklasses | 0.09 |
 | dabeaz/dataklasses_eval | 0.10 |
-| prefab v0.11.0 | 0.14 |
-| prefab_attributes v0.11.0 | 0.14 |
-| prefab_eval v0.11.0 | 1.04 |
+| prefab v0.12.0 | 0.14 |
+| prefab_attributes v0.12.0 | 0.14 |
+| prefab_eval v0.12.0 | 1.09 |

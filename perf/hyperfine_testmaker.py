@@ -234,7 +234,7 @@ datasets = [
 ]
 
 
-def write_tests(*, runs=100, includes_pass=True):
+def write_tests(*, runs=100, warmup=20, includes_pass=True):
     base_dir.mkdir(exist_ok=True)
     importer_dir.mkdir(exist_ok=True)
     classdef_dir.mkdir(exist_ok=True)
@@ -266,7 +266,7 @@ def write_tests(*, runs=100, includes_pass=True):
     zsh_script = (
         "python -VV\n"
         f"python -c \"{versions}\"\n"
-        f"hyperfine --export-markdown {outpath} --shell=none --runs {runs} --warmup 10 {tests}"
+        f"hyperfine --export-markdown {outpath} --shell=none --runs {runs} --warmup {warmup} {tests}"
     )
 
     shell_pth = base_dir / f"hyperfine_runner.{script_ext}"
@@ -285,7 +285,7 @@ def write_tests(*, runs=100, includes_pass=True):
     )
 
     import_script = (
-        f"hyperfine --export-markdown {outpath} --shell=none --runs {runs} --warmup 10 {tests}"
+        f"hyperfine --export-markdown {outpath} --shell=none --runs {runs} --warmup {warmup} {tests}"
     )
 
     shell_pth = base_dir / f'hyperfine_importtimes.{script_ext}'
@@ -293,4 +293,4 @@ def write_tests(*, runs=100, includes_pass=True):
 
 
 if __name__ == '__main__':
-    write_tests(includes_pass=True)
+    write_tests(includes_pass=True, runs=30, warmup=10)

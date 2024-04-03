@@ -124,13 +124,14 @@ For example looking at import time (before any classes have been generated).
 
 | Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
 |:---|---:|---:|---:|---:|
-| `python -c "pass"` | 21.5 ± 0.3 | 20.9 | 23.0 | 1.00 |
-| `python -c "from collections import namedtuple"` | 23.7 ± 0.5 | 22.8 | 25.4 | 1.10 ± 0.03 |
-| `python -c "from prefab_classes import prefab"` | 24.2 ± 0.4 | 23.5 | 25.9 | 1.13 ± 0.03 |
-| `python -c "from typing import NamedTuple"` | 31.1 ± 0.4 | 30.4 | 32.6 | 1.45 ± 0.03 |
-| `python -c "from dataclasses import dataclass"` | 38.1 ± 0.6 | 37.1 | 40.6 | 1.77 ± 0.04 |
-| `python -c "from attrs import define"` | 51.8 ± 1.3 | 50.5 | 57.7 | 2.41 ± 0.07 |
-| `python -c "from pydantic import BaseModel"` | 67.4 ± 1.1 | 65.9 | 71.7 | 3.13 ± 0.07 |
+| `python -c "pass"` | 22.7 ± 0.8 | 21.4 | 24.9 | 1.00 |
+| `python -c "from prefab_classes import prefab"` | 23.9 ± 1.0 | 23.0 | 27.1 | 1.06 ± 0.06 |
+| `python -c "from collections import namedtuple"` | 23.6 ± 0.5 | 22.9 | 24.9 | 1.04 ± 0.04 |
+| `python -c "from typing import NamedTuple"` | 31.3 ± 0.4 | 30.7 | 32.7 | 1.38 ± 0.05 |
+| `python -c "from dataclasses import dataclass"` | 38.0 ± 0.5 | 36.9 | 38.9 | 1.68 ± 0.06 |
+| `python -c "from attrs import define"` | 52.1 ± 0.8 | 50.7 | 54.0 | 2.30 ± 0.09 |
+| `python -c "from pydantic import BaseModel"` | 70.0 ± 3.7 | 65.6 | 79.3 | 3.09 ± 0.20 |
+
 
 
 For more detailed tests you can look at the
