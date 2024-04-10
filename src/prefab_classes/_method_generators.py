@@ -270,7 +270,15 @@ def get_repr_maker(will_eval=True):
 def get_eq_maker():
     def __eq__(cls):
         class_comparison = "self.__class__ is other.__class__"
-        field_names = getattr(cls, FIELDS_ATTRIBUTE)
+
+        internals = getattr(cls, INTERNAL_DICT)
+        attributes = internals["attributes"]
+        field_names = [
+            name
+            for name, attrib in attributes.items()
+            if attrib.compare and not attrib.exclude_field
+        ]
+
         if field_names:
             selfvals = ",".join(f"self.{name}" for name in field_names)
             othervals = ",".join(f"other.{name}" for name in field_names)
