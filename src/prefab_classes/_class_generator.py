@@ -308,7 +308,7 @@ def _make_prefab(
     # Check for slots first
     # If provided as a SlotAttributes instance this will be used
     # regardless of other data
-    cls_slots = getattr(cls, "__slots__", None)
+    cls_slots = cls.__dict__.get("__slots__")
 
     # We need to look at type hints for the type hint
     # syntax variant.
