@@ -1,6 +1,10 @@
 # PrefabClasses - Python Class Boilerplate Generator  #
 ![PrefabClasses Test Status](https://github.com/DavidCEllis/PrefabClasses/actions/workflows/auto_test.yml/badge.svg?branch=main)
 
+> [!WARN] `prefab_classes` is being deprecated in favour 
+> of `ducktools.classbuilder.prefab` which is a mostly compatible
+> reimplementation.
+
 Writes the class boilerplate code so you don't have to. 
 Yet another variation on attrs/dataclasses.
 
