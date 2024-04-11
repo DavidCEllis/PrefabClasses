@@ -9,6 +9,8 @@
 > This can be obtained using:
 > 
 > `python -m pip install ducktools-classbuilder`
+> 
+> [ducktools.classbuilder](https://github.com/DavidCEllis/ducktools-classbuilder)
 
 Writes the class boilerplate code so you don't have to. 
 Yet another variation on attrs/dataclasses.
