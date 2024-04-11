@@ -5,6 +5,10 @@
 > `prefab_classes` is being deprecated in favour of 
 > `ducktools.classbuilder.prefab` which is a mostly compatible
 > reimplementation.
+> 
+> This can be obtained using:
+> 
+> `python -m pip install ducktools-classbuilder`
 
 Writes the class boilerplate code so you don't have to. 
 Yet another variation on attrs/dataclasses.
