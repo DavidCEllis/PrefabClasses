@@ -10,7 +10,7 @@
 > 
 > `python -m pip install ducktools-classbuilder`
 > 
-> The only (intentional) changes int that module are:
+> The only (intentional) changes in that module are:
 >   * `SlotAttributes` is now `SlotFields`
 >   * `as_dict` is in the main module and does not cache
 >   * `@prefab(dict_method=True)` will create a cached as_dict 
