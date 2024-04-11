@@ -3,14 +3,20 @@
 
 > [!WARNING] 
 > `prefab_classes` is being deprecated in favour of 
-> `ducktools.classbuilder.prefab` which is a mostly compatible
-> reimplementation.
+> the prefab submodule of [ducktools-classbuilder](https://github.com/DavidCEllis/ducktools-classbuilder) 
+> which is a mostly compatible reimplementation.
 > 
 > This can be obtained using:
 > 
 > `python -m pip install ducktools-classbuilder`
 > 
-> [ducktools.classbuilder](https://github.com/DavidCEllis/ducktools-classbuilder)
+> The only (intentional) changes int that module are:
+>   * `SlotAttributes` is now `SlotFields`
+>   * `as_dict` is in the main module and does not cache
+>   * `@prefab(dict_method=True)` will create a cached as_dict 
+>     method on the class that the function will automatically 
+>     use.
+>   * `to_json` no longer exists - just use `json.dumps(obj, default=as_dict)`
 
 Writes the class boilerplate code so you don't have to. 
 Yet another variation on attrs/dataclasses.
