@@ -15,6 +15,15 @@ extra/performance_tests
 api
 ```
 
+```{warning}
+`prefab_classes` is being deprecated in favour of `ducktools.classbuilder.prefab` 
+which is a mostly compatible reimplementation.
+
+This can be obtained using:
+
+`python -m pip install ducktools-classbuilder`
+```
+
 Prefab Classes is a package that automatically generates basic class magic
 methods so you don't have to write them yourself.
 
@@ -116,8 +125,6 @@ class Settings:
 You have probably seen something like this before if you've looked into the `dataclasses`
 module or the `attrs` package. The main difference for `prefab_classes` is in the
 implementation, although there are also some other design differences.
-
-See {doc}`getting_started` for more examples and more detailed explanation on usage.
 
 ## Indices and tables ##
 * {ref}`genindex`
