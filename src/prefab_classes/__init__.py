@@ -41,13 +41,14 @@ __all__ = [
     "prefab",
     "attribute",
     "build_prefab",
-    "SlotAttributes" "KW_ONLY",
+    "SlotAttributes",
+    "KW_ONLY",
     "PrefabError",
     "is_prefab",
     "is_prefab_instance",
 ]
 
-__version__ = "v0.13.0"
+__version__ = "v0.13.1"
 
 _imports = [
     MultiFromImport(
