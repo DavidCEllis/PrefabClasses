@@ -15,6 +15,25 @@ extra/performance_tests
 api
 ```
 
+```{warning}
+`prefab_classes` is being deprecated in favour of 
+the prefab submodule of [ducktools-classbuilder](https://github.com/DavidCEllis/ducktools-classbuilder) 
+which is a mostly compatible reimplementation.
+
+This can be obtained using:
+
+`python -m pip install ducktools-classbuilder`
+
+The only (intentional) changes in that module are:
+  * `SlotAttributes` is now `SlotFields`
+  * `as_dict` is in the main module and does not cache
+  * `@prefab(dict_method=True)` will create a cached as_dict 
+    method on the class that the function will automatically 
+    use.
+  * attributes are excluded from `as_dict` using the `serialize` argument to `attribute`
+  * `to_json` no longer exists - just use `json.dumps(obj, default=as_dict)`
+```
+
 Prefab Classes is a package that automatically generates basic class magic
 methods so you don't have to write them yourself.
 
@@ -116,8 +135,6 @@ class Settings:
 You have probably seen something like this before if you've looked into the `dataclasses`
 module or the `attrs` package. The main difference for `prefab_classes` is in the
 implementation, although there are also some other design differences.
-
-See {doc}`getting_started` for more examples and more detailed explanation on usage.
 
 ## Indices and tables ##
 * {ref}`genindex`
