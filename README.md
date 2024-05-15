@@ -16,6 +16,7 @@
 >   * `@prefab(dict_method=True)` will create a cached as_dict 
 >     method on the class that the function will automatically 
 >     use.
+>   * attributes are excluded from `as_dict` using the `serialize` argument to `attribute`
 >   * `to_json` no longer exists - just use `json.dumps(obj, default=as_dict)`
 
 Writes the class boilerplate code so you don't have to. 
