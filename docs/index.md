@@ -16,12 +16,22 @@ api
 ```
 
 ```{warning}
-`prefab_classes` is being deprecated in favour of `ducktools.classbuilder.prefab` 
+`prefab_classes` is being deprecated in favour of 
+the prefab submodule of [ducktools-classbuilder](https://github.com/DavidCEllis/ducktools-classbuilder) 
 which is a mostly compatible reimplementation.
 
 This can be obtained using:
 
 `python -m pip install ducktools-classbuilder`
+
+The only (intentional) changes in that module are:
+  * `SlotAttributes` is now `SlotFields`
+  * `as_dict` is in the main module and does not cache
+  * `@prefab(dict_method=True)` will create a cached as_dict 
+    method on the class that the function will automatically 
+    use.
+  * attributes are excluded from `as_dict` using the `serialize` argument to `attribute`
+  * `to_json` no longer exists - just use `json.dumps(obj, default=as_dict)`
 ```
 
 Prefab Classes is a package that automatically generates basic class magic
