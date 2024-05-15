@@ -20,6 +20,15 @@
 # SOFTWARE.
 # ==============================================================================
 
+import warnings
+
+warnings.warn(
+    DeprecationWarning(
+        "PrefabClasses is being deprecated in favour of ducktools-classbuilder"
+    )
+)
+
+
 from ducktools.lazyimporter import (
     LazyImporter,
     MultiFromImport,
