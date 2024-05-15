@@ -38,7 +38,7 @@ __all__ = [
     "is_prefab_instance",
 ]
 
-__version__ = "v0.12.0"
+__version__ = "v0.13.0"
 
 _imports = [
     MultiFromImport(
